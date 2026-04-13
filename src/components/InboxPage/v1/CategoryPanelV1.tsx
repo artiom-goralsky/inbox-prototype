@@ -1,0 +1,71 @@
+import React from 'react';
+import { Typography } from '@circleco/compass/components/Typography';
+import { Icon } from '@circleco/compass/components/Icon';
+import { Avatar } from '@circleco/compass/components/Avatar';
+import { Select } from '@circleco/compass/components/Select';
+import type { V1Category } from './v1MockData';
+
+interface CategoryPanelV1Props {
+  activeCategory: V1Category;
+  onCategoryChange: (category: V1Category) => void;
+  onVersionChange: (version: 'v1' | 'v2') => void;
+}
+
+const CATEGORIES: { id: V1Category; label: string; iconType: 'avatar' | 'icon'; iconName?: string }[] = [
+  { id: 'dms', label: 'My DMs', iconType: 'avatar' },
+  { id: 'moderation', label: 'Moderation', iconType: 'icon', iconName: 'compass' },
+  { id: 'course-comments', label: 'Course comments', iconType: 'icon', iconName: 'graduate-cap' },
+  { id: 'ai-inbox', label: 'AI Inbox', iconType: 'icon', iconName: 'ai-box' },
+];
+
+const CategoryPanelV1: React.FC<CategoryPanelV1Props> = ({ activeCategory, onCategoryChange, onVersionChange }) => {
+  return (
+    <div className="w-[200px] h-full border-r border-[#f0f3f5] bg-primary flex flex-col shrink-0 overflow-hidden">
+      {/* Header */}
+      <div className="p-4 shrink-0">
+        <Typography variant="heading-md" color="primary">Inbox</Typography>
+      </div>
+
+      {/* Categories */}
+      <div className="p-2 flex flex-col flex-1">
+        <div className="flex flex-col">
+          {CATEGORIES.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => onCategoryChange(item.id)}
+              className={`flex items-center gap-3 h-9 w-full px-3 py-1 rounded-lg text-left transition-colors ${
+                activeCategory === item.id ? 'bg-active' : 'hover:bg-hover'
+              }`}
+            >
+              {item.iconType === 'avatar' ? (
+                <Avatar name="Admin" size="xxs" />
+              ) : (
+                <Icon name={item.iconName as any} size="sm" />
+              )}
+              <Typography variant="body-sm" color="primary" className="truncate flex-1">
+                {item.label}
+              </Typography>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Version switcher */}
+      <div className="p-3 shrink-0">
+        <Select
+          aria-label="Prototype version"
+          placeholder="v 1"
+          options={[
+            { label: 'v 1', value: 'v1' },
+            { label: 'v 2', value: 'v2' },
+          ]}
+          onValueChange={(v) => {
+            if (v?.value === 'v2') onVersionChange('v2');
+          }}
+        />
+      </div>
+    </div>
+  );
+};
+
+export default CategoryPanelV1;

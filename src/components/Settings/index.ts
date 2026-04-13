@@ -1,0 +1,9 @@
+export { default as General } from './General';
+export { default as CustomDomain } from './CustomDomain';
+export { default as CommunityAI } from './CommunityAI';
+export { default as MobileApp } from './MobileApp';
+export { default as WeeklyDigest } from './WeeklyDigest';
+export { default as Embed } from './Embed';
+export { default as SingleSignOn } from './SingleSignOn';
+export { default as Messaging } from './Messaging';
+export { default as Legal } from './Legal';

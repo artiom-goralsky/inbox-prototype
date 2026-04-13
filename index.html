@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/png" href="/images/circle-logo.png" />
+    <link rel="shortcut icon" type="image/png" href="/images/circle-logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="A modern React TypeScript application for managing audience data with a beautiful, responsive UI built with Tailwind CSS."
+    />
+    <link rel="apple-touch-icon" href="/logo192.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <title>Circle 4.0</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <!-- #region agent log -->
+    <script>
+      fetch('http://127.0.0.1:7657/ingest/fd01d022-d456-47e7-9ee3-eabbb6756821',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'adbd37'},body:JSON.stringify({sessionId:'adbd37',runId:'initial',hypothesisId:'H5',location:'index.html:body',message:'HTML bootstrap script executed',data:{href:window.location.href,userAgent:navigator.userAgent.slice(0,80)},timestamp:Date.now()})}).catch(()=>{});
+    </script>
+    <!-- #endregion -->
+    <div id="root"></div>
+    <pre id="__err" style="display:none;position:fixed;top:0;left:0;right:0;z-index:99999;background:red;color:white;padding:16px;font-size:12px;white-space:pre-wrap;max-height:50vh;overflow:auto"></pre>
+    <script>
+      window.addEventListener('error', function(e) {
+        var el = document.getElementById('__err');
+        el.style.display = 'block';
+        el.textContent = e.message + '\n' + (e.filename || '') + ':' + (e.lineno || '') + '\n' + (e.error && e.error.stack || '');
+      });
+      window.addEventListener('unhandledrejection', function(e) {
+        var el = document.getElementById('__err');
+        el.style.display = 'block';
+        el.textContent = String(e.reason && e.reason.stack || e.reason);
+      });
+    </script>
+    <script type="module" src="/src/index.tsx"></script>
+  </body>
+</html>
