@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import InboxV1 from './v1/InboxV1';
+import InboxV1_5 from './v1.5/InboxV1_5';
 import InboxSidebar from './InboxSidebar';
 import TodayView from './TodayView';
 import DMThreadList from './DMThreadList';
@@ -29,7 +30,7 @@ const INITIAL_TAB_COUNTS: Partial<Record<Tab, number>> = {
 };
 
 const InboxPage: React.FC = () => {
-  const [prototypeVersion, setPrototypeVersion] = useState<'v1' | 'v2'>('v1');
+  const [prototypeVersion, setPrototypeVersion] = useState<'v1' | 'v1.5' | 'v2'>('v1');
   const [activeTab, setActiveTab] = useState<Tab>('today');
   const [dmSelectedId, setDmSelectedId] = useState('james-liu');
   const [modSelectedId, setModSelectedId] = useState('cp');
@@ -136,6 +137,10 @@ const InboxPage: React.FC = () => {
 
   if (prototypeVersion === 'v1') {
     return <InboxV1 onVersionChange={setPrototypeVersion} />;
+  }
+
+  if (prototypeVersion === 'v1.5') {
+    return <InboxV1_5 onVersionChange={setPrototypeVersion} />;
   }
 
   return (
