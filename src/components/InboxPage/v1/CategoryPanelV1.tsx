@@ -8,7 +8,7 @@ import type { V1Category } from './v1MockData';
 interface CategoryPanelV1Props {
   activeCategory: V1Category;
   onCategoryChange: (category: V1Category) => void;
-  onVersionChange: (version: 'v1' | 'v2') => void;
+  onVersionChange: (version: 'v1' | 'v1.5' | 'v2') => void;
 }
 
 const CATEGORIES: { id: V1Category; label: string; iconType: 'avatar' | 'icon'; iconName?: string }[] = [
@@ -57,9 +57,11 @@ const CategoryPanelV1: React.FC<CategoryPanelV1Props> = ({ activeCategory, onCat
           placeholder="v 1"
           options={[
             { label: 'v 1', value: 'v1' },
+            { label: 'v 1.5', value: 'v1.5' },
             { label: 'v 2', value: 'v2' },
           ]}
           onValueChange={(v) => {
+            if (v?.value === 'v1.5') onVersionChange('v1.5');
             if (v?.value === 'v2') onVersionChange('v2');
           }}
         />

@@ -56,7 +56,7 @@ const TAB_COUNTS: Partial<Record<Tab, number>> = {
 interface InboxSidebarProps {
   activeTab: Tab;
   onTabChange: (tab: Tab) => void;
-  onVersionChange?: (version: 'v1' | 'v2') => void;
+  onVersionChange?: (version: 'v1' | 'v1.5' | 'v2') => void;
 }
 
 const InboxSidebar: React.FC<InboxSidebarProps> = ({ activeTab, onTabChange, onVersionChange }) => {
@@ -181,10 +181,12 @@ const InboxSidebar: React.FC<InboxSidebarProps> = ({ activeTab, onTabChange, onV
             placeholder="v 2"
             options={[
               { label: 'v 1', value: 'v1' },
+              { label: 'v 1.5', value: 'v1.5' },
               { label: 'v 2', value: 'v2' },
             ]}
             onValueChange={(v) => {
               if (v?.value === 'v1') onVersionChange?.('v1');
+              if (v?.value === 'v1.5') onVersionChange?.('v1.5');
             }}
           />
         </div>

@@ -141,7 +141,7 @@ const AIInboxCenterPanelV1: React.FC<AIInboxCenterPanelV1Props> = ({ selectedId,
         {/* Composer */}
         <div className="px-4 pb-4 shrink-0">
           <div className="max-w-[768px] mx-auto">
-            <div className="border border-[#f0f3f5] rounded-2xl overflow-hidden">
+            <div className="bg-primary rounded-[16px] overflow-hidden shadow-[0px_0px_0px_1px_rgba(0,0,0,0.04),0px_3px_12px_-4px_rgba(0,0,0,0.1),0px_4px_16px_-8px_rgba(0,0,0,0.1)]">
               <textarea
                 value={composerText}
                 onChange={(e) => setComposerText(e.target.value)}
@@ -150,14 +150,8 @@ const AIInboxCenterPanelV1: React.FC<AIInboxCenterPanelV1Props> = ({ selectedId,
                 className="w-full px-4 py-3 text-sm resize-none outline-none bg-primary min-h-[44px]"
                 rows={1}
               />
-              <div className="flex items-center justify-between p-2">
-                <div className="flex items-center">
-                  <IconButton icon="hashtag" size="md" variant="ghost" aria-label="Hashtag" />
-                  <IconButton icon="paperclip" size="md" variant="ghost" aria-label="Attach" />
-                </div>
-                <div className="flex items-center gap-1">
-                  <IconButton icon="arrow-up" size="md" variant="secondary" aria-label="Send" onClick={handleSend} />
-                </div>
+              <div className="flex items-center justify-end p-2">
+                <IconButton icon="arrow-up" size="md" variant="secondary" aria-label="Send" onClick={handleSend} />
               </div>
             </div>
           </div>

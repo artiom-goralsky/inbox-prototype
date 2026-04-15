@@ -48,9 +48,11 @@ interface ThreadListV1Props {
   selectedId: string;
   onSelect: (id: string) => void;
   onSettingsOpen?: () => void;
+  titleOverride?: string;
+  onNewMessage?: () => void;
 }
 
-const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSelect, onSettingsOpen }) => {
+const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSelect, onSettingsOpen, titleOverride, onNewMessage }) => {
   const threads = getThreadsForCategory(category);
 
   // Moderation: local reviewed set + decisions + dismiss animation
@@ -142,9 +144,7 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
       }
       case 'course-comments':
         return threads.filter(t => {
-          if (courseStatus === 'unanswered' && !t.isUnanswered) return false;
           if (courseScope !== 'all' && t.lessonName !== courseScope) return false;
-          if (search && !t.name.toLowerCase().includes(search.toLowerCase())) return false;
           return true;
         });
       case 'ai-inbox':
@@ -166,7 +166,7 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
           <>
             <IconButton icon="magnifying-glass" size="md" variant="ghost" aria-label="Search" onClick={toggleSearch} />
             <IconButton icon="checkmark-double" size="md" variant="ghost" aria-label="Mark all read" />
-            <IconButton icon="plus" size="md" variant="ghost" aria-label="New message" />
+            <IconButton icon="plus" size="md" variant="ghost" aria-label="New message" onClick={onNewMessage} />
           </>
         );
       case 'moderation':
@@ -174,12 +174,7 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
           <IconButton icon="settings-gear" size="md" variant="ghost" aria-label="Settings" onClick={onSettingsOpen} />
         );
       case 'course-comments':
-        return (
-          <>
-            <IconButton icon="magnifying-glass" size="md" variant="ghost" aria-label="Search" onClick={toggleSearch} />
-            <IconButton icon="checkmark-double" size="md" variant="ghost" aria-label="Mark all read" />
-          </>
-        );
+        return null;
       case 'ai-inbox':
         return (
           <IconButton icon="magnifying-glass" size="md" variant="ghost" aria-label="Search" onClick={toggleSearch} />
@@ -193,7 +188,7 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
         const dmTab = dmScope === 'ai' ? 'agents' : dmStatus === 'unread' ? 'unread' : 'all';
         return (
           <Tabs.Root
-            tabs={[{ value: 'all', label: 'All' }, { value: 'unread', label: 'Unread' }, { value: 'agents', label: 'Agents' }]}
+            tabs={[{ value: 'all', label: 'Inbox' }, { value: 'unread', label: 'Unread' }, { value: 'agents', label: 'Agents' }]}
             selectedValue={dmTab}
             onValueChange={v => {
               if (v === 'agents') {
@@ -219,22 +214,14 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
         );
       case 'course-comments':
         return (
-          <div className="flex items-center justify-between w-full">
-            <Tabs.Root
-              tabs={[{ value: 'all', label: 'All' }, { value: 'unanswered', label: 'Unread' }]}
-              selectedValue={courseStatus}
-              onValueChange={v => setCourseStatus(v as 'all' | 'unanswered')}
-              size="md"
+          <div className="w-fit shrink-0">
+            <Select
+              aria-label="Course scope"
+              value={{ label: COURSE_SCOPE_OPTIONS.find(o => o.value === courseScope)?.label ?? 'All courses', value: courseScope }}
+              placeholder="All courses"
+              options={COURSE_SCOPE_OPTIONS}
+              onValueChange={v => setCourseScope((v as any)?.value ?? 'all')}
             />
-            <div className="w-fit shrink-0">
-              <Select
-                aria-label="Course scope"
-                value={{ label: COURSE_SCOPE_OPTIONS.find(o => o.value === courseScope)?.label ?? 'All courses', value: courseScope }}
-                placeholder="All courses"
-                options={COURSE_SCOPE_OPTIONS}
-                onValueChange={v => setCourseScope((v as any)?.value ?? 'all')}
-              />
-            </div>
           </div>
         );
       case 'ai-inbox':
@@ -267,7 +254,7 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
       {/* Title header */}
       <div className="flex items-center gap-2 h-14 pl-6 pr-4 shrink-0">
         <Typography variant="heading-md" color="primary" className="flex-1 truncate">
-          {CATEGORY_TITLE[category]}
+          {titleOverride ?? CATEGORY_TITLE[category]}
         </Typography>
         <div className="flex items-center gap-1 shrink-0">
           {renderTitleIcons()}
