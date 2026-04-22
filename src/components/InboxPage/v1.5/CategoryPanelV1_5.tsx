@@ -4,6 +4,7 @@ import { Icon } from '@circleco/compass/components/Icon';
 import { Avatar } from '@circleco/compass/components/Avatar';
 import { Select } from '@circleco/compass/components/Select';
 import type { V1_5Category } from './v1_5MockData';
+import NotificationsPopover from '../NotificationsPopover';
 
 interface CategoryPanelV1_5Props {
   activeCategory: V1_5Category;
@@ -46,8 +47,9 @@ const CategoryPanelV1_5: React.FC<CategoryPanelV1_5Props> = ({ activeCategory, o
   return (
     <div className="w-[220px] h-full border-r border-[#f0f3f5] bg-primary flex flex-col shrink-0 overflow-hidden">
       {/* Header */}
-      <div className="p-4 shrink-0">
+      <div className="p-4 shrink-0 flex items-center justify-between">
         <Typography variant="heading-md" color="primary">Inbox</Typography>
+        <NotificationsPopover />
       </div>
 
       {/* Categories */}
