@@ -8,6 +8,7 @@ import { Select } from '@circleco/compass/components/Select';
 import { useViews } from './views/useViews';
 import CreateViewModal from './views/CreateViewModal';
 import type { InboxCategory, InboxView } from './views/viewTypes';
+import NotificationsPopover from './NotificationsPopover';
 
 type Tab = 'all' | 'dms' | 'chat-threads' | 'connection-requests' | 'moderation' | 'course-comments' | 'ai-inbox';
 
@@ -83,8 +84,9 @@ const InboxSidebar: React.FC<InboxSidebarProps> = ({ activeTab, onTabChange, onV
     <>
       <div className="w-[200px] h-full border-r border-secondary bg-primary flex flex-col shrink-0">
         {/* Header */}
-        <div className="p-4 shrink-0">
+        <div className="p-4 shrink-0 flex items-center justify-between">
           <Typography variant="heading-md" color="primary">Inbox</Typography>
+          <NotificationsPopover />
         </div>
 
         {/* Body */}

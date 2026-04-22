@@ -106,7 +106,7 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
   const [dmStatus, setDmStatus] = useState<'all' | 'unread'>('all');
   const [modStatus, setModStatus] = useState<'inbox' | 'approved' | 'rejected'>('inbox');
   const [courseStatus, setCourseStatus] = useState<'all' | 'unanswered'>('all');
-  const [aiStatusFilter, setAiStatusFilter] = useState<'all' | 'paused'>('all');
+  const [aiStatusFilter, setAiStatusFilter] = useState<'all' | 'unread' | 'paused'>('all');
 
   // Scope filters
   const [dmScope, setDmScope] = useState<'all' | 'people' | 'ai'>('all');
@@ -157,6 +157,7 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
         });
       case 'ai-inbox':
         return threads.filter(t => {
+          if (aiStatusFilter === 'unread' && !t.unread) return false;
           if (aiStatusFilter === 'paused' && t.aiStatus !== 'paused') return false;
           if (aiAgent !== 'all' && t.agentId !== aiAgent) return false;
           if (search && !t.name.toLowerCase().includes(search.toLowerCase())) return false;
@@ -282,16 +283,22 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
             />
           </div>
         );
-      case 'ai-inbox':
+      case 'ai-inbox': {
+        const AI_STATUS_OPTIONS = [
+          { label: 'All', value: 'all' },
+          { label: 'Unread', value: 'unread' },
+          { label: 'AI Paused', value: 'paused' },
+        ];
         return (
           <div className="flex items-center justify-between w-full">
-            <Tabs.Root
-              tabs={[{ value: 'all', label: 'All' }, { value: 'paused', label: 'Paused' }]}
-              selectedValue={aiStatusFilter}
-              onValueChange={v => setAiStatusFilter(v as 'all' | 'paused')}
-              size="md"
-            />
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2">
+              <Select
+                aria-label="Status filter"
+                value={{ label: AI_STATUS_OPTIONS.find(o => o.value === aiStatusFilter)?.label ?? 'All', value: aiStatusFilter }}
+                placeholder="All"
+                options={AI_STATUS_OPTIONS}
+                onValueChange={v => setAiStatusFilter(((v as any)?.value ?? 'all') as 'all' | 'unread' | 'paused')}
+              />
               <Select
                 aria-label="Agent filter"
                 value={{ label: AGENT_OPTIONS.find(o => o.value === aiAgent)?.label ?? 'All agents', value: aiAgent }}
@@ -299,13 +306,14 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
                 options={AGENT_OPTIONS}
                 onValueChange={v => setAiAgent((v as any)?.value ?? 'all')}
               />
-              <Menu
-                options={getSortOptions().map(o => ({ label: o.label, onClick: () => setSortMode(o.value) }))}
-                trigger={<IconButton icon="arrow-bottom-top" size="md" variant="outline" aria-label="Sort" />}
-              />
             </div>
+            <Menu
+              options={getSortOptions().map(o => ({ label: o.label, onClick: () => setSortMode(o.value) }))}
+              trigger={<IconButton icon="arrow-bottom-top" size="md" variant="outline" aria-label="Sort" />}
+            />
           </div>
         );
+      }
     }
   };
 
