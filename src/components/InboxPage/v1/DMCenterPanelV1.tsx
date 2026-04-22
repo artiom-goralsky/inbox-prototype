@@ -1,19 +1,23 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Typography } from '@circleco/compass/components/Typography';
 import { Avatar } from '@circleco/compass/components/Avatar';
+import { Icon } from '@circleco/compass/components/Icon';
 import { IconButton } from '@circleco/compass/components/IconButton';
 import { Menu } from '@circleco/compass/components/Menu';
 import { DM_THREADS, DM_CONVERSATIONS, type V1Message } from './v1MockData';
 import SearchPanelV1 from './SearchPanelV1';
 import ThreadPanelV1 from './ThreadPanelV1';
+import SuggestedReplyWidget from '../../shared/SuggestedReplyWidget';
+import { getSuggestedReply } from '../suggestedReplyMockData';
 
 interface DMCenterPanelV1Props {
   selectedId: string;
   onProfileOpen: (name: string) => void;
   initialDraft?: string;
+  showAiAssist?: boolean;
 }
 
-const DMCenterPanelV1: React.FC<DMCenterPanelV1Props> = ({ selectedId, onProfileOpen, initialDraft }) => {
+const DMCenterPanelV1: React.FC<DMCenterPanelV1Props> = ({ selectedId, onProfileOpen, initialDraft, showAiAssist = false }) => {
   const thread = DM_THREADS.find((t) => t.id === selectedId);
   const groups = DM_CONVERSATIONS[selectedId];
   const [composerText, setComposerText] = useState(initialDraft ?? '');
@@ -21,6 +25,8 @@ const DMCenterPanelV1: React.FC<DMCenterPanelV1Props> = ({ selectedId, onProfile
   const [localMessages, setLocalMessages] = useState<V1Message[]>([]);
   const [threadMessage, setThreadMessage] = useState<V1Message | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const [composerAiDraft, setComposerAiDraft] = useState(false);
+  const [suggestionDismissed, setSuggestionDismissed] = useState(false);
   const messagesRef = useRef<HTMLDivElement>(null);
 
   // Listen for search-highlight events
@@ -38,10 +44,11 @@ const DMCenterPanelV1: React.FC<DMCenterPanelV1Props> = ({ selectedId, onProfile
     return () => window.removeEventListener('search-highlight', handler);
   }, []);
 
-  // Close local drawers when conversation changes
+  // Close local drawers + reset suggestion when conversation changes
   useEffect(() => {
     setSearchOpen(false);
     setThreadMessage(null);
+    setSuggestionDismissed(false);
   }, [selectedId]);
 
   // Close local drawers when another drawer opens
@@ -57,6 +64,18 @@ const DMCenterPanelV1: React.FC<DMCenterPanelV1Props> = ({ selectedId, onProfile
   useEffect(() => {
     if (initialDraft) setComposerText(initialDraft);
   }, [initialDraft]);
+
+  // Listen for AI assist "Add to composer" events
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { text } = (e as CustomEvent).detail as { text: string };
+      setComposerText(text);
+      setComposerAiDraft(true);
+      setSuggestionDismissed(true);
+    };
+    window.addEventListener('composer-set-draft', handler);
+    return () => window.removeEventListener('composer-set-draft', handler);
+  }, []);
 
   const allMessages = useMemo(() => {
     const msgs: { id: string; senderName: string; text: string; time: string }[] = [];
@@ -76,6 +95,12 @@ const DMCenterPanelV1: React.FC<DMCenterPanelV1Props> = ({ selectedId, onProfile
       </div>
     );
   }
+
+  const handleAiAssist = (msg: V1Message) => {
+    window.dispatchEvent(new CustomEvent('copilot-add-reference', {
+      detail: { messageId: msg.id, authorName: msg.senderName, snippet: msg.text.slice(0, 80), category: 'dm' }
+    }));
+  };
 
   const handleSend = () => {
     if (!composerText.trim()) return;
@@ -118,7 +143,7 @@ const DMCenterPanelV1: React.FC<DMCenterPanelV1Props> = ({ selectedId, onProfile
                   <Typography variant="label-xs" color="tertiary">{group.label}</Typography>
                 </div>
                 {group.messages.map((msg) => (
-                  <MessageRow key={msg.id} message={msg} highlighted={highlightedId === msg.id} onNameClick={() => onProfileOpen(msg.senderName)} onOpenThread={openThread} />
+                  <MessageRow key={msg.id} message={msg} highlighted={highlightedId === msg.id} onNameClick={() => onProfileOpen(msg.senderName)} onOpenThread={openThread} onAiAssist={showAiAssist ? handleAiAssist : undefined} />
                 ))}
               </div>
             ))
@@ -127,40 +152,66 @@ const DMCenterPanelV1: React.FC<DMCenterPanelV1Props> = ({ selectedId, onProfile
               <div className="flex items-center pt-6 pb-2 px-3 border-b border-[#f0f3f5] mb-2">
                 <Typography variant="label-xs" color="tertiary">Today</Typography>
               </div>
-              <MessageRow message={{ id: 'placeholder', senderName: thread.name, text: thread.preview, time: '9:45 AM' }} highlighted={highlightedId === 'placeholder'} onNameClick={() => onProfileOpen(thread.name)} />
+              <MessageRow message={{ id: 'placeholder', senderName: thread.name, text: thread.preview, time: '9:45 AM' }} highlighted={highlightedId === 'placeholder'} onNameClick={() => onProfileOpen(thread.name)} onAiAssist={handleAiAssist} />
             </div>
           )}
           {localMessages.map((msg) => (
-            <MessageRow key={msg.id} message={msg} highlighted={highlightedId === msg.id} onNameClick={() => onProfileOpen(msg.senderName)} onOpenThread={openThread} />
+            <MessageRow key={msg.id} message={msg} highlighted={highlightedId === msg.id} onNameClick={() => onProfileOpen(msg.senderName)} onOpenThread={openThread} onAiAssist={showAiAssist ? handleAiAssist : undefined} />
           ))}
           </div>
         </div>
 
-        {/* Composer */}
-        <div className="px-4 pb-4 shrink-0">
-          <div className="max-w-[768px] mx-auto">
-          <div className="border border-[#f0f3f5] rounded-2xl overflow-hidden">
-            <textarea
-              value={composerText}
-              onChange={(e) => setComposerText(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-              placeholder={`Message ${thread.name}`}
-              className="w-full px-4 py-3 text-sm resize-none outline-none bg-primary min-h-[44px]"
-              rows={1}
-            />
-            <div className="flex items-center justify-between p-2">
-              <div className="flex items-center">
-                <IconButton icon="hashtag" size="md" variant="ghost" aria-label="Hashtag" />
-                <IconButton icon="paperclip" size="md" variant="ghost" aria-label="Attach" />
+        {/* Composer or Suggested Reply Widget */}
+        {(() => {
+          const suggestion = showAiAssist ? getSuggestedReply(selectedId) : null;
+          if (suggestion && !suggestionDismissed) {
+            return (
+              <div className="flex flex-col items-center px-4 pb-4 shrink-0">
+                <SuggestedReplyWidget
+                  recipientName={thread.name}
+                  draftText={suggestion.draftText}
+                  sources={suggestion.sources}
+                  reasoning={suggestion.reasoning}
+                  conversationId={selectedId}
+                  onTakeOver={(text) => { setComposerText(text); setComposerAiDraft(false); setSuggestionDismissed(true); }}
+                  onDiscard={() => setSuggestionDismissed(true)}
+                />
               </div>
-              <div className="flex items-center gap-2">
-                <IconButton icon="microphone" size="md" variant="ghost" aria-label="Voice" />
-                <IconButton icon="arrow-up" size="md" variant="secondary" aria-label="Send" onClick={handleSend} />
+            );
+          }
+          return (
+            <div className="px-4 pb-4 shrink-0">
+              <div className="max-w-[768px] mx-auto">
+              <div className={`border rounded-2xl overflow-hidden ${showAiAssist && composerAiDraft ? 'border-info bg-info-light' : 'border-[#f0f3f5]'}`}>
+                {showAiAssist && composerAiDraft && (
+                  <div className="flex items-center gap-1 px-4 pt-2">
+                    <Icon name="sparkles" size="sm" color="info" />
+                    <Typography variant="caption" color="info">AI-generated draft</Typography>
+                  </div>
+                )}
+                <textarea
+                  value={composerText}
+                  onChange={(e) => { setComposerText(e.target.value); if (!e.target.value) setComposerAiDraft(false); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                  placeholder={`Message ${thread.name}`}
+                  className="w-full px-4 py-3 text-sm resize-none outline-none bg-primary min-h-[80px] max-h-[120px] overflow-y-auto"
+                  rows={3}
+                />
+                <div className="flex items-center justify-between p-2">
+                  <div className="flex items-center">
+                    <IconButton icon="hashtag" size="md" variant="ghost" aria-label="Hashtag" />
+                    <IconButton icon="paperclip" size="md" variant="ghost" aria-label="Attach" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <IconButton icon="microphone" size="md" variant="ghost" aria-label="Voice" />
+                    <IconButton icon="arrow-up" size="md" variant="secondary" aria-label="Send" onClick={handleSend} />
+                  </div>
+                </div>
+              </div>
               </div>
             </div>
-          </div>
-          </div>
-        </div>
+          );
+        })()}
       {searchOpen && <SearchPanelV1 onClose={() => setSearchOpen(false)} messages={allMessages} />}
       {threadMessage && (
         <ThreadPanelV1
@@ -173,7 +224,7 @@ const DMCenterPanelV1: React.FC<DMCenterPanelV1Props> = ({ selectedId, onProfile
   );
 };
 
-function MessageRow({ message, highlighted, onNameClick, onOpenThread }: { message: V1Message; highlighted?: boolean; onNameClick?: () => void; onOpenThread?: (msg: V1Message) => void }) {
+function MessageRow({ message, highlighted, onNameClick, onOpenThread, onAiAssist }: { message: V1Message; highlighted?: boolean; onNameClick?: () => void; onOpenThread?: (msg: V1Message) => void; onAiAssist?: (msg: V1Message) => void }) {
   const [hovered, setHovered] = useState(false);
   const hasReplies = message.replies && message.replies.length > 0;
 
@@ -216,6 +267,9 @@ function MessageRow({ message, highlighted, onNameClick, onOpenThread }: { messa
           <IconButton icon="emoji-smiley" size="sm" variant="ghost" aria-label="React" />
           <IconButton icon="bookmark" size="sm" variant="ghost" aria-label="Save" />
           <IconButton icon="thread" size="sm" variant="ghost" aria-label="Reply in thread" onClick={() => onOpenThread?.(message)} />
+          {message.senderName !== 'You' && onAiAssist && (
+            <IconButton icon="sparkles" size="sm" variant="ghost" aria-label="AI assist" onClick={() => onAiAssist(message)} />
+          )}
           <Menu
             options={[
               { label: 'Edit', icon: 'pencil' as const, onClick: () => {} },

@@ -7,12 +7,15 @@ import { Button } from '@circleco/compass/components/Button';
 import { Menu } from '@circleco/compass/components/Menu';
 import { COURSE_THREADS, COURSE_COMMENT_DATA, COURSE_THREAD_REPLIES, type V1Message } from './v1MockData';
 import ThreadPanelV1 from './ThreadPanelV1';
+import SuggestedReplyWidget from '../../shared/SuggestedReplyWidget';
+import { getSuggestedReply } from '../suggestedReplyMockData';
 
-function CommentRow({ comment, onProfileOpen, threadReplies, onOpenThread }: {
+function CommentRow({ comment, onProfileOpen, threadReplies, onOpenThread, onAiAssist }: {
   comment: { id: string; name: string; date: string; text: string };
   onProfileOpen: (name: string) => void;
   threadReplies?: V1Message[];
   onOpenThread?: (parentMsg: V1Message, replies: V1Message[]) => void;
+  onAiAssist?: (comment: { id: string; name: string; text: string }) => void;
 }) {
   const [hovered, setHovered] = useState(false);
   const hasReplies = threadReplies && threadReplies.length > 0;
@@ -59,6 +62,9 @@ function CommentRow({ comment, onProfileOpen, threadReplies, onOpenThread }: {
         <div className="absolute -top-4 right-2 flex items-center bg-primary border border-secondary rounded-lg shadow-2xs z-10 overflow-hidden">
           <IconButton icon="emoji-smiley" size="sm" variant="ghost" aria-label="React" />
           <IconButton icon="thread" size="sm" variant="ghost" aria-label="Reply in thread" onClick={handleOpenThread} />
+          {onAiAssist && (
+            <IconButton icon="sparkles" size="sm" variant="ghost" aria-label="AI assist" onClick={() => onAiAssist(comment)} />
+          )}
           <Menu
             options={[
               { label: 'Edit', icon: 'pencil' as const, onClick: () => {} },
@@ -79,18 +85,33 @@ function CommentRow({ comment, onProfileOpen, threadReplies, onOpenThread }: {
 interface CourseCommentsCenterPanelV1Props {
   selectedId: string;
   onProfileOpen: (name: string) => void;
+  showAiAssist?: boolean;
 }
 
-const CourseCommentsCenterPanelV1: React.FC<CourseCommentsCenterPanelV1Props> = ({ selectedId, onProfileOpen }) => {
+const CourseCommentsCenterPanelV1: React.FC<CourseCommentsCenterPanelV1Props> = ({ selectedId, onProfileOpen, showAiAssist = false }) => {
   const thread = COURSE_THREADS.find((t) => t.id === selectedId);
   const commentData = COURSE_COMMENT_DATA[selectedId];
   const [composerText, setComposerText] = useState('');
   const [activeThread, setActiveThread] = useState<{ parent: V1Message; replies: V1Message[] } | null>(null);
+  const [composerAiDraft, setComposerAiDraft] = useState(false);
+  const [suggestionDismissed, setSuggestionDismissed] = useState(false);
 
-  // Close thread panel when conversation changes
+  // Close thread panel + reset suggestion when conversation changes
   useEffect(() => {
     setActiveThread(null);
+    setSuggestionDismissed(false);
   }, [selectedId]);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { text } = (e as CustomEvent).detail as { text: string };
+      setComposerText(text);
+      setComposerAiDraft(true);
+      setSuggestionDismissed(true);
+    };
+    window.addEventListener('composer-set-draft', handler);
+    return () => window.removeEventListener('composer-set-draft', handler);
+  }, []);
 
   useEffect(() => {
     const handler = () => setActiveThread(null);
@@ -101,6 +122,12 @@ const CourseCommentsCenterPanelV1: React.FC<CourseCommentsCenterPanelV1Props> = 
   const openThread = (parent: V1Message, replies: V1Message[]) => {
     window.dispatchEvent(new CustomEvent('drawer-open'));
     setActiveThread({ parent, replies });
+  };
+
+  const handleAiAssist = (comment: { id: string; name: string; text: string }) => {
+    window.dispatchEvent(new CustomEvent('copilot-add-reference', {
+      detail: { messageId: comment.id, authorName: comment.name, snippet: comment.text.slice(0, 80), category: 'courseComment' }
+    }));
   };
 
   if (!thread) {
@@ -140,6 +167,7 @@ const CourseCommentsCenterPanelV1: React.FC<CourseCommentsCenterPanelV1Props> = 
                 onProfileOpen={onProfileOpen}
                 threadReplies={COURSE_THREAD_REPLIES[comment.id]}
                 onOpenThread={openThread}
+                onAiAssist={showAiAssist ? handleAiAssist : undefined}
               />
             ))}
             {comments.length === 0 && (
@@ -155,27 +183,47 @@ const CourseCommentsCenterPanelV1: React.FC<CourseCommentsCenterPanelV1Props> = 
           </div>
         </div>
 
-        {/* Composer */}
-        <div className="px-4 pb-4 shrink-0">
-          <div className="max-w-[768px] mx-auto">
-          <div className="border border-[#f0f3f5] rounded-2xl overflow-hidden">
-            <textarea
-              value={composerText}
-              onChange={(e) => setComposerText(e.target.value)}
-              placeholder="Message #Discussions"
-              className="w-full px-4 py-3 text-sm resize-none outline-none bg-primary min-h-[44px]"
-              rows={1}
-            />
-            <div className="flex items-center justify-between p-2">
-              <div className="flex items-center">
-                <IconButton icon="hashtag" size="md" variant="ghost" aria-label="Hashtag" />
-                <IconButton icon="paperclip" size="md" variant="ghost" aria-label="Attach" />
+        {/* Composer or Suggested Reply Widget */}
+        {(() => {
+          const suggestion = showAiAssist ? getSuggestedReply(selectedId) : null;
+          if (suggestion && !suggestionDismissed) {
+            return (
+              <div className="flex flex-col items-center px-4 pb-4 shrink-0">
+                <SuggestedReplyWidget
+                  recipientName={thread.name}
+                  draftText={suggestion.draftText}
+                  sources={suggestion.sources}
+                  reasoning={suggestion.reasoning}
+                  conversationId={selectedId}
+                  onTakeOver={(text) => { setComposerText(text); setComposerAiDraft(false); setSuggestionDismissed(true); }}
+                  onDiscard={() => setSuggestionDismissed(true)}
+                />
               </div>
-              <IconButton icon="arrow-up" size="md" variant="secondary" disabled aria-label="Send" />
+            );
+          }
+          return (
+            <div className="px-4 pb-4 shrink-0">
+              <div className="max-w-[768px] mx-auto">
+              <div className="border border-[#f0f3f5] rounded-2xl overflow-hidden">
+                <textarea
+                  value={composerText}
+                  onChange={(e) => setComposerText(e.target.value)}
+                  placeholder="Message #Discussions"
+                  className="w-full px-4 py-3 text-sm resize-none outline-none bg-primary min-h-[80px] max-h-[120px] overflow-y-auto"
+                  rows={3}
+                />
+                <div className="flex items-center justify-between p-2">
+                  <div className="flex items-center">
+                    <IconButton icon="hashtag" size="md" variant="ghost" aria-label="Hashtag" />
+                    <IconButton icon="paperclip" size="md" variant="ghost" aria-label="Attach" />
+                  </div>
+                  <IconButton icon="arrow-up" size="md" variant="secondary" disabled aria-label="Send" />
+                </div>
+              </div>
+              </div>
             </div>
-          </div>
-          </div>
-        </div>
+          );
+        })()}
       {activeThread && (
         <ThreadPanelV1
           parentMessage={activeThread.parent}

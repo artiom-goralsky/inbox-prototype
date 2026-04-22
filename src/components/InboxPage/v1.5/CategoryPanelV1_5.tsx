@@ -54,16 +54,16 @@ const CategoryPanelV1_5: React.FC<CategoryPanelV1_5Props> = ({ activeCategory, o
       <div className="px-2 flex flex-col flex-1 gap-4">
         {/* Mine */}
         <div className="flex flex-col gap-0.5">
-          <div className="px-3 pb-1">
-            <Typography variant="label-xs" color="tertiary" className="uppercase">Mine</Typography>
+          <div className="pt-3 pb-1 px-3">
+            <Typography variant="label-xs" color="tertiary">Mine</Typography>
           </div>
           {MINE_CATEGORIES.map(renderItem)}
         </div>
 
         {/* Shared */}
         <div className="flex flex-col gap-0.5">
-          <div className="px-3 pb-1">
-            <Typography variant="label-xs" color="tertiary" className="uppercase">Shared</Typography>
+          <div className="pt-3 pb-1 px-3">
+            <Typography variant="label-xs" color="tertiary">Shared</Typography>
           </div>
           {SHARED_CATEGORIES.map(renderItem)}
         </div>
