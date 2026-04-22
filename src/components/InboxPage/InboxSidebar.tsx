@@ -9,14 +9,15 @@ import { useViews } from './views/useViews';
 import CreateViewModal from './views/CreateViewModal';
 import type { InboxCategory, InboxView } from './views/viewTypes';
 
-type Tab = 'today' | 'dms' | 'moderation' | 'course-comments' | 'connections' | 'ai-inbox';
+type Tab = 'all' | 'dms' | 'chat-threads' | 'connection-requests' | 'moderation' | 'course-comments' | 'ai-inbox';
 
 const TAB_TO_CATEGORY: Record<Tab, InboxCategory | null> = {
-  today: null,
+  all: null,
   dms: 'dms',
+  'chat-threads': null,
+  'connection-requests': 'connections',
   moderation: 'moderation',
   'course-comments': 'comments',
-  connections: 'connections',
   'ai-inbox': 'ai',
 };
 
@@ -24,7 +25,7 @@ const CATEGORY_TO_TAB: Partial<Record<InboxCategory | 'all', Tab>> = {
   dms: 'dms',
   moderation: 'moderation',
   comments: 'course-comments',
-  connections: 'connections',
+  connections: 'connection-requests',
   ai: 'ai-inbox',
 };
 
@@ -37,19 +38,22 @@ interface NavItem {
   count?: number;
 }
 
-const CATEGORIES: NavItem[] = [
-  { id: 'today',           label: 'Today',           iconType: 'icon', iconName: 'star-filled' },
-  { id: 'dms',             label: 'My DMs',         iconType: 'avatar' },
+const MINE_CATEGORIES: NavItem[] = [
+  { id: 'dms',                 label: 'DMs',                 iconType: 'avatar' },
+  { id: 'chat-threads',        label: 'Chat threads',        iconType: 'icon', iconName: 'thread' },
+  { id: 'connection-requests', label: 'Connection requests', iconType: 'icon', iconName: 'people-add' },
+];
+
+const SHARED_CATEGORIES: NavItem[] = [
   { id: 'moderation',      label: 'Moderation',      iconType: 'icon', iconName: 'compass' },
   { id: 'course-comments', label: 'Course comments', iconType: 'icon', iconName: 'graduate-cap' },
-  { id: 'connections',     label: 'Connections',     iconType: 'icon', iconName: 'people' },
   { id: 'ai-inbox',        label: 'AI Inbox',        iconType: 'icon', iconName: 'ai-box' },
 ];
 
 const TAB_COUNTS: Partial<Record<Tab, number>> = {
   dms: 12,
   moderation: 6,
-  connections: 3,
+  'connection-requests': 3,
   'ai-inbox': 3,
 };
 
@@ -85,9 +89,29 @@ const InboxSidebar: React.FC<InboxSidebarProps> = ({ activeTab, onTabChange, onV
 
         {/* Body */}
         <div className="p-2 flex flex-col gap-4 flex-1 overflow-y-auto">
-          {/* Categories */}
+          {/* All — top-level item */}
           <div className="flex flex-col">
-            {CATEGORIES.map(item => {
+            <button
+              onClick={() => { onTabChange('all'); selectView(null); }}
+              className={`flex items-center gap-3 h-9 w-full px-3 py-1 rounded-xl text-left transition-colors ${
+                activeTab === 'all' && !activeViewId ? 'bg-active' : 'hover:bg-hover'
+              }`}
+            >
+              <div className="shrink-0 w-4 h-4 flex items-center justify-center overflow-hidden">
+                <Icon name="inbox-empty" size="sm" />
+              </div>
+              <Typography variant="body-sm" color="primary" className="truncate flex-1">
+                All
+              </Typography>
+            </button>
+          </div>
+
+          {/* Categories — Mine */}
+          <div className="flex flex-col gap-0.5">
+            <div className="pt-3 pb-1 px-3">
+              <Typography variant="label-xs" color="tertiary">Mine</Typography>
+            </div>
+            {MINE_CATEGORIES.map(item => {
               const count = TAB_COUNTS[item.id];
               return (
                 <button
@@ -101,8 +125,39 @@ const InboxSidebar: React.FC<InboxSidebarProps> = ({ activeTab, onTabChange, onV
                     {item.iconType === 'avatar' ? (
                       <Avatar name="Me" size="xxs" />
                     ) : (
-                      <Icon name={item.iconName!} size="sm" color={item.id === 'today' ? undefined : 'primary'} className={item.id === 'today' ? 'text-yellow-500' : undefined} />
+                      <Icon name={item.iconName!} size="sm" />
                     )}
+                  </div>
+                  <Typography variant="body-sm" color="primary" className="truncate flex-1">
+                    {item.label}
+                  </Typography>
+                  {count != null && count > 0 && (
+                    <Typography variant="caption" color="tertiary" className="shrink-0 tabular-nums">
+                      {count}
+                    </Typography>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Categories — Shared */}
+          <div className="flex flex-col gap-0.5">
+            <div className="pt-3 pb-1 px-3">
+              <Typography variant="label-xs" color="tertiary">Shared</Typography>
+            </div>
+            {SHARED_CATEGORIES.map(item => {
+              const count = TAB_COUNTS[item.id];
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => { onTabChange(item.id); selectView(null); }}
+                  className={`flex items-center gap-3 h-9 w-full px-3 py-1 rounded-xl text-left transition-colors ${
+                    activeTab === item.id && !activeViewId ? 'bg-active' : 'hover:bg-hover'
+                  }`}
+                >
+                  <div className="shrink-0 w-4 h-4 flex items-center justify-center overflow-hidden">
+                    <Icon name={item.iconName!} size="sm" />
                   </div>
                   <Typography variant="body-sm" color="primary" className="truncate flex-1">
                     {item.label}

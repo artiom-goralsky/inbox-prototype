@@ -2,6 +2,7 @@ import React from 'react';
 import { Typography } from '@circleco/compass/components/Typography';
 import { Avatar } from '@circleco/compass/components/Avatar';
 import { IconButton } from '@circleco/compass/components/IconButton';
+import { Menu } from '@circleco/compass/components/Menu';
 import { CHAT_THREAD_ITEMS, type ChatThreadItem } from './v1_5MockData';
 
 interface ChatThreadsListV1_5Props {
@@ -10,6 +11,7 @@ interface ChatThreadsListV1_5Props {
 }
 
 const ChatThreadsListV1_5: React.FC<ChatThreadsListV1_5Props> = ({ selectedId, onSelect }) => {
+
   return (
     <div className="h-full bg-primary border-r border-[#f0f3f5] flex flex-col overflow-hidden">
       {/* Title header */}
@@ -20,6 +22,18 @@ const ChatThreadsListV1_5: React.FC<ChatThreadsListV1_5Props> = ({ selectedId, o
         <div className="flex items-center shrink-0">
           <IconButton icon="checkmark-double" size="sm" variant="ghost" aria-label="Mark all read" />
         </div>
+      </div>
+
+      {/* Filter bar */}
+      <div className="flex items-center justify-end px-4 pb-3 border-b border-[#f0f3f5] shrink-0">
+        <Menu
+          options={[
+            { label: 'AI priority', onClick: () => {} },
+            { label: 'Last activity', onClick: () => {} },
+            { label: 'Oldest unanswered', onClick: () => {} },
+          ]}
+          trigger={<IconButton icon="arrow-bottom-top" size="md" variant="outline" aria-label="Sort" />}
+        />
       </div>
 
       {/* Thread items */}

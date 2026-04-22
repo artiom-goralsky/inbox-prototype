@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Typography } from '@circleco/compass/components/Typography';
 import { Avatar } from '@circleco/compass/components/Avatar';
 import { Tabs } from '@circleco/compass/components/Tabs';
+import { IconButton } from '@circleco/compass/components/IconButton';
+import { Menu } from '@circleco/compass/components/Menu';
 
 // Dismiss animation (same as TodayView)
 type CardAnim = 'active' | 'dismissing' | 'collapsing' | 'removed';
@@ -21,28 +23,30 @@ interface Author {
   topReason: string;
   itemCount: number;
   time: string;
+  priority: 'high' | 'medium' | 'low';
 }
 
 const AUTHORS: Author[] = [
-  { id: 'maria-santos',    name: 'Maria Santos',    topReason: 'Spam',                  itemCount: 5, time: '2d' },
-  { id: 'bot-accounts',    name: 'Bot accounts',    topReason: 'Spam',                  itemCount: 3, time: '1d' },
-  { id: 'jake-miller',     name: 'Jake Miller',     topReason: 'False positive',        itemCount: 2, time: '1d' },
-  { id: 'derek-hoffman',   name: 'Derek Hoffman',   topReason: 'Self-promotion',        itemCount: 4, time: '2d' },
-  { id: 'km',           name: 'Kathryn Murphy', topReason: 'Hate speech',           itemCount: 2, time: '9:45' },
-  { id: 'kw',           name: 'Kristin Watson', topReason: 'Misinformation',        itemCount: 1, time: '9:45' },
-  { id: 'cp',           name: 'Calvin Parks',   topReason: 'Spam',                  itemCount: 3, time: '8:12' },
-  { id: 're',           name: 'Ralph Edwards',  topReason: 'Self-promotion',        itemCount: 1, time: 'Yesterday' },
-  { id: 'ab',           name: 'Annette Black',  topReason: 'Inappropriate content', itemCount: 4, time: 'Mon' },
-  { id: 'ww',           name: 'Wade Warren',    topReason: 'Off-topic',             itemCount: 1, time: 'Mon' },
+  { id: 'maria-santos',    name: 'Maria Santos',    topReason: 'Spam',                  itemCount: 4, time: '2d', priority: 'medium' },
+  { id: 'bot-accounts',    name: 'Bot accounts',    topReason: 'Spam',                  itemCount: 3, time: '1d', priority: 'low' },
+  { id: 'jake-miller',     name: 'Jake Miller',     topReason: 'False positive',        itemCount: 2, time: '1d', priority: 'low' },
+  { id: 'derek-hoffman',   name: 'Derek Hoffman',   topReason: 'Self-promotion',        itemCount: 4, time: '2d', priority: 'medium' },
+  { id: 'km',           name: 'Tom Brown',       topReason: 'Hate speech',           itemCount: 2, time: '9:45', priority: 'high' },
+  { id: 'kw',           name: 'Priya Sharma',    topReason: 'Misinformation',        itemCount: 1, time: '9:45', priority: 'medium' },
+  { id: 'cp',           name: 'Kenji Tanaka',    topReason: 'Spam',                  itemCount: 3, time: '8:12', priority: 'medium' },
+  { id: 're',           name: 'Amy Torres',      topReason: 'Self-promotion',        itemCount: 1, time: 'Yesterday', priority: 'low' },
+  { id: 'ab',           name: 'Nina Patel',      topReason: 'Inappropriate content', itemCount: 4, time: 'Mon', priority: 'high' },
+  { id: 'ww',           name: 'David Kim',       topReason: 'Off-topic',             itemCount: 1, time: 'Mon', priority: 'low' },
 ];
 
 interface ModerationThreadListProps {
   selectedId: string;
   onSelect: (id: string) => void;
   hiddenIds?: string[];
+  showSortSelect?: boolean;
 }
 
-const ModerationThreadList: React.FC<ModerationThreadListProps> = ({ selectedId, onSelect, hiddenIds = [] }) => {
+const ModerationThreadList: React.FC<ModerationThreadListProps> = ({ selectedId, onSelect, hiddenIds = [], showSortSelect = false }) => {
   const [localReviewed, setLocalReviewed] = useState<Set<string>>(new Set());
   const [itemAnims, setItemAnims] = useState<Record<string, CardAnim>>({});
 
@@ -60,33 +64,66 @@ const ModerationThreadList: React.FC<ModerationThreadListProps> = ({ selectedId,
     return () => window.removeEventListener('moderation-reviewed', handler);
   }, []);
 
-  const [modFilter, setModFilter] = useState<'pending' | 'reviewed'>('pending');
+  const [modFilter, setModFilter] = useState<'inbox' | 'approved' | 'rejected'>('inbox');
+  const [sortMode, setSortMode] = useState('newest');
 
-  const visible = AUTHORS.filter(a => {
-    if (hiddenIds.includes(a.id)) return false;
-    if (modFilter === 'reviewed') return localReviewed.has(a.id);
-    // Pending: show non-reviewed + still-animating items
-    const anim = itemAnims[a.id];
-    if (anim && anim !== 'removed') return true;
-    return !localReviewed.has(a.id);
-  });
+  const MOD_SORT_OPTIONS = [
+    { label: 'AI priority', value: 'ai-priority' },
+    { label: 'Newest', value: 'newest' },
+    { label: 'Most reports', value: 'most-reports' },
+  ];
+
+  const PRIORITY_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2 };
+
+  const visible = useMemo(() => {
+    const filtered = AUTHORS.filter(a => {
+      if (hiddenIds.includes(a.id)) return false;
+      if (modFilter === 'approved') return localReviewed.has(a.id);
+      if (modFilter === 'rejected') return localReviewed.has(a.id);
+      // Inbox: pending items + animating out
+      const anim = itemAnims[a.id];
+      if (anim && anim !== 'removed') return true;
+      return !localReviewed.has(a.id);
+    });
+    if (sortMode === 'ai-priority') {
+      return [...filtered].sort((a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]);
+    }
+    return filtered;
+  }, [hiddenIds, modFilter, localReviewed, itemAnims, sortMode]);
 
   return (
-    <div className="w-full h-full border-r border-secondary flex flex-col bg-primary">
+    <div className="w-full h-full border-r border-[#f0f3f5] flex flex-col bg-primary overflow-hidden">
+      {/* Title header */}
+      <div className="flex items-center gap-2 h-14 pl-6 pr-4 shrink-0">
+        <Typography variant="heading-md" color="primary" className="flex-1 truncate">
+          Moderation
+        </Typography>
+      </div>
+
       {/* Filter bar */}
-      <div className="px-4 pt-4 pb-3 shrink-0">
-        <Tabs.Root
-          tabs={[{ value: 'pending', label: 'Pending' }, { value: 'reviewed', label: 'Reviewed' }]}
-          selectedValue={modFilter}
-          onValueChange={v => setModFilter(v as 'pending' | 'reviewed')}
-          size="md"
-        />
+      <div className="flex flex-col shrink-0 border-b border-[#f0f3f5]">
+        <div className="px-4 h-10 flex items-center pb-3 box-content">
+          <div className="flex items-center justify-between w-full">
+            <Tabs.Root
+              tabs={[{ value: 'inbox', label: 'Inbox' }, { value: 'approved', label: 'Approved' }, { value: 'rejected', label: 'Rejected' }]}
+              selectedValue={modFilter}
+              onValueChange={v => setModFilter(v as 'inbox' | 'approved' | 'rejected')}
+              size="md"
+            />
+            {showSortSelect && (
+              <Menu
+                options={MOD_SORT_OPTIONS.map(o => ({ label: o.label, onClick: () => setSortMode(o.value) }))}
+                trigger={<IconButton icon="arrow-bottom-top" size="md" variant="outline" aria-label="Sort" />}
+              />
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Thread list */}
-      <div className="flex-1 overflow-y-auto p-2">
+      <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-0.5">
         {visible.map(author => {
-          const anim = modFilter === 'pending' ? (itemAnims[author.id] ?? 'active') : 'active';
+          const anim = modFilter === 'inbox' ? (itemAnims[author.id] ?? 'active') : 'active';
           return (
             <div
               key={author.id}
@@ -94,21 +131,23 @@ const ModerationThreadList: React.FC<ModerationThreadListProps> = ({ selectedId,
               tabIndex={0}
               onClick={() => onSelect(author.id)}
               onKeyDown={e => e.key === 'Enter' && onSelect(author.id)}
-              className={`flex items-center gap-3 pl-4 pr-3 py-3 cursor-pointer transition-colors rounded-lg ${
+              className={`flex items-center gap-3 pl-4 pr-3 py-2 cursor-pointer transition-colors rounded-[16px] ${
                 selectedId === author.id ? 'bg-active' : 'hover:bg-hover'
               } ${animClass(anim)}`}
             >
-              <Avatar name={author.name} size="sm" />
+              <Avatar name={author.name} size="md" />
 
               <div className="flex-1 min-w-0 flex flex-col gap-1">
                 {/* Row 1: name + time */}
-                <div className="flex items-center gap-2 min-w-0">
-                  <Typography variant="heading-sm" color="primary" className="truncate">
-                    {author.name}
-                  </Typography>
-                  <Typography variant="caption" color="disabled" className="shrink-0 ml-auto">
-                    {author.time}
-                  </Typography>
+                <div className="flex items-center h-3.5">
+                  <div className="flex flex-1 gap-2 items-center min-w-0">
+                    <Typography variant="heading-sm" color="primary" className="truncate">
+                      {author.name}
+                    </Typography>
+                    <Typography variant="caption" color="tertiary" className="shrink-0 ml-auto">
+                      {author.time}
+                    </Typography>
+                  </div>
                 </div>
 
                 {/* Row 2: reason + item count */}

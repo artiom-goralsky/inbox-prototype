@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Typography } from '@circleco/compass/components/Typography';
 import { Avatar } from '@circleco/compass/components/Avatar';
 import { IconButton } from '@circleco/compass/components/IconButton';
+import { Menu } from '@circleco/compass/components/Menu';
 import { Select } from '@circleco/compass/components/Select';
 import { Tabs } from '@circleco/compass/components/Tabs';
 import { TextInput } from '@circleco/compass/components/TextInput';
 import { Icon } from '@circleco/compass/components/Icon';
 import { getThreadsForCategory, INITIAL_REVIEWED_IDS, INITIAL_DECISIONS, type V1Category } from './v1MockData';
+import CourseCommentRow from '../CourseCommentRow';
 
 const AGENT_OPTIONS = [
   { label: 'All agents', value: 'all' },
@@ -24,7 +26,7 @@ const COURSE_SCOPE_OPTIONS = [
 ];
 
 const CATEGORY_TITLE: Record<V1Category, string> = {
-  dms: 'My DMs',
+  dms: 'DMs',
   moderation: 'Moderation',
   'course-comments': 'Course comments',
   'ai-inbox': 'AI Inbox',
@@ -50,9 +52,10 @@ interface ThreadListV1Props {
   onSettingsOpen?: () => void;
   titleOverride?: string;
   onNewMessage?: () => void;
+  showSortSelect?: boolean;
 }
 
-const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSelect, onSettingsOpen, titleOverride, onNewMessage }) => {
+const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSelect, onSettingsOpen, titleOverride, onNewMessage, showSortSelect = false }) => {
   const threads = getThreadsForCategory(category);
 
   // Moderation: local reviewed set + decisions + dismiss animation
@@ -83,8 +86,9 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
       const { id } = (e as CustomEvent).detail as { id: string };
       // Switch to the correct tab based on whether the target is reviewed or pending
       setModStatus(prev => {
-        const isReviewed = localReviewed.has(id);
-        const targetTab = isReviewed ? 'reviewed' : 'pending';
+        if (!localReviewed.has(id)) return prev === 'inbox' ? prev : 'inbox';
+        const decision = decisions[id];
+        const targetTab = decision === 'removed' ? 'rejected' : 'approved';
         if (prev !== targetTab) return targetTab;
         return prev;
       });
@@ -100,7 +104,7 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
 
   // Status filters
   const [dmStatus, setDmStatus] = useState<'all' | 'unread'>('all');
-  const [modStatus, setModStatus] = useState<'pending' | 'reviewed'>('pending');
+  const [modStatus, setModStatus] = useState<'inbox' | 'approved' | 'rejected'>('inbox');
   const [courseStatus, setCourseStatus] = useState<'all' | 'unanswered'>('all');
   const [aiStatusFilter, setAiStatusFilter] = useState<'all' | 'paused'>('all');
 
@@ -108,6 +112,9 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
   const [dmScope, setDmScope] = useState<'all' | 'people' | 'ai'>('all');
   const [courseScope, setCourseScope] = useState('all');
   const [aiAgent, setAiAgent] = useState('all');
+
+  // Sort state
+  const [sortMode, setSortMode] = useState('newest');
 
   // Search state
   const [searchOpen, setSearchOpen] = useState(false);
@@ -129,15 +136,16 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
           return true;
         });
       case 'moderation': {
-        if (modStatus === 'reviewed') {
-          return threads.filter(t => localReviewed.has(t.id));
+        if (modStatus === 'approved') {
+          return threads.filter(t => localReviewed.has(t.id) && decisions[t.id] === 'approved');
         }
-        // Pending: show items not yet in reviewed set, plus items still animating out
+        if (modStatus === 'rejected') {
+          return threads.filter(t => localReviewed.has(t.id) && decisions[t.id] === 'removed');
+        }
+        // Inbox: show items not yet reviewed, plus items still animating out
         return threads.filter(t => {
           const anim = itemAnims[t.id];
-          // Animating out — keep visible until collapse finishes
           if (anim && anim !== 'removed') return true;
-          // Already moved to reviewed — hide
           if (localReviewed.has(t.id)) return false;
           return true;
         });
@@ -157,7 +165,43 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
     }
   };
 
-  const filteredThreads = getFilteredThreads();
+  const PRIORITY_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2 };
+  const PRIORITY_LEVELS: Array<{ key: string; label: string; dotColor: string; estimate: string }> = [
+    { key: 'high', label: 'High priority', dotColor: '#E24B4A', estimate: '~2 min' },
+    { key: 'medium', label: 'Medium priority', dotColor: '#BA7517', estimate: '~3 min' },
+    { key: 'low', label: 'Low priority', dotColor: 'var(--color-text-tertiary, #717680)', estimate: '~2 min' },
+  ];
+  const filtered = getFilteredThreads();
+  const filteredThreads = sortMode === 'ai-priority'
+    ? [...filtered].sort((a, b) => PRIORITY_ORDER[a.priority ?? 'low'] - PRIORITY_ORDER[b.priority ?? 'low'])
+    : filtered;
+  const isAiPriority = sortMode === 'ai-priority';
+
+  // Sort options per category
+  const getSortOptions = () => {
+    switch (category) {
+      case 'dms': return [
+        { label: 'AI priority', value: 'ai-priority' },
+        { label: 'Last activity', value: 'newest' },
+        { label: 'Oldest unanswered', value: 'oldest' },
+      ];
+      case 'moderation': return [
+        { label: 'AI priority', value: 'ai-priority' },
+        { label: 'Newest', value: 'newest' },
+        { label: 'Most reports', value: 'most-reports' },
+      ];
+      case 'course-comments': return [
+        { label: 'AI priority', value: 'ai-priority' },
+        { label: 'Newest', value: 'newest' },
+        { label: 'By course', value: 'by-course' },
+      ];
+      case 'ai-inbox': return [
+        { label: 'AI priority', value: 'ai-priority' },
+        { label: 'Last activity', value: 'newest' },
+        { label: 'Paused first', value: 'paused-first' },
+      ];
+    }
+  };
 
   const renderTitleIcons = () => {
     switch (category) {
@@ -187,40 +231,54 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
       case 'dms': {
         const dmTab = dmScope === 'ai' ? 'agents' : dmStatus === 'unread' ? 'unread' : 'all';
         return (
-          <Tabs.Root
-            tabs={[{ value: 'all', label: 'Inbox' }, { value: 'unread', label: 'Unread' }, { value: 'agents', label: 'Agents' }]}
-            selectedValue={dmTab}
-            onValueChange={v => {
-              if (v === 'agents') {
-                setDmScope('ai');
-                setDmStatus('all');
-              } else {
-                setDmScope('all');
-                setDmStatus(v as 'all' | 'unread');
-              }
-            }}
-            size="md"
-          />
+          <div className="flex items-center justify-between w-full">
+            <Tabs.Root
+              tabs={[{ value: 'all', label: 'Inbox' }, { value: 'unread', label: 'Unread' }, { value: 'agents', label: 'Agents' }]}
+              selectedValue={dmTab}
+              onValueChange={v => {
+                if (v === 'agents') {
+                  setDmScope('ai');
+                  setDmStatus('all');
+                } else {
+                  setDmScope('all');
+                  setDmStatus(v as 'all' | 'unread');
+                }
+              }}
+              size="md"
+            />
+            {showSortSelect && (
+              <Menu
+                options={getSortOptions().map(o => ({ label: o.label, onClick: () => setSortMode(o.value) }))}
+                trigger={<IconButton icon="arrow-bottom-top" size="md" variant="outline" aria-label="Sort" />}
+              />
+            )}
+          </div>
         );
       }
       case 'moderation':
         return (
           <Tabs.Root
-            tabs={[{ value: 'pending', label: 'Pending' }, { value: 'reviewed', label: 'Reviewed' }]}
+            tabs={[{ value: 'inbox', label: 'Inbox' }, { value: 'approved', label: 'Approved' }, { value: 'rejected', label: 'Rejected' }]}
             selectedValue={modStatus}
-            onValueChange={v => setModStatus(v as 'pending' | 'reviewed')}
+            onValueChange={v => setModStatus(v as 'inbox' | 'approved' | 'rejected')}
             size="md"
           />
         );
       case 'course-comments':
         return (
-          <div className="w-fit shrink-0">
-            <Select
-              aria-label="Course scope"
-              value={{ label: COURSE_SCOPE_OPTIONS.find(o => o.value === courseScope)?.label ?? 'All courses', value: courseScope }}
-              placeholder="All courses"
-              options={COURSE_SCOPE_OPTIONS}
-              onValueChange={v => setCourseScope((v as any)?.value ?? 'all')}
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center shrink-0">
+              <Select
+                aria-label="Course scope"
+                value={{ label: COURSE_SCOPE_OPTIONS.find(o => o.value === courseScope)?.label ?? 'All courses', value: courseScope }}
+                placeholder="All courses"
+                options={COURSE_SCOPE_OPTIONS}
+                onValueChange={v => setCourseScope((v as any)?.value ?? 'all')}
+              />
+            </div>
+            <Menu
+              options={getSortOptions().map(o => ({ label: o.label, onClick: () => setSortMode(o.value) }))}
+              trigger={<IconButton icon="arrow-bottom-top" size="md" variant="outline" aria-label="Sort" />}
             />
           </div>
         );
@@ -241,11 +299,83 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
                 options={AGENT_OPTIONS}
                 onValueChange={v => setAiAgent((v as any)?.value ?? 'all')}
               />
-              <IconButton icon="filter" size="md" variant="outline" aria-label="Sort" />
+              <Menu
+                options={getSortOptions().map(o => ({ label: o.label, onClick: () => setSortMode(o.value) }))}
+                trigger={<IconButton icon="arrow-bottom-top" size="md" variant="outline" aria-label="Sort" />}
+              />
             </div>
           </div>
         );
     }
+  };
+
+  const renderThreadItem = (item: ReturnType<typeof getThreadsForCategory>[number]) => {
+    const isSelected = selectedId === item.id;
+    const isMod = category === 'moderation';
+    const itemAnimState = isMod && modStatus === 'inbox' ? (itemAnims[item.id] ?? 'active') : 'active';
+
+    return (
+      <div
+        key={item.id}
+        role="button"
+        tabIndex={0}
+        onClick={() => onSelect(item.id)}
+        onKeyDown={(e) => e.key === 'Enter' && onSelect(item.id)}
+        className={`flex gap-3 items-center pl-4 pr-3 py-2 cursor-pointer transition-colors rounded-xl ${
+          isSelected ? 'bg-active' : 'hover:bg-hover'
+        } ${animClass(itemAnimState)}`}
+      >
+        {category === 'course-comments' && item.lessonName ? (
+          <CourseCommentRow
+            lessonTitle={item.lessonName}
+            lastCommenter={item.name}
+            lastCommentPreview={item.preview}
+            time={item.time}
+          />
+        ) : (
+          <>
+            {item.isAgent ? (
+              <img src="/images/agent-avatar.svg" alt={item.name} className="size-8 rounded-full shrink-0" />
+            ) : (
+              <Avatar name={item.name} size="md" />
+            )}
+            <div className="flex-1 min-w-0 flex flex-col gap-1">
+              <div className="flex items-center gap-1.5">
+                <Typography variant="heading-sm" color="primary" className={isMod ? 'shrink-0 truncate' : 'flex-1 truncate'}>
+                  {item.name}
+                </Typography>
+                {isMod && item.badgeLabel && (
+                  <Typography variant="caption" color="tertiary" className="shrink-0">{item.badgeLabel}</Typography>
+                )}
+                <Typography variant="caption" color="disabled" className={isMod ? 'flex-1 text-right shrink-0' : 'shrink-0'}>
+                  {item.time}
+                </Typography>
+                {category === 'ai-inbox' && item.aiStatus === 'paused' && (
+                  <Icon name="clock-snooze" size="sm" color="tertiary" />
+                )}
+                {category === 'ai-inbox' && item.aiStatus === 'active' && (
+                  <div className="size-2 rounded-full bg-info shrink-0" aria-label="Active" />
+                )}
+                {!isMod && category === 'dms' && item.unread && (
+                  <div className="size-2 rounded-full bg-info shrink-0" aria-label="Unread" />
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Typography variant="body-sm" color="secondary" className="truncate flex-1">
+                  {item.preview}
+                </Typography>
+                {isMod && decisions[item.id] === 'approved' && (
+                  <Icon name="circle-check-filled" size="sm" color="success" />
+                )}
+                {isMod && decisions[item.id] === 'removed' && (
+                  <Icon name="circle-x-filled" size="sm" color="danger" />
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -284,75 +414,27 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
           <div className="flex items-center justify-center flex-1 py-8">
             <Typography variant="body-sm" color="tertiary">No results</Typography>
           </div>
-        ) : (
-          filteredThreads.map((item) => {
-            const isSelected = selectedId === item.id;
-            const isMod = category === 'moderation';
-
-            const aiOpacityClass = '';
-
-            const itemAnimState = isMod && modStatus === 'pending' ? (itemAnims[item.id] ?? 'active') : 'active';
-
+        ) : isAiPriority ? (
+          PRIORITY_LEVELS.map(({ key, label, dotColor, estimate }) => {
+            const groupItems = filteredThreads.filter(i => (i.priority ?? 'low') === key);
+            if (groupItems.length === 0) return null;
             return (
-              <div
-                key={item.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => onSelect(item.id)}
-                onKeyDown={(e) => e.key === 'Enter' && onSelect(item.id)}
-                className={`flex gap-3 items-center pl-4 pr-3 py-2 cursor-pointer transition-colors rounded-xl ${aiOpacityClass} ${
-                  isSelected ? 'bg-active' : 'hover:bg-hover'
-                } ${animClass(itemAnimState)}`}
-              >
-                {item.isAgent ? (
-                  <img src="/images/agent-avatar.svg" alt={item.name} className="size-8 rounded-full shrink-0" />
-                ) : (
-                  <Avatar name={item.name} size="md" />
-                )}
-                <div className="flex-1 min-w-0 flex flex-col gap-1">
-                  {/* Name + type/time */}
-                  <div className="flex items-center gap-1.5">
-                    <Typography variant="heading-sm" color="primary" className={isMod ? 'shrink-0 truncate' : 'flex-1 truncate'}>
-                      {item.name}
-                    </Typography>
-                    {isMod && item.badgeLabel && (
-                      <Typography variant="caption" color="tertiary" className="shrink-0">{item.badgeLabel}</Typography>
-                    )}
-                    <Typography variant="caption" color="disabled" className={isMod ? 'flex-1 text-right shrink-0' : 'shrink-0'}>
-                      {item.time}
-                    </Typography>
-                    {category === 'ai-inbox' && item.aiStatus === 'paused' && (
-                      <Icon name="clock-snooze" size="sm" color="tertiary" />
-                    )}
-                    {category === 'ai-inbox' && item.aiStatus === 'active' && (
-                      <div className="size-2 rounded-full bg-info shrink-0" aria-label="Active" />
-                    )}
-                    {!isMod && category === 'dms' && item.unread && (
-                      <div className="size-2 rounded-full bg-info shrink-0" aria-label="Unread" />
-                    )}
-                  </div>
-                  {/* Course lesson name */}
-                  {category === 'course-comments' && item.lessonName && (
-                    <Typography variant="caption" color="tertiary" className="truncate">
-                      {item.lessonName}
-                    </Typography>
-                  )}
-                  {/* Preview + decision icon */}
-                  <div className="flex items-center gap-2">
-                    <Typography variant="body-sm" color="secondary" className="truncate flex-1">
-                      {item.preview}
-                    </Typography>
-                    {isMod && decisions[item.id] === 'approved' && (
-                      <Icon name="circle-check-filled" size="sm" color="success" />
-                    )}
-                    {isMod && decisions[item.id] === 'removed' && (
-                      <Icon name="circle-x-filled" size="sm" color="danger" />
-                    )}
-                  </div>
+              <div key={key}>
+                <div className="sticky top-0 z-10 flex items-center gap-2 h-9 pl-4 pr-3 bg-primary">
+                  <div className="size-1.5 rounded-full shrink-0" style={{ backgroundColor: dotColor }} />
+                  <Typography variant="caption" color="tertiary" className="font-semibold">
+                    {label} · {groupItems.length}
+                  </Typography>
+                  <Typography variant="caption" color="tertiary" className="ml-auto shrink-0">
+                    {estimate}
+                  </Typography>
                 </div>
+                {groupItems.map(item => renderThreadItem(item))}
               </div>
             );
           })
+        ) : (
+          filteredThreads.map((item) => renderThreadItem(item))
         )}
       </div>
     </div>

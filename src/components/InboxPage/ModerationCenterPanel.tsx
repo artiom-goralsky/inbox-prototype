@@ -8,7 +8,7 @@ import { Accordion } from '@circleco/compass/components/Accordion';
 import { Popover } from '@circleco/compass/components/Popover';
 import { IconButton } from '@circleco/compass/components/IconButton';
 import { SplitButton } from '@circleco/compass/components/SplitButton';
-import { HISTORY_ITEMS, HISTORY_SUMMARIES } from './mockModerationHistory';
+import { HISTORY_ITEMS, HISTORY_SUMMARIES, type ModerationHistoryItem } from './mockModerationHistory';
 import { ModerationSummaryBar, ModerationHistoryToggle, ModerationHistoryTimeline } from './ModerationHistory';
 
 type ContentType = 'Post' | 'Comment' | 'Message' | 'Connection' | 'DM';
@@ -44,53 +44,59 @@ interface AuthorData {
 
 const AUTHOR_DATA: Record<string, AuthorData> = {
   cp: {
-    name: 'Calvin Parks',
-    cards: [
-      {
-        id: 'card-1',
-        type: 'Post',
-        context: 'Introductions',
-        postTitle: 'Welcome to the Clarity Community!',
-        postAuthor: { name: 'Calvin Parks', bio: 'Photographer · Intermediate', time: 'Today, 9:14 AM' },
-        content: 'Welcome to the Clarity Community! 🎉 I\'m so excited to be here. Quick note — if you\'re looking to grow your audience fast, I\'ve been using this incredible tool that got me 10k followers in a week. DM me for the link, completely free! Don\'t miss out before it expires.',
-        reports: [
-          { name: 'Kristin Watson', reason: 'Spam',       date: 'Today, 9:14 AM',      comment: 'This is clearly promotional spam — unsolicited advertisement.', status: 'removed' as const },
-          { name: 'Ralph Edwards',  reason: 'Spam',       date: 'Today, 8:52 AM',      comment: 'Spammy link drop. Classic self-promotion scheme.', status: 'approved' as const },
-          { name: 'Jane Cooper',    reason: 'Spam',       date: 'Yesterday, 4:33 PM',  comment: 'Flagging for spam. Same post appeared in 3 different spaces.', status: 'pending' as const },
-          { name: 'Dianne Russell', reason: 'Misleading', date: 'Yesterday, 2:17 PM',  comment: 'The "10k followers in a week" claim is obviously false.', status: 'pending' as const },
-          { name: 'Jacob Jones',    reason: 'Spam',       date: 'Yesterday, 11:05 AM', comment: 'Reported as spam — unsolicited promotion with suspicious link.', status: 'pending' as const },
-        ],
-      },
-      {
-        id: 'card-2',
-        type: 'Comment',
-        context: 'Welcome to clarity community',
-        postTitle: 'Thanks for this!',
-        postAuthor: { name: 'Calvin Parks', bio: 'Photographer · Intermediate', time: 'Today, 10:00 AM' },
-        content: 'Thanks for this! By the way, I found a shortcut — check out growthboost.io, it works for any community platform. I\'ve been using it for months. Reply here or DM me if you want details.',
-        reports: [
-          { name: 'Wade Warren', reason: 'Spam', date: 'Today, 10:05 AM', comment: 'Another spam comment linking to an external service.', status: 'pending' as const },
-          { name: 'Cody Fisher', reason: 'Spam', date: 'Today, 9:48 AM',  comment: 'Growthboost.io is a known spam referral link.', status: 'pending' as const },
-        ],
-      },
-    ],
+    name: 'Kenji Tanaka',
+    cards: [],
   },
   km: {
-    name: 'Kathryn Murphy',
+    name: 'Tom Brown',
+    cards: [],
+  },
+  'derek-hoffman': {
+    name: 'Derek Hoffman',
     cards: [
       {
-        id: 'card-3',
+        id: 'dh-1',
         type: 'Post',
-        context: 'General',
-        postTitle: 'HUGE opportunity — limited spots available!',
-        postAuthor: { name: 'Kathryn Murphy', bio: 'Designer · Advanced', time: 'Today, 11:20 AM' },
-        content: 'HUGE opportunity — limited spots available! Reply NOW to claim your free trial before midnight.',
+        context: 'Gear Talk',
+        postTitle: 'Urban Grit preset pack — 40% off for Circle members',
+        postAuthor: { name: 'Derek Hoffman', bio: 'Meetup host · 8 months', time: 'Today, 9:14 AM' },
+        content: 'Hey photographers — my local meetup group just launched a new Lightroom preset pack called \'Urban Grit.\' $29 normally, but Circle members get 40% off with code CIRCLE40. DM me if you want a sample before buying. Always happy to support this community.',
         reports: [
-          { name: 'Kristin Watson', reason: 'Spam',       date: 'Today, 11:20 AM',     comment: 'Urgency tactics and all-caps shouting — clear spam pattern.' },
-          { name: 'Calvin Parks',   reason: 'Spam',       date: 'Today, 10:48 AM',     comment: 'Looks like an unsolicited ad, no context provided.' },
-          { name: 'Jane Cooper',    reason: 'Misleading', date: 'Today, 10:01 AM',     comment: '"Free trial" with no product details is misleading.' },
-          { name: 'Ralph Edwards',  reason: 'Spam',       date: 'Yesterday, 6:15 PM',  comment: 'Flagged for aggressive promotional language.' },
-          { name: 'Annette Black',  reason: 'Spam',       date: 'Yesterday, 5:40 PM',  comment: 'Same template post in multiple channels.' },
+          { name: 'Kenji Tanaka', reason: 'Self-promotion', date: 'Today, 9:14 AM', comment: 'Self-promotion with external payment link.', status: 'pending' as const },
+          { name: 'Amy Torres',   reason: 'Self-promotion', date: 'Today, 8:52 AM', comment: 'This is the third promo post from Derek this week.', status: 'pending' as const },
+        ],
+      },
+      {
+        id: 'dh-2',
+        type: 'Comment',
+        context: 'Questions',
+        postTitle: 'Reply to beginner question',
+        postAuthor: { name: 'Derek Hoffman', bio: 'Meetup host · 8 months', time: 'Today, 9:45 AM' },
+        content: 'That\'s a really ignorant take. Maybe try actually learning the fundamentals before giving advice that could mess up someone\'s settings.',
+        reports: [
+          { name: 'Emily Park', reason: 'Harassment', date: 'Today, 9:45 AM', comment: 'Hostile and dismissive response to a beginner question.', status: 'pending' as const },
+        ],
+      },
+      {
+        id: 'dh-3',
+        type: 'Post',
+        context: 'Announcements',
+        postTitle: 'Quick tip from meetup',
+        postAuthor: { name: 'Derek Hoffman', bio: 'Meetup host · 8 months', time: 'Yesterday' },
+        content: 'Quick tip from last night\'s meetup — always carry a gray card for mixed lighting. Saved me three times at indoor events this month alone.',
+        reports: [
+          { name: 'Priya Sharma', reason: 'Off-topic', date: 'Yesterday', comment: 'Meetup self-promotion disguised as a tip.', status: 'approved' as const },
+        ],
+      },
+      {
+        id: 'dh-4',
+        type: 'Post',
+        context: 'Gear Marketplace',
+        postTitle: 'Urban Grit preset launch',
+        postAuthor: { name: 'Derek Hoffman', bio: 'Meetup host · 8 months', time: 'Today, 9:45 AM' },
+        content: 'New Lightroom preset pack — \'Urban Grit\' $29. Made specifically for street photography. Circle members get 40% off with code CIRCLE40.',
+        reports: [
+          { name: 'Amy Torres', reason: 'Self-promotion', date: 'Today, 9:45 AM', comment: 'Another paid product promotion from the same member.', status: 'pending' as const },
         ],
       },
     ],
@@ -100,24 +106,31 @@ const AUTHOR_DATA: Record<string, AuthorData> = {
     cards: [
       {
         id: 'ms-1', type: 'Post', context: 'Photography Basics',
-        postTitle: 'Check out these amazing deals!',
+        postTitle: 'Amazing deals on camera gear',
         postAuthor: { name: 'Maria Santos', bio: 'Joined 2 weeks ago', time: 'Sat, 10:14 AM' },
-        content: 'Check out these amazing deals on camera gear at GearShop.io — professional quality at 30% off. Use code PHOTO30 at checkout!',
-        reports: [{ name: 'Calvin Parks', reason: 'Spam', date: 'Sat, 11:02 AM', comment: 'Promotional link drop.' }],
+        content: 'Check out these amazing deals on camera gear at photogeardeals.store! Professional DSLRs starting at $299. Use code CIRCLE20 for 20% off. Limited time offer!',
+        reports: [{ name: 'Spam Filter', reason: 'Spam', date: 'Sat, 11:02 AM', comment: 'Auto-flagged: external link matching known spam patterns.' }],
       },
       {
-        id: 'ms-2', type: 'Post', context: 'Landscape Tips',
-        postTitle: 'Professional photographers swear by these lenses',
+        id: 'ms-2', type: 'Post', context: 'Announcements',
+        postTitle: 'Best deals on tripods',
         postAuthor: { name: 'Maria Santos', bio: 'Joined 2 weeks ago', time: 'Sat, 11:30 AM' },
-        content: 'Professional photographers swear by these lenses — get 20% off at GearShop.io. Reply for my referral link!',
-        reports: [{ name: 'Annette Black', reason: 'Spam', date: 'Sat, 12:05 PM', comment: 'Same store link as the other post.' }],
+        content: 'Best deals on tripods and stabilizers at photogeardeals.store! Flash sale this weekend only. Professional grade at hobbyist prices.',
+        reports: [{ name: 'Kenji Tanaka', reason: 'Spam', date: 'Sat, 12:05 PM', comment: 'Second post linking to same external domain.' }],
       },
       {
-        id: 'ms-3', type: 'Post', context: 'Street Photography',
-        postTitle: 'Upgrade your street photography kit',
+        id: 'ms-3', type: 'Post', context: 'Gear Talk',
+        postTitle: 'Flash sale on editing software',
         postAuthor: { name: 'Maria Santos', bio: 'Joined 2 weeks ago', time: 'Sat, 2:45 PM' },
-        content: 'Upgrade your street photography kit — exclusive discounts at GearShop.io. Sale ends Sunday midnight.',
-        reports: [{ name: 'Wade Warren', reason: 'Spam', date: 'Sat, 3:10 PM', comment: 'Third post linking to the same store.' }],
+        content: 'Flash sale on editing software — use code CIRCLE20 at photogeardeals.store for 50% off! Professional tools at amateur prices.',
+        reports: [{ name: 'David Kim', reason: 'Spam', date: 'Sat, 3:10 PM', comment: 'Same store link again. Clearly a spam account.' }],
+      },
+      {
+        id: 'ms-4', type: 'Post', context: 'Landscape Tips',
+        postTitle: 'Upgrade your kit',
+        postAuthor: { name: 'Maria Santos', bio: 'Joined 2 weeks ago', time: 'Sun, 9:00 AM' },
+        content: 'Upgrade your street photography kit — exclusive discounts at photogeardeals.store. These are exact items used by pros. Reply for my referral link!',
+        reports: [{ name: 'James Liu', reason: 'Spam', date: 'Sun, 10:15 AM', comment: 'Fourth post from same domain in 48 hours.' }],
       },
     ],
   },
@@ -125,17 +138,17 @@ const AUTHOR_DATA: Record<string, AuthorData> = {
     name: 'Jake Miller',
     cards: [
       {
-        id: 'jm-1', type: 'Comment', context: 'Street Photography',
-        postTitle: 'this shot is damn beautiful',
-        postAuthor: { name: 'Jake Miller', bio: 'Member · 14 months', time: 'Yesterday, 4:12 PM' },
-        content: 'this shot is damn beautiful — the lighting in the background is unreal. Genuinely one of the best captures this month.',
-        reports: [{ name: 'Profanity Filter', reason: 'Profanity', date: 'Yesterday, 4:12 PM', comment: 'Auto-flagged: contains word "damn".' }],
+        id: 'jm-1', type: 'Comment', context: 'Golden Hour Collection',
+        postTitle: 'Rim light portrait comment',
+        postAuthor: { name: 'Jake Miller', bio: 'Member · 14 months · 23 posts', time: 'Yesterday, 4:12 PM' },
+        content: 'holy shit this is perfect. How did you get that rim light on the edge of the face? The separation from the background is insane.',
+        reports: [{ name: 'Profanity Filter', reason: 'Profanity', date: 'Yesterday, 4:12 PM', comment: 'Auto-flagged: contains profanity.' }],
       },
       {
-        id: 'jm-2', type: 'Comment', context: 'Landscape Tips',
-        postTitle: 'holy damn that golden hour shot',
-        postAuthor: { name: 'Jake Miller', bio: 'Member · 14 months', time: 'Yesterday, 5:40 PM' },
-        content: 'holy damn that golden hour shot is everything. Reminds me of why I got into photography.',
+        id: 'jm-2', type: 'Comment', context: 'Studio Setup Tutorial',
+        postTitle: 'Studio tones comment',
+        postAuthor: { name: 'Jake Miller', bio: 'Member · 14 months · 23 posts', time: 'Yesterday, 5:40 PM' },
+        content: 'damn these tones are insane. Absolutely gorgeous work. What LUT are you using? The skin rendering is chef\'s kiss.',
         reports: [{ name: 'Profanity Filter', reason: 'Profanity', date: 'Yesterday, 5:40 PM', comment: 'Auto-flagged: contains word "damn".' }],
       },
     ],
@@ -229,6 +242,7 @@ const ModerationCenterPanel: React.FC<ModerationCenterPanelProps> = ({ selectedI
   const [checkedCards, setCheckedCards] = useState<Set<string>>(new Set());
   const [historyExpanded, setHistoryExpanded] = useState(false);
   const [outcomesOverride, setOutcomesOverride] = useState<Record<string, 'removed' | 'allowed'>>({});
+  const [resolvedCards, setResolvedCards] = useState<Record<string, 'allowed' | 'removed'>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const authorData = AUTHOR_DATA[selectedId] ?? FALLBACK_AUTHOR;
@@ -236,16 +250,38 @@ const ModerationCenterPanel: React.FC<ModerationCenterPanelProps> = ({ selectedI
   const historyItems = HISTORY_ITEMS[selectedId] ?? [];
   const historySummary = HISTORY_SUMMARIES[selectedId] ?? null;
 
-  const effectiveAllowedCount = historyItems.length > 0
+  // Pending cards = cards not yet resolved
+  const pendingCards = cards.filter(card => !resolvedCards[card.id]);
+
+  // Build history items from resolved pending cards
+  const newHistoryItems: ModerationHistoryItem[] = cards
+    .filter(card => resolvedCards[card.id])
+    .map(card => ({
+      id: `resolved-${card.id}`,
+      type: card.type as ModerationHistoryItem['type'],
+      outcome: resolvedCards[card.id],
+      date: new Date().toISOString().split('T')[0],
+      contentSnippet: card.content.slice(0, 80) + (card.content.length > 80 ? '...' : ''),
+      decidedBy: 'You',
+      context: card.context,
+    }));
+
+  const allHistoryItems = [...newHistoryItems, ...historyItems];
+
+  const resolvedAllowedCount = Object.values(resolvedCards).filter(o => o === 'allowed').length;
+  const resolvedRemovedCount = Object.values(resolvedCards).filter(o => o === 'removed').length;
+
+  const effectiveAllowedCount = (historyItems.length > 0
     ? historyItems.filter(i => (outcomesOverride[i.id] ?? i.outcome) === 'allowed').length
-    : (historySummary?.allowedCount ?? 0);
-  const effectiveRemovedCount = historyItems.length > 0
+    : (historySummary?.allowedCount ?? 0)) + resolvedAllowedCount;
+  const effectiveRemovedCount = (historyItems.length > 0
     ? historyItems.filter(i => (outcomesOverride[i.id] ?? i.outcome) === 'removed').length
-    : (historySummary?.removedCount ?? 0);
+    : (historySummary?.removedCount ?? 0)) + resolvedRemovedCount;
 
   useEffect(() => {
     setHistoryExpanded(false);
     setOutcomesOverride({});
+    setResolvedCards({});
   }, [selectedId]);
 
   const handleOutcomeChange = (id: string, outcome: 'removed' | 'allowed') => {
@@ -262,6 +298,34 @@ const ModerationCenterPanel: React.FC<ModerationCenterPanelProps> = ({ selectedI
     const overrides: Record<string, 'removed' | 'allowed'> = {};
     historyItems.forEach(i => { overrides[i.id] = 'removed'; });
     setOutcomesOverride(overrides);
+  };
+
+  const handleCardResolve = (cardId: string, outcome: 'allowed' | 'removed') => {
+    const next = { ...resolvedCards, [cardId]: outcome };
+    setResolvedCards(next);
+    setHistoryExpanded(true);
+    // If all cards are now resolved, fire review to dismiss from thread list
+    if (cards.every(c => next[c.id])) {
+      fireReview(selectedId);
+    }
+  };
+
+  const handleAllowAllAction = () => {
+    const next: Record<string, 'allowed' | 'removed'> = { ...resolvedCards };
+    cards.forEach(c => { if (!next[c.id]) next[c.id] = 'allowed'; });
+    setResolvedCards(next);
+    setHistoryExpanded(true);
+    handleAllowAll();
+    fireReview(selectedId);
+  };
+
+  const handleRemoveAllAction = () => {
+    const next: Record<string, 'allowed' | 'removed'> = { ...resolvedCards };
+    cards.forEach(c => { if (!next[c.id]) next[c.id] = 'removed'; });
+    setResolvedCards(next);
+    setHistoryExpanded(true);
+    handleRemoveAll();
+    fireReview(selectedId);
   };
 
   const toggleCard = (cardId: string, checked: boolean) => {
@@ -304,10 +368,10 @@ const ModerationCenterPanel: React.FC<ModerationCenterPanelProps> = ({ selectedI
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          {cards.length > 0 && (
+          {pendingCards.length > 0 && (
             <>
-              <Button variant="outline" size="sm" onClick={() => { handleAllowAll(); fireReview(selectedId); }}>Allow all</Button>
-              <Button variant="outline" size="sm" onClick={() => { handleRemoveAll(); fireReview(selectedId); }}>Remove all</Button>
+              <Button variant="outline" size="sm" onClick={handleAllowAllAction}>Allow all</Button>
+              <Button variant="outline" size="sm" onClick={handleRemoveAllAction}>Remove all</Button>
             </>
           )}
           <Popover
@@ -325,7 +389,7 @@ const ModerationCenterPanel: React.FC<ModerationCenterPanelProps> = ({ selectedI
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-12 py-8">
         <div className="max-w-[800px] mx-auto flex flex-col gap-6">
 
-        {cards.map(card => {
+        {pendingCards.map(card => {
           const isChecked = checkedCards.has(card.id);
 
           return (
@@ -347,19 +411,19 @@ const ModerationCenterPanel: React.FC<ModerationCenterPanelProps> = ({ selectedI
                     <SplitButton
                       variant="outline"
                       size="sm"
-                      onClick={() => fireReview(selectedId)}
-                      menuOptions={[{ label: 'Approve and moderate future posts', onClick: () => fireReview(selectedId) }]}
+                      onClick={() => handleCardResolve(card.id, 'allowed')}
+                      menuOptions={[{ label: 'Approve and moderate future posts', onClick: () => handleCardResolve(card.id, 'allowed') }]}
                     >
                       Approve
                     </SplitButton>
                   ) : (
-                    <Button variant="outline" size="sm" onClick={() => fireReview(selectedId)}>Approve</Button>
+                    <Button variant="outline" size="sm" onClick={() => handleCardResolve(card.id, 'allowed')}>Approve</Button>
                   )}
                   <SplitButton
                     variant="outline"
                     size="sm"
-                    onClick={() => fireReview(selectedId)}
-                    menuOptions={[{ label: getRemoveSplitOption(card.type), onClick: () => fireReview(selectedId) }]}
+                    onClick={() => handleCardResolve(card.id, 'removed')}
+                    menuOptions={[{ label: getRemoveSplitOption(card.type), onClick: () => handleCardResolve(card.id, 'removed') }]}
                   >
                     Remove
                   </SplitButton>
@@ -424,18 +488,18 @@ const ModerationCenterPanel: React.FC<ModerationCenterPanelProps> = ({ selectedI
           );
         })}
 
-        {cards.length === 0 && (
+        {pendingCards.length === 0 && allHistoryItems.length === 0 && (
           <div className="flex-1 flex items-center justify-center py-16">
             <Typography variant="body-md" color="tertiary">No flagged content</Typography>
           </div>
         )}
 
         {/* History toggle + timeline */}
-        {historyItems.length > 0 && (
+        {allHistoryItems.length > 0 && (
           <>
             <div className="flex flex-col items-center">
               <ModerationHistoryToggle
-                count={historyItems.length}
+                count={allHistoryItems.length}
                 isExpanded={historyExpanded}
                 onToggle={() => {
                   const scrollTop = scrollRef.current?.scrollTop ?? 0;
@@ -446,7 +510,7 @@ const ModerationCenterPanel: React.FC<ModerationCenterPanelProps> = ({ selectedI
                 }}
               />
             </div>
-            {historyExpanded && <ModerationHistoryTimeline items={historyItems} outcomesOverride={outcomesOverride} onOutcomeChange={handleOutcomeChange} onOpenProfile={onOpenProfile} />}
+            {historyExpanded && <ModerationHistoryTimeline items={allHistoryItems} outcomesOverride={outcomesOverride} onOutcomeChange={handleOutcomeChange} onOpenProfile={onOpenProfile} />}
           </>
         )}
         </div>
