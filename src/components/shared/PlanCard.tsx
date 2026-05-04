@@ -8,6 +8,8 @@ export interface PlanSection {
   title: string;
   description: string;
   details?: string[];
+  /** Marks this step as requiring explicit confirmation before execution */
+  sensitive?: boolean;
 }
 
 export interface PlanData {
@@ -39,9 +41,11 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, onBuild }) => {
               <div className="w-11 h-11 rounded-2xl bg-royal-blue-100 flex items-center justify-center">
                 <Icon name="pencil" size="lg" />
               </div>
-              <Typography variant="heading-lg" color="primary">
-                <span className="font-bold">{plan.title}</span>
-              </Typography>
+              {plan.title && (
+                <Typography variant="heading-lg" color="primary">
+                  <span className="font-bold">{plan.title}</span>
+                </Typography>
+              )}
             </div>
             <Button type="button" variant="outline" size="md" onClick={() => setExpanded(!expanded)}>
               {expanded ? 'Collapse' : 'Expand'}
@@ -107,9 +111,9 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, onBuild }) => {
         <Typography variant="body-sm" color="secondary" className="flex-1">
           How does the plan look?
         </Typography>
-        <IconButton type="button" variant="ghost" size="sm" icon="thumbup" aria-label="Looks good" className="text-tertiary" />
+        <IconButton type="button" variant="ghost" size="sm" icon="thumbup" aria-label="Looks good" />
         <div className="-scale-y-100">
-          <IconButton type="button" variant="ghost" size="sm" icon="thumbup" aria-label="Needs changes" className="text-tertiary" />
+          <IconButton type="button" variant="ghost" size="sm" icon="thumbup" aria-label="Needs changes" />
         </div>
         <Button type="button" variant="ghost" size="sm" onClick={() => setHidden(true)}>
           Hide

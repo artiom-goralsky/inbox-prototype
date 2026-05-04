@@ -4,7 +4,7 @@ import ModerationCenterPanelV1 from '../v1/ModerationCenterPanelV1';
 import CourseCommentsCenterPanelV1 from '../v1/CourseCommentsCenterPanelV1';
 import AIInboxCenterPanelV1 from '../v1/AIInboxCenterPanelV1';
 import ChatThreadsCenterPanelV1_5 from './ChatThreadsCenterPanelV1_5';
-import ConnectionRequestCenterPanelV1_5 from './ConnectionRequestCenterPanelV1_5';
+import ConnectionRequestConversationCenterPanelV1_5 from './ConnectionRequestConversationCenterPanelV1_5';
 import type { V1_5Category } from './v1_5MockData';
 
 interface CenterPanelV1_5Props {
@@ -22,7 +22,7 @@ const CenterPanelV1_5: React.FC<CenterPanelV1_5Props> = ({ category, selectedId,
       return <ChatThreadsCenterPanelV1_5 selectedId={selectedId} onProfileOpen={onProfileOpen} />;
     case 'connection-requests':
       return (
-        <ConnectionRequestCenterPanelV1_5
+        <ConnectionRequestConversationCenterPanelV1_5
           selectedId={selectedId}
           onAccept={id => onConnectionAction?.(id, 'accept')}
           onIgnore={id => onConnectionAction?.(id, 'ignore')}

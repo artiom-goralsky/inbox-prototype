@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box } from '@circleco/compass/components/Box';
 import { Typography } from '@circleco/compass/components/Typography';
 import { Button } from '@circleco/compass/components/Button';
 import { IconButton } from '@circleco/compass/components/IconButton';
@@ -13,7 +12,7 @@ export type AssetItem = {
   title: string;
   description?: string;
   subtitle?: string;
-  type?: 'chat' | 'asset' | 'agent' | 'page' | 'build-frame';
+  type?: 'chat' | 'asset' | 'agent' | 'page' | 'build-frame' | 'event' | 'course';
   agentData?: {
     mode: 'Operator' | 'Strategist';
     phase: number;
@@ -40,6 +39,7 @@ interface AssetDetailSidebarProps {
   onClose: () => void;
   onWidthChange?: (width: number) => void;
   onStartConversation?: (skillName: string) => void;
+  onViewInAnalytics?: () => void;
   /** When rendered inside the artifact panel, hide the internal header */
   hideHeader?: boolean;
 }
@@ -49,6 +49,7 @@ const AssetDetailSidebar: React.FC<AssetDetailSidebarProps> = ({
   onClose,
   onWidthChange,
   onStartConversation,
+  onViewInAnalytics,
   hideHeader = false,
 }) => {
   const [barsAnimated, setBarsAnimated] = useState(false);
@@ -118,7 +119,7 @@ const AssetDetailSidebar: React.FC<AssetDetailSidebarProps> = ({
             </div>
             <div className="flex items-center gap-1 shrink-0">
               {!isDailyBriefing && !isAgent && (
-                <Button type="button" variant="secondary" size="sm">
+                <Button type="button" variant="secondary" size="sm" onClick={onViewInAnalytics}>
                   View in analytics
                 </Button>
               )}
@@ -461,7 +462,7 @@ const AssetDetailSidebar: React.FC<AssetDetailSidebarProps> = ({
 
               {/* Domain badge */}
               <div className="flex items-center gap-2">
-                <Icon name={asset.agentData.groupIcon as IconName} size="sm" className="text-secondary" />
+                <Icon name={asset.agentData.groupIcon as IconName} size="sm" />
                 <Typography variant="label-sm" color="secondary">
                   {asset.agentData.group}
                 </Typography>
@@ -484,7 +485,7 @@ const AssetDetailSidebar: React.FC<AssetDetailSidebarProps> = ({
                 <div className="flex flex-col gap-2">
                   {asset.agentData.capabilities.map((cap, i) => (
                     <div key={i} className="flex items-start gap-2.5">
-                      <Icon name="circle-check" size="sm" className="text-success shrink-0 mt-0.5" />
+                      <Icon name="circle-check" size="sm" className="shrink-0 mt-0.5" />
                       <Typography variant="body-sm" color="primary">
                         {cap}
                       </Typography>
@@ -572,10 +573,10 @@ const AssetDetailSidebar: React.FC<AssetDetailSidebarProps> = ({
               {/* Breakdown rows — 3 columns with dividers */}
               <div className="grid grid-cols-3 gap-0">
                 {breakdownItems.map((item, idx) => (
-                  <Box
+                  <div
                     key={idx}
                     className={mergeClasses(
-                      'flex flex-col gap-1 px-3 border-0 shadow-none rounded-none',
+                      'flex flex-col gap-1 px-3',
                       idx > 0 ? 'border-l border-secondary' : ''
                     )}
                   >
@@ -597,7 +598,7 @@ const AssetDetailSidebar: React.FC<AssetDetailSidebarProps> = ({
                         {item.change}
                       </span>
                     </div>
-                  </Box>
+                  </div>
                 ))}
               </div>
 

@@ -16,7 +16,7 @@ import ModerationSettingsModal from './v1/ModerationSettingsModal';
 import ChatThreadsListV1_5 from './v1.5/ChatThreadsListV1_5';
 import ChatThreadsCenterPanelV1_5 from './v1.5/ChatThreadsCenterPanelV1_5';
 import ConnectionRequestsListV1_5 from './v1.5/ConnectionRequestsListV1_5';
-import ConnectionRequestCenterPanelV1_5 from './v1.5/ConnectionRequestCenterPanelV1_5';
+import ConnectionRequestConversationCenterPanelV1_5 from './v1.5/ConnectionRequestConversationCenterPanelV1_5';
 import { CONNECTION_REQUEST_ITEMS, type ConnectionRequestItem } from './v1.5/v1_5MockData';
 import { DM_THREADS, getProfileData, type V1Category, type ProfileData, type V1ThreadItem } from './v1/v1MockData';
 import AllViewThreadList from './AllViewThreadList';
@@ -285,6 +285,7 @@ const InboxPage: React.FC = () => {
             onSettingsOpen={() => setShowModSettings(true)}
             onNewMessage={activeTab === 'dms' ? () => setShowNewMessage(true) : undefined}
             showSortSelect
+            enableViewModes
           />
         );
       case 'moderation':
@@ -294,6 +295,7 @@ const InboxPage: React.FC = () => {
             onSelect={setModSelectedId}
             showSortSelect
             hiddenIds={hiddenModIds}
+            enableViewModes
           />
         );
       case 'chat-threads':
@@ -328,7 +330,7 @@ const InboxPage: React.FC = () => {
           return <ChatThreadsCenterPanelV1_5 selectedId={allCenterMapping.selectedId} onProfileOpen={handleProfileOpen} showAiAssist />;
         case 'connectionRequest':
           return (
-            <ConnectionRequestCenterPanelV1_5
+            <ConnectionRequestConversationCenterPanelV1_5
               selectedId={allCenterMapping.selectedId}
               onAccept={() => handleAllResolve(allSelectedId)}
               onIgnore={() => handleAllResolve(allSelectedId)}
@@ -370,11 +372,11 @@ const InboxPage: React.FC = () => {
         return <ChatThreadsCenterPanelV1_5 selectedId={chatThreadSelectedId} onProfileOpen={handleProfileOpen} showAiAssist />;
       case 'connection-requests':
         return (
-          <ConnectionRequestCenterPanelV1_5
+          <ConnectionRequestConversationCenterPanelV1_5
             selectedId={connReqSelectedId}
-            onAccept={id => handleConnectionAction(id, 'accept')}
-            onIgnore={id => handleConnectionAction(id, 'ignore')}
-            onBlock={id => handleConnectionAction(id, 'block')}
+            onAccept={(id: string) => handleConnectionAction(id, 'accept')}
+            onIgnore={(id: string) => handleConnectionAction(id, 'ignore')}
+            onBlock={(id: string) => handleConnectionAction(id, 'block')}
             onProfileOpen={handleProfileOpen}
           />
         );

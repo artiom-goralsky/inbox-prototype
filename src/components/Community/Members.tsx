@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Avatar } from '@circleco/compass/components/Avatar';
 import { Badge } from '@circleco/compass/components/Badge';
+import { Button } from '@circleco/compass/components/Button';
 import { Icon } from '@circleco/compass/components/Icon';
 import { Typography } from '@circleco/compass/components/Typography';
-import { CommunitySectionHeader } from '@/components/Community/CommunitySectionHeader';
+import { Divider } from '@circleco/compass/components/Divider';
 
 interface Member {
   id: string;
@@ -19,6 +20,16 @@ interface Member {
 }
 
 const Members: React.FC = () => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const handler = () => setIsScrolled(el.scrollTop > 10);
+    el.addEventListener('scroll', handler, { passive: true });
+    return () => el.removeEventListener('scroll', handler);
+  }, []);
+
   // Mock data
   const currentUser = {
     name: 'Carlos Ramirez',
@@ -117,22 +128,26 @@ const Members: React.FC = () => {
   ];
 
   return (
-    <div className="bg-secondary w-full h-full flex flex-col items-center gap-6 px-6 py-0 overflow-auto">
-      {/* Header */}
-      <CommunitySectionHeader
-        title="Members"
-        actions={
-          <button type="button" className="h-9 px-4 text-sm font-medium border border-primary rounded-lg hover:bg-hover transition-colors">
-            Manage
-          </button>
-        }
-      />
-
+    <div className="flex-1 h-full flex flex-col bg-secondary overflow-hidden min-w-0">
+      {/* Sticky header */}
+      <div className={`shrink-0 bg-secondary z-10 transition-all duration-200 ${isScrolled ? 'border-b border-secondary' : 'pt-3'}`} style={{ transitionTimingFunction: 'cubic-bezier(0.23, 1, 0.32, 1)' }}>
+        <div className="max-w-[1280px] mx-auto px-9">
+          <div className={`flex items-center justify-between gap-3 transition-all duration-200 ${isScrolled ? 'py-3' : 'py-6'}`} style={{ transitionTimingFunction: 'cubic-bezier(0.23, 1, 0.32, 1)' }}>
+            <Typography variant={isScrolled ? 'heading-sm' : 'heading-xl'} color="primary">Members</Typography>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm">Manage</Button>
+            </div>
+          </div>
+        </div>
+        {isScrolled && <Divider orientation="horizontal" />}
+      </div>
+      <div ref={scrollRef} className="flex-1 overflow-y-auto">
+      <div className="flex flex-col items-center gap-6 px-9 pt-4 max-w-[1280px] mx-auto w-full">
       {/* Main Content */}
       <div className="flex flex-1 gap-6 items-start max-w-[1280px] w-full">
         {/* Left Sidebar - Profile Info */}
         <div className="flex flex-col gap-6 items-start w-[296px] shrink-0">
-          <div className="bg-primary border border-primary rounded-2xl w-full">
+          <div className="bg-primary border border-primary rounded-2xl shadow-2xs w-full">
             <div className="flex flex-col gap-7 items-center overflow-hidden pb-3 pt-6 px-3">
               {/* Profile Picture */}
               <div className="flex flex-col gap-4 items-center justify-center">
@@ -231,7 +246,7 @@ const Members: React.FC = () => {
         <div className="flex flex-1 flex-col gap-10 h-full items-start">
           {/* Requests Section */}
           <div className="flex flex-col gap-8 items-start w-full">
-            <div className="bg-primary border border-primary rounded-2xl w-full">
+            <div className="bg-primary border border-primary rounded-2xl shadow-2xs w-full">
               <div className="flex flex-col gap-1 items-start overflow-hidden w-full">
                 {/* Header */}
                 <div className="bg-primary border-b border-primary  rounded-2xl relative shrink-0 w-full ">
@@ -355,7 +370,7 @@ const Members: React.FC = () => {
             </div>
 
             {/* Recommendations Section */}
-            <div className="bg-primary border border-primary rounded-2xl w-full">
+            <div className="bg-primary border border-primary rounded-2xl shadow-2xs w-full">
               <div className="flex flex-col gap-1 items-start overflow-hidden w-full">
                 {/* Header */}
                 <div className="bg-primary border-b border-primary relative shrink-0 w-full  rounded-2xl">
@@ -510,7 +525,7 @@ const Members: React.FC = () => {
                 {allMembers.map(member => (
                   <div
                     key={member.id}
-                    className="bg-primary border border-primary rounded-2xl w-full"
+                    className="bg-primary border border-primary rounded-2xl shadow-2xs w-full"
                   >
                     <div className="flex flex-col gap-5 items-start justify-center overflow-hidden p-6 w-full">
                       <div className="flex gap-6 items-start w-full">
@@ -620,6 +635,8 @@ const Members: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
+      </div>
       </div>
     </div>
   );

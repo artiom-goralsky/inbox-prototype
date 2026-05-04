@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Button } from '@circleco/compass/components/Button';
+import { IconButton } from '@circleco/compass/components/IconButton';
 import { Icon } from '@circleco/compass/components/Icon';
 import { Typography } from '@circleco/compass/components/Typography';
-import { CommunitySectionHeader } from '@/components/Community/CommunitySectionHeader';
+import { Divider } from '@circleco/compass/components/Divider';
 
 interface Event {
   id: string;
@@ -29,6 +31,16 @@ interface Event {
 }
 
 const Events: React.FC = () => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const handler = () => setIsScrolled(el.scrollTop > 10);
+    el.addEventListener('scroll', handler, { passive: true });
+    return () => el.removeEventListener('scroll', handler);
+  }, []);
+
   const [activeFilter, setActiveFilter] = useState<'upcoming' | 'past'>(
     'upcoming'
   );
@@ -224,7 +236,7 @@ const Events: React.FC = () => {
     };
 
     return (
-      <div className="bg-primary rounded-2xl shadow-[0px_0px_0px_1px_rgba(0,0,0,0.04),0px_3px_12px_-4px_rgba(0,0,0,0.1),0px_4px_16px_-8px_rgba(0,0,0,0.1)] p-5 w-full">
+      <div className="bg-primary rounded-2xl shadow-2xs p-5 w-full">
         {/* Cover Image */}
         <div className="h-[244px] w-full rounded-2xl overflow-hidden mb-5 bg-[#0d2d5d] relative">
           {event.coverImage ? (
@@ -382,48 +394,27 @@ const Events: React.FC = () => {
   };
 
   return (
-    <div className="bg-secondary flex-1 flex flex-col items-center gap-6 px-6 py-0 overflow-auto">
-      {/* Header */}
-      <CommunitySectionHeader
-        title="Events"
-        actions={
-          <>
-            <div className="bg-secondary flex gap-1 h-9 items-center p-1 rounded-2xl w-[114px]">
-              <button
-                type="button"
-                onClick={() => setViewMode('list')}
-                className={`h-7 w-7 rounded-xl flex items-center justify-center transition-colors ${viewMode === 'list' ? 'bg-primary shadow-sm' : 'hover:bg-hover'}`}
-                aria-label="List view"
-              >
-                <Icon name="bullet-list" size="sm" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('grid')}
-                className={`h-7 w-7 rounded-xl flex items-center justify-center transition-colors ${viewMode === 'grid' ? 'bg-primary shadow-sm' : 'hover:bg-hover'}`}
-                aria-label="Grid view"
-              >
-                <Icon name="layout-grid" size="sm" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('calendar')}
-                className={`h-7 w-7 rounded-xl flex items-center justify-center transition-colors ${viewMode === 'calendar' ? 'bg-primary shadow-sm' : 'hover:bg-hover'}`}
-                aria-label="Calendar view"
-              >
-                <Icon name="calendar" size="sm" />
-              </button>
+    <div className="flex-1 h-full flex flex-col bg-secondary overflow-hidden min-w-0">
+      {/* Sticky header */}
+      <div className={`shrink-0 bg-secondary z-10 transition-all duration-200 ${isScrolled ? 'border-b border-secondary' : 'pt-3'}`} style={{ transitionTimingFunction: 'cubic-bezier(0.23, 1, 0.32, 1)' }}>
+        <div className="max-w-[1280px] mx-auto px-9">
+          <div className={`flex items-center justify-between gap-3 transition-all duration-200 ${isScrolled ? 'py-3' : 'py-6'}`} style={{ transitionTimingFunction: 'cubic-bezier(0.23, 1, 0.32, 1)' }}>
+            <Typography variant={isScrolled ? 'heading-sm' : 'heading-xl'} color="primary">Events</Typography>
+            <div className="flex items-center gap-2">
+              <div className="bg-primary flex gap-1 h-9 items-center p-1 rounded-2xl shadow-2xs border border-primary">
+                <IconButton variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="sm" icon="bullet-list" aria-label="List view" onClick={() => setViewMode('list')} />
+                <IconButton variant={viewMode === 'grid' ? 'secondary' : 'ghost'} size="sm" icon="layout-grid" aria-label="Grid view" onClick={() => setViewMode('grid')} />
+                <IconButton variant={viewMode === 'calendar' ? 'secondary' : 'ghost'} size="sm" icon="calendar" aria-label="Calendar view" onClick={() => setViewMode('calendar')} />
+              </div>
+              <Button variant="primary" size="sm">New event</Button>
+              <IconButton variant="outline" size="sm" icon="dot-menu" aria-label="More options" />
             </div>
-            <button type="button" className="h-9 px-4 text-sm font-medium bg-[#506cf0] text-white rounded-lg hover:opacity-90 transition-opacity">
-              New event
-            </button>
-            <button type="button" className="h-9 w-9 rounded-xl border border-primary flex items-center justify-center hover:bg-hover transition-colors" aria-label="More options">
-              <Icon name="dot-menu" size="sm" />
-            </button>
-          </>
-        }
-      />
-
+          </div>
+        </div>
+        {isScrolled && <Divider orientation="horizontal" />}
+      </div>
+      <div ref={scrollRef} className="flex-1 overflow-y-auto">
+      <div className="flex flex-col gap-10 items-center max-w-[1280px] mx-auto px-9 pt-4 w-full">
       {/* Content */}
       <div className="flex flex-col gap-10 items-center max-w-[680px] w-full">
         {/* Tabs and Next Event Section */}
@@ -478,6 +469,8 @@ const Events: React.FC = () => {
             </div>
           ))}
         </div>
+      </div>
+      </div>
       </div>
     </div>
   );

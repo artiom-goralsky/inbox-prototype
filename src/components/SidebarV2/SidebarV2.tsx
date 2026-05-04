@@ -29,8 +29,6 @@ import {
   ACCORDION_TOP_IDS,
   ACCORDION_MANAGE_IDS,
   ACCORDION_SHOW_MORE_IDS,
-  INSET_BUILD_IDS,
-  INSET_BUILD_MORE_IDS,
   RECENT_CHATS,
   type AdminNavItemV5,
   type AdminNavChildV5,
@@ -189,7 +187,7 @@ interface SidebarV5Props {
   /** If true, only the sidebar panel is rendered (no TopBar, no content column). Use inside AdminSection. */
   sidebarOnly?: boolean;
   /** When provided, shows Recent Chats entry and calls this when selected (opens Copilot + collapse). */
-  onOpenCopilot?: () => void;
+  onOpenCopilot?: (chatId?: string) => void;
   /** When true and sidebarOnly, sidebar shows collapsed (icon-only) rail. */
   isCopilotActive?: boolean;
   /** Called when an agent row in the Agents section is clicked. */
@@ -713,7 +711,7 @@ const AgentsSection: React.FC<{
         className="flex items-center gap-3 h-9 px-3 py-1 rounded-[12px] cursor-pointer hover:bg-secondary transition-colors text-left w-full"
       >
         <div className="w-[18px] h-[18px] shrink-0 flex items-center justify-center">
-          <Icon name="plus" size="sm" className="text-tertiary" aria-hidden />
+          <Icon name="plus" size="sm" aria-hidden />
         </div>
         <span className="text-[14px] leading-5 text-tertiary">Add agent</span>
       </button>
@@ -1116,17 +1114,6 @@ const SidebarV5: React.FC<SidebarV5Props> = ({
       return rows;
     });
   }, [accordionShowMoreItems]);
-
-  const collapsedMoreItems = useMemo(() => {
-    if (navStyle === 'v4') return v4ManageMoreFlat;
-    if (navStyle === 'v3') return v3AdditionalItemsFlat;
-    return accordionShowMoreItemsFlat;
-  }, [
-    navStyle,
-    v4ManageMoreFlat,
-    v3AdditionalItemsFlat,
-    accordionShowMoreItemsFlat,
-  ]);
 
   const objectName = useMemo(() => {
     const map: Record<string, string> = {
@@ -1638,7 +1625,7 @@ const SidebarV5: React.FC<SidebarV5Props> = ({
               </nav>
               {/* Bottom: Avatar + Collapse */}
               <div className="shrink-0 px-3 pb-3 pt-2 flex flex-col gap-2 items-center">
-                <Tooltip content="Michal" side="right" sideOffset={8}>
+                <Tooltip content="Rudy" side="right" sideOffset={8}>
                   <div className="w-9 h-9 flex items-center justify-center cursor-pointer">
                     <Avatar size="xs" />
                   </div>
@@ -1749,7 +1736,7 @@ const SidebarV5: React.FC<SidebarV5Props> = ({
                     <div
                       role="button"
                       tabIndex={0}
-                      onClick={onOpenCopilot}
+                      onClick={() => onOpenCopilot?.()}
                       onKeyDown={e => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
@@ -1955,7 +1942,7 @@ const SidebarV5: React.FC<SidebarV5Props> = ({
                     <div
                       role="button"
                       tabIndex={0}
-                      onClick={onOpenCopilot}
+                      onClick={() => onOpenCopilot?.()}
                       onKeyDown={e => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
@@ -2306,11 +2293,11 @@ const SidebarV5: React.FC<SidebarV5Props> = ({
                       key={chat.id}
                       role="button"
                       tabIndex={0}
-                      onClick={() => onOpenCopilot?.()}
+                      onClick={() => onOpenCopilot?.(chat.id)}
                       onKeyDown={e => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
-                          onOpenCopilot?.();
+                          onOpenCopilot?.(chat.id);
                         }
                       }}
                       className="flex items-center gap-3 h-9 px-3 py-1 rounded-[12px] transition-colors cursor-pointer text-primary hover:bg-secondary"
@@ -2468,39 +2455,70 @@ const SidebarV5: React.FC<SidebarV5Props> = ({
               </nav>
 
               {/* Bottom: Avatar + Collapse sidebar */}
-              <div className="shrink-0 px-3 pb-3 flex flex-col gap-1">
-                <div
-                  role="button"
-                  tabIndex={0}
-                  className="flex w-full items-center gap-3 h-9 px-3 py-1 rounded-[12px] transition-colors text-[14px] leading-5 text-primary font-normal hover:bg-secondary justify-start cursor-pointer"
-                >
-                  <Avatar size="xs" />
-                  <span className="flex-1 text-left truncate whitespace-nowrap">
-                    Michal
-                  </span>
+              {sidebarCollapsed ? (
+                <div className="shrink-0 px-3 pb-3 flex flex-col items-center gap-0">
+                  <Tooltip content="Expand sidebar" side="right" sideOffset={8}>
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={onToggleSidebar}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          onToggleSidebar?.();
+                        }
+                      }}
+                      className="flex items-center justify-center h-9 w-9 rounded-[12px] transition-colors hover:bg-secondary cursor-pointer"
+                    >
+                      <Icon
+                        name={'layout-left' as IconName}
+                        size="md"
+                        className="w-5 h-5 shrink-0"
+                        style={{ color: 'var(--color-icon-disabled)' }}
+                      />
+                    </div>
+                  </Tooltip>
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    className="flex items-center justify-center h-9 w-9 rounded-[12px] transition-colors hover:bg-secondary cursor-pointer"
+                  >
+                    <Avatar size="xs" />
+                  </div>
                 </div>
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={onToggleSidebar}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      onToggleSidebar?.();
-                    }
-                  }}
-                  className="flex w-full items-center gap-3 h-9 px-3 py-1 rounded-[12px] transition-colors text-[14px] leading-5 text-disabled font-normal hover:bg-secondary justify-start cursor-pointer"
-                >
-                  <Icon
-                    name={'layout-left' as IconName}
-                    size="md"
-                    className="w-5 h-5 shrink-0"
-                  />
-                  <span className="flex-1 text-left truncate whitespace-nowrap">
-                    Collapse sidebar
-                  </span>
+              ) : (
+                <div className="shrink-0 px-3 pb-3 flex items-center gap-0">
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    className="flex flex-1 items-center gap-3 h-9 px-3 py-1 rounded-[12px] transition-colors text-[14px] leading-5 text-primary font-normal hover:bg-secondary justify-start cursor-pointer min-w-0"
+                  >
+                    <Avatar size="xs" />
+                    <span className="flex-1 text-left truncate whitespace-nowrap">
+                      Rudy
+                    </span>
+                  </div>
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={onToggleSidebar}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onToggleSidebar?.();
+                      }
+                    }}
+                    className="flex items-center justify-center h-9 w-9 rounded-[12px] transition-colors hover:bg-secondary shrink-0 cursor-pointer"
+                  >
+                    <Icon
+                      name={'layout-left' as IconName}
+                      size="md"
+                      className="w-5 h-5 shrink-0"
+                      style={{ color: 'var(--color-icon-disabled)' }}
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
             </>
           )}
         </aside>

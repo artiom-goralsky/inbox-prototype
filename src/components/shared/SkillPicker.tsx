@@ -1,8 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Typography } from '@circleco/compass/components/Typography';
-import { Button } from '@circleco/compass/components/Button';
 import { Icon, type IconName } from '@circleco/compass/components/Icon';
-import { Tooltip } from '@circleco/compass/components/Tooltip';
 import { type Skill, filterSkills, SKILLS } from './skillData';
 
 /* ── Skill Tag (inline in input) ───────────────────────────────────── */
@@ -13,24 +10,32 @@ interface SkillTagProps {
 }
 
 export const SkillTag: React.FC<SkillTagProps> = ({ skill, onRemove }) => (
-  <Tooltip
-    content={skill.description}
-    side="top"
-    sideOffset={6}
-  >
-    <div>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        startIcon={skill.icon as IconName}
-        endIcon="cross"
-        onClick={e => { e.preventDefault(); onRemove(); }}
-      >
-        {skill.name}
-      </Button>
+  <div className="group/pill inline-flex items-center gap-2 bg-[#f7f9fa] border border-[#e4e7eb] rounded-[12px] px-[10px] py-[4px]">
+    {/* Icon box */}
+    <div className="w-5 h-5 rounded-[4px] bg-[#e4e7eb] flex items-center justify-center shrink-0">
+      <Icon name="book-filled" size="sm" className="text-[#717680]" />
     </div>
-  </Tooltip>
+
+    {/* Skill name in mono */}
+    <span
+      className="text-sm text-[#717680] whitespace-nowrap leading-6"
+      style={{ fontFamily: "'Geist Mono', 'Fira Mono', 'Courier New', monospace", fontWeight: 500 }}
+    >
+      &ldquo;{skill.id}&rdquo;
+    </span>
+
+    {/* Remove */}
+    <button
+      type="button"
+      onClick={e => { e.preventDefault(); onRemove(); }}
+      className="text-[#a5a9ad] hover:text-[#717680] transition-colors ml-1 opacity-0 group-hover/pill:opacity-100"
+      aria-label="Remove skill"
+    >
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <path d="M2 2l8 8M10 2L2 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      </svg>
+    </button>
+  </div>
 );
 
 /* ── Skill Picker Dropdown ─────────────────────────────────────────── */
@@ -39,7 +44,6 @@ interface SkillPickerProps {
   query: string;
   onSelect: (skill: Skill) => void;
   onClose: () => void;
-  /** Position relative to input — bottom-left by default */
   className?: string;
 }
 
@@ -48,16 +52,13 @@ const SkillPicker: React.FC<SkillPickerProps> = ({ query, onSelect, onClose, cla
   const listRef = useRef<HTMLDivElement>(null);
   const filtered = query ? filterSkills(query) : SKILLS;
 
-  // Reset active index when results change
   useEffect(() => { setActiveIndex(0); }, [query]);
 
-  // Scroll active item into view
   useEffect(() => {
     const el = listRef.current?.children[activeIndex] as HTMLElement | undefined;
     el?.scrollIntoView({ block: 'nearest' });
   }, [activeIndex]);
 
-  // Keyboard navigation
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'ArrowDown') {
@@ -78,83 +79,38 @@ const SkillPicker: React.FC<SkillPickerProps> = ({ query, onSelect, onClose, cla
     return () => document.removeEventListener('keydown', handler);
   }, [filtered, activeIndex, onSelect, onClose]);
 
-  if (filtered.length === 0) {
-    return (
-      <div className={`absolute bottom-full left-0 mb-2 w-[320px] bg-primary border border-secondary rounded-xl shadow-lg p-3 z-50 ${className ?? ''}`}>
-        <Typography variant="body-sm" color="tertiary" className="text-center py-2">
-          No skills match &ldquo;{query}&rdquo;
-        </Typography>
-      </div>
-    );
-  }
-
-  // Group by category
-  const groups: Record<string, Skill[]> = {};
-  for (const skill of filtered) {
-    (groups[skill.category] ??= []).push(skill);
-  }
-
-  let flatIndex = 0;
-
   return (
-    <div className={`absolute bottom-full left-0 mb-2 w-[320px] bg-primary border border-secondary rounded-xl shadow-lg overflow-hidden z-50 ${className ?? ''}`}>
-      <div className="px-3 pt-3 pb-1">
-        <Typography variant="label-xs" color="tertiary" className="uppercase tracking-wider">
-          Skills
-        </Typography>
-      </div>
-      <div ref={listRef} className="max-h-[280px] overflow-y-auto px-1 pb-1">
-        {Object.entries(groups).map(([category, skills]) => (
-          <div key={category}>
-            {Object.keys(groups).length > 1 && (
-              <div className="px-2 pt-2 pb-1">
-                <Typography variant="caption" color="tertiary">{category}</Typography>
-              </div>
-            )}
-            {skills.map(skill => {
-              const idx = flatIndex++;
-              const isActive = idx === activeIndex;
-              return (
-                <button
-                  key={skill.id}
-                  type="button"
-                  onMouseEnter={() => setActiveIndex(idx)}
-                  onClick={() => onSelect(skill)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                    isActive ? 'bg-hover' : ''
-                  }`}
-                >
-                  <Icon name={skill.icon as IconName} size="sm" className="shrink-0 text-secondary" />
-                  <div className="flex-1 min-w-0">
-                    <Typography variant="label-sm" color="primary" className="truncate">
-                      {skill.name}
-                    </Typography>
-                    <Typography variant="caption" color="tertiary" className="truncate block">
-                      {skill.description}
-                    </Typography>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        ))}
-      </div>
-      <div className="px-3 py-2 border-t border-secondary flex items-center gap-3">
-        <Typography variant="caption" color="tertiary">
-          <span className="inline-flex items-center gap-1">
-            <kbd className="px-1 py-0.5 rounded bg-secondary text-[10px] font-mono">↑↓</kbd> navigate
-          </span>
-        </Typography>
-        <Typography variant="caption" color="tertiary">
-          <span className="inline-flex items-center gap-1">
-            <kbd className="px-1 py-0.5 rounded bg-secondary text-[10px] font-mono">↵</kbd> select
-          </span>
-        </Typography>
-        <Typography variant="caption" color="tertiary">
-          <span className="inline-flex items-center gap-1">
-            <kbd className="px-1 py-0.5 rounded bg-secondary text-[10px] font-mono">esc</kbd> close
-          </span>
-        </Typography>
+    <div
+      className={`absolute bottom-full left-0 mb-2 w-[200px] bg-primary border border-[#e4e7eb] rounded-lg overflow-hidden z-50
+        shadow-[0px_0px_0px_1px_rgba(0,0,0,0.04),0px_3px_12px_-4px_rgba(0,0,0,0.1),0px_4px_16px_-8px_rgba(0,0,0,0.1)]
+        ${className ?? ''}`}
+    >
+      <div className="p-1 flex flex-col gap-2">
+        {/* Header */}
+        <div className="px-2 py-1">
+          <span className="text-xs font-medium text-[#717680]">Skills</span>
+        </div>
+
+        {/* Items */}
+        <div ref={listRef} className="flex flex-col max-h-[220px] overflow-y-auto">
+          {filtered.length === 0 ? (
+            <div className="px-2 py-2 text-sm text-[#717680]">No results</div>
+          ) : (
+            filtered.map((skill, idx) => (
+              <button
+                key={skill.id}
+                type="button"
+                onMouseEnter={() => setActiveIndex(idx)}
+                onClick={() => onSelect(skill)}
+                className={`w-full text-left px-2 py-2 rounded-md text-sm text-[#191b1f] transition-colors ${
+                  idx === activeIndex ? 'bg-[#f7f9fa]' : 'hover:bg-[#f7f9fa]'
+                }`}
+              >
+                {skill.name}
+              </button>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

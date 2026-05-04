@@ -9,6 +9,7 @@ import { IconButton } from '@circleco/compass/components/IconButton';
 import type { AssetItem } from '../shared/AssetDetailSidebar';
 import SkillPicker, { SkillTag } from '../shared/SkillPicker';
 import type { Skill } from '../shared/skillData';
+import NewCommunityFlow from './NewCommunityFlow';
 
 interface DashboardProps {
   onToggleSidebar: () => void;
@@ -17,9 +18,13 @@ interface DashboardProps {
   onShortcutClick?: (label: string) => void;
   /** Increment to trigger a glow animation on the message box */
   pulseInput?: number;
+  onCreateProject?: (typeId: string, answers: string[]) => void;
 }
 
 
+
+const MAX_CATEGORY_ITEMS = 7; // longest category — keeps panel height stable when switching
+const ITEM_HEIGHT_PX = 44;   // py-3 (24px) + text-sm line-height (20px)
 
 const SHORTCUT_CATEGORIES = [
   {
@@ -100,19 +105,43 @@ const SHORTCUT_CATEGORIES = [
 ];
 
 
-const Dashboard: React.FC<DashboardProps> = ({ onOpenCopilot, onItemClick: _onItemClick, onShortcutClick, pulseInput = 0 }) => {
+const getTimeGreeting = () => {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+};
+
+const getDisplayName = () => {
+  const param = new URLSearchParams(window.location.search).get('name');
+  if (param) { localStorage.setItem('protoUserName', param); return param; }
+  return localStorage.getItem('protoUserName') || 'Rudy';
+};
+
+const Dashboard: React.FC<DashboardProps> = ({ onOpenCopilot, onItemClick: _onItemClick, onShortcutClick, pulseInput = 0, onCreateProject }) => {
   const [message, setMessage] = useState('');
   const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
+  const [headingPhase, setHeadingPhase] = useState<'greeting' | 'fading' | 'today'>('greeting');
+  const displayName = getDisplayName();
   const [slashQuery, setSlashQuery] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [openCategory, setOpenCategory] = useState<string | null>(null);
-  const [pendingCategory, setPendingCategory] = useState<string | null>(null);
-  const [panelExiting, setPanelExiting] = useState(false);
-  const [closingCategory, setClosingCategory] = useState(false);
+  const [isItemsClosing, setIsItemsClosing] = useState(false);
+  const [recentChatsEntering, setRecentChatsEntering] = useState(false);
   const [isGlowing, setIsGlowing] = useState(false);
-  const categoryPanelRef = useRef<HTMLDivElement>(null);
+  type CommunityType = 'existing' | 'new-community';
+  const [communityType, setCommunityType] = useState<CommunityType>('existing');
+  const [showOnboardingCard, setShowOnboardingCard] = useState(false);
+  const skillSectionRef = useRef<HTMLDivElement>(null);
   const fadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputFormRef = useRef<HTMLFormElement>(null);
+
+  // Heading: greeting → "What do you want to do today?" after 10s
+  useEffect(() => {
+    const fade = setTimeout(() => setHeadingPhase('fading'), 6000);
+    const swap = setTimeout(() => setHeadingPhase('today'), 6400);
+    return () => { clearTimeout(fade); clearTimeout(swap); };
+  }, []);
 
   // Trigger glow animation only when pulseInput actually increments (not on mount)
   const prevPulseRef = useRef(pulseInput);
@@ -125,21 +154,32 @@ const Dashboard: React.FC<DashboardProps> = ({ onOpenCopilot, onItemClick: _onIt
     return () => clearTimeout(t);
   }, [pulseInput]);
 
-  const closeCategory = () => {
-    if (!openCategory || panelExiting) return;
-    setPanelExiting(true);
+  const closeItems = () => {
+    if (!openCategory || isItemsClosing) return;
+    setIsItemsClosing(true);
   };
+
+  const handleCategoryClick = (label: string) => {
+    if (openCategory === label) {
+      closeItems();
+    } else {
+      setIsItemsClosing(false);
+      setOpenCategory(label);
+    }
+  };
+
+  const closeItemsRef = useRef(closeItems);
+  closeItemsRef.current = closeItems;
 
   useEffect(() => {
     if (!openCategory) return;
     const handleClick = (e: MouseEvent) => {
-      if (categoryPanelRef.current && !categoryPanelRef.current.contains(e.target as Node)) {
-        closeCategory();
+      if (skillSectionRef.current && !skillSectionRef.current.contains(e.target as Node)) {
+        closeItemsRef.current();
       }
     };
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openCategory]);
 
   useEffect(() => () => { if (fadeTimer.current) clearTimeout(fadeTimer.current); }, []);
@@ -342,22 +382,53 @@ const Dashboard: React.FC<DashboardProps> = ({ onOpenCopilot, onItemClick: _onIt
       {/* Atmospheric focus gradient */}
       <div className={`input-focus-gradient${isGlowing ? ' active' : ''}`} />
       {/* Top bar */}
-      <div className="shrink-0 flex items-center h-16 px-4">
+      <div className="shrink-0 flex items-center justify-between h-16 px-4">
         <Typography variant="label-sm" color="primary">
           New chat
         </Typography>
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => setCommunityType('new-community')}
+            className={`text-sm transition-colors ${communityType === 'new-community' ? 'text-[color:var(--color-text-primary)] font-medium' : 'text-[color:var(--color-text-tertiary)] hover:text-[color:var(--color-text-secondary)]'}`}
+          >
+            New community
+          </button>
+          <button
+            type="button"
+            onClick={() => setCommunityType('existing')}
+            className={`text-sm transition-colors ${communityType === 'existing' ? 'text-[color:var(--color-text-primary)] font-medium' : 'text-[color:var(--color-text-tertiary)] hover:text-[color:var(--color-text-secondary)]'}`}
+          >
+            Existing
+          </button>
+        </div>
       </div>
 
-      {/* Scrollable content — vertically centered */}
+      {/* New community flow — replaces dashboard content */}
+      {communityType === 'new-community' ? (
+        <NewCommunityFlow
+          onSkipToChat={(msg) => {
+            setCommunityType('existing');
+            setShowOnboardingCard(true);
+            onOpenCopilot?.(undefined, msg);
+          }}
+          onCreateProject={(typeId, _steps, answers) => {
+            onCreateProject?.(typeId, answers);
+          }}
+        />
+      ) : (
+      /* Scrollable content — vertically centered */
       <div className="flex-1 min-h-0 overflow-auto flex flex-col">
-        <div className="w-full max-w-[810px] mx-auto flex flex-col gap-10 items-center px-4 py-16 my-auto">
+        <div className="w-full max-w-[670px] mx-auto flex flex-col gap-10 items-center py-16 my-auto min-h-[840px]">
 
           {/* Heading */}
           <h1
-            className="text-[32px] font-semibold leading-[48px] tracking-[-1px] text-center w-full text-primary"
-            style={{ fontFamily: "'Inter Variable', Inter, sans-serif" }}
+            className="text-[32px] font-semibold leading-[48px] tracking-[-1px] text-center w-full text-primary transition-opacity duration-400 ease-out"
+            style={{ fontFamily: "'Inter Variable', Inter, sans-serif", opacity: headingPhase === 'fading' ? 0 : 1 }}
           >
-            What do you want to do today?
+            {headingPhase === 'today'
+              ? 'What do you want to do today?'
+              : `${getTimeGreeting()}${displayName ? `, ${displayName}` : ''}.`}
           </h1>
 
           {/* Message box */}
@@ -462,97 +533,118 @@ const Dashboard: React.FC<DashboardProps> = ({ onOpenCopilot, onItemClick: _onIt
             </div>
           </form>
 
-          {/* Skill buttons */}
-          <div className="w-full relative">
-            {/* Category buttons row */}
-            {(!openCategory || !!pendingCategory) && (
-              <div
-                className={`flex items-start flex-wrap gap-[10px] w-full ${pendingCategory ? 'skill-buttons-hidden' : ''} ${closingCategory ? 'skill-buttons-visible' : ''}`}
-                onAnimationEnd={(e) => {
-                  if (e.animationName === 'skill-buttons-exit' && pendingCategory) {
-                    setOpenCategory(pendingCategory);
-                    setPendingCategory(null);
-                  } else if (e.animationName === 'skill-buttons-enter') {
-                    setClosingCategory(false);
-                  }
-                }}
-              >
-                {SHORTCUT_CATEGORIES.map(cat => (
-                  <Button
-                    key={cat.label}
-                    type="button"
-                    variant="outline"
-                    size="md"
-                    startIcon={cat.icon}
-                    onClick={() => setPendingCategory(cat.label)}
-                  >
-                    {cat.label}
-                  </Button>
-                ))}
-              </div>
-            )}
+          {/* Skill buttons + items */}
+          <div ref={skillSectionRef} className="w-full flex flex-col gap-3">
+            {/* Category buttons row — always visible */}
+            <div className="flex items-center flex-wrap gap-[8px] w-full">
+              {SHORTCUT_CATEGORIES.map(cat => (
+                <Button
+                  key={cat.label}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  startIcon={cat.icon}
+                  onClick={() => handleCategoryClick(cat.label)}
+                  style={openCategory === cat.label ? {
+                    borderColor: '#717680',
+                    boxShadow: '0px 0px 0px 3px rgba(113, 118, 128, 0.30)',
+                  } : undefined}
+                >
+                  {cat.label}
+                </Button>
+              ))}
+            </div>
 
-            {/* Expanded category panel */}
+            {/* Inline items list */}
             {openCategory && (() => {
               const cat = SHORTCUT_CATEGORIES.find(c => c.label === openCategory);
               if (!cat) return null;
               return (
                 <div
-                  ref={categoryPanelRef}
-                  className={`${panelExiting ? 'skill-panel-exit' : 'skill-panel-enter'} w-full bg-primary border border-secondary rounded-2xl shadow-[0px_0px_0px_1px_rgba(0,0,0,0.04),0px_3px_12px_-4px_rgba(0,0,0,0.1),0px_4px_16px_-8px_rgba(0,0,0,0.1)] overflow-hidden`}
+                  key={openCategory}
+                  className={`w-full flex flex-col ${isItemsClosing ? 'items-panel-exit' : 'items-panel-enter'}`}
+                  style={{ minHeight: MAX_CATEGORY_ITEMS * ITEM_HEIGHT_PX }}
                   onAnimationEnd={(e) => {
-                    if (e.animationName === 'skill-panel-exit' && panelExiting) {
-                      setPanelExiting(false);
+                    if (e.animationName === 'items-panel-exit' && isItemsClosing) {
                       setOpenCategory(null);
-                      setClosingCategory(true);
+                      setIsItemsClosing(false);
+                      setRecentChatsEntering(true);
                     }
                   }}
                 >
-                  <div className="flex items-center justify-between px-5 py-3">
-                    <div className="flex items-center gap-2">
-                      <Icon name={cat.icon} size="sm" />
-                      <Typography variant="label-sm" color="secondary">
-                        {cat.label}
-                      </Typography>
-                    </div>
-                    <IconButton
+                  {cat.items.map((item, i) => (
+                    <button
+                      key={i}
                       type="button"
-                      variant="ghost"
-                      size="sm"
-                      icon="cross"
-                      aria-label="Close"
-                      onClick={closeCategory}
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    {cat.items.map((item, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        className="skill-panel-item text-left px-5 py-3 border-t border-secondary hover:bg-hover transition-colors duration-[50ms] cursor-pointer"
-                        onClick={() => {
-                          closeCategory();
-                          onShortcutClick?.(item);
-                        }}
-                      >
-                        <Typography variant="body-sm" color="primary">
-                          {item}
-                        </Typography>
-                      </button>
-                    ))}
-                  </div>
+                      className="skill-shortcut-item group flex items-center gap-3 w-full px-3 py-3 rounded-2xl cursor-pointer hover:bg-[#F7F9FA] transition-colors duration-75 text-left"
+                      onClick={() => {
+                        closeItems();
+                        onShortcutClick?.(item);
+                      }}
+                    >
+                      <span className="text-sm font-medium text-[#717680] group-hover:text-[#191B1F] transition-colors duration-75">{item}</span>
+                      <span className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-75 text-[#191B1F]">
+                        <Icon name={'arrow-up-right' as IconName} size="sm" />
+                      </span>
+                    </button>
+                  ))}
                 </div>
               );
             })()}
           </div>
 
+          {/* Onboarding card — shown when user skipped onboarding via "Or..." */}
+          {!openCategory && showOnboardingCard && (
+            <button
+              type="button"
+              onClick={() => {
+                setShowOnboardingCard(false);
+                setCommunityType('new-community');
+              }}
+              className="relative w-full text-left bg-primary border border-[#E4E7EB] rounded-lg pl-[132px] pr-5 py-4 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] hover:bg-hover transition-colors cursor-pointer flex items-center gap-0.5 overflow-visible"
+            >
+              {/* Mini checklist illustration — absolutely positioned */}
+              <svg
+                width="87" height="70" viewBox="0 0 87 70" fill="none"
+                className="absolute left-[21.5px] -top-[11.5px] pointer-events-none"
+                style={{ filter: 'drop-shadow(0px 3px 12px rgba(0,0,0,0.1)) drop-shadow(0px 0px 0px rgba(0,0,0,0.04))' }}
+              >
+                <rect width="87" height="70" rx="4" fill="white" />
+                <circle cx="14" cy="14" r="4" fill="#86EFAC" />
+                <circle cx="14" cy="34" r="4" fill="#E4E7EB" />
+                <circle cx="14" cy="54" r="4" fill="#E4E7EB" />
+                <rect x="24" y="13" width="52" height="2" rx="1" fill="#E4E7EB" />
+                <rect x="24" y="33" width="52" height="2" rx="1" fill="#E4E7EB" />
+                <rect x="24" y="53" width="52" height="2" rx="1" fill="#E4E7EB" />
+              </svg>
+              <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                <Typography variant="label-sm" color="primary">
+                  Let&apos;s build your community together
+                </Typography>
+                <Typography variant="body-sm" color="secondary">
+                  Pick a community type and get a personalized launch plan
+                </Typography>
+              </div>
+              <IconButton
+                type="button"
+                variant="ghost"
+                size="sm"
+                icon="arrow-right"
+                aria-label="Start onboarding"
+                className="shrink-0"
+                tabIndex={-1}
+              />
+            </button>
+          )}
+
           {/* Recent chats */}
-          <div className="flex flex-col gap-2 w-full">
+          {!openCategory && <div className={`flex flex-col gap-2 w-full ${recentChatsEntering ? 'recent-chats-visible' : ''}`} onAnimationEnd={() => setRecentChatsEntering(false)}>
             <Typography variant="label-sm" color="tertiary">
               Recent chats
             </Typography>
             <div className="flex flex-col gap-2">
               {[
+                { id: '0', title: 'Copilot conversation improvements', subtitle: 'Explored ways to improve Copilot response quality, conversation flow, and context retention across multi-turn interactions...' },
                 { id: '1', title: 'Weekly new member onboarding report', subtitle: '8 of 12 completed onboarding this week. Drop-off is still at the goals survey step...' },
                 { id: '2', title: 'Members at risk of churning this month', subtitle: 'I flagged 14 members inactive for 21+ days. Here\'s the re-engagement plan I drafted...' },
                 { id: '3', title: 'Re-engagement campaign for January dropoffs', subtitle: 'The 5-email welcome series is ready. Open rate on the first send was 47%...' },
@@ -570,7 +662,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onOpenCopilot, onItemClick: _onIt
                 </button>
               ))}
             </div>
-          </div>
+          </div>}
         {/* Today's focus, Overview */}
         {true && <>
 
@@ -643,7 +735,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onOpenCopilot, onItemClick: _onIt
               variant="outline"
               size="sm"
               endIcon="chevron-down"
-              className="h-7 px-2 text-[12px] font-medium shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
             >
               Last 7 days
             </Button>
@@ -694,12 +785,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onOpenCopilot, onItemClick: _onIt
                     >
                       {m.value}
                     </Typography>
-                    <span className="rounded-[6px] overflow-hidden">
-                      <Badge
-                        label={m.delta}
-                        variant={isUp ? 'success' : 'warning'}
-                      />
-                    </span>
+                    <Badge
+                      label={m.delta}
+                      variant={isUp ? 'success' : 'warning'}
+                      className="rounded-[6px]"
+                    />
                   </div>
                 );
               })}
@@ -863,16 +953,19 @@ const Dashboard: React.FC<DashboardProps> = ({ onOpenCopilot, onItemClick: _onIt
                     </div>
                   </div>
 
-                  <span className="inline-flex items-center gap-1 text-[12px] font-medium text-primary">
-                    <Link href="#" size="sm">
-                      Members analytics
-                    </Link>
+                  <Link
+                    href="#"
+                    size="sm"
+                    className="inline-flex items-center gap-1 text-[12px] font-medium text-primary"
+                  >
+                    Members analytics
                     <Icon
                       name="chevron-right"
                       size="sm"
+                      className="w-4 h-4"
                       aria-hidden
                     />
-                  </span>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -882,6 +975,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onOpenCopilot, onItemClick: _onIt
         </>}
         </div>
       </div>
+      )}
     </div>
   );
 };

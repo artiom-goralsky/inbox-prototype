@@ -194,8 +194,8 @@ const DMCenterPanelV1: React.FC<DMCenterPanelV1Props> = ({ selectedId, onProfile
                   onChange={(e) => { setComposerText(e.target.value); if (!e.target.value) setComposerAiDraft(false); }}
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                   placeholder={`Message ${thread.name}`}
-                  className="w-full px-4 py-3 text-sm resize-none outline-none bg-primary min-h-[80px] max-h-[120px] overflow-y-auto"
-                  rows={3}
+                  className="w-full px-4 py-3 text-sm leading-5 resize-none outline-none bg-primary min-h-[20px]"
+                  rows={1}
                 />
                 <div className="flex items-center justify-between p-2">
                   <div className="flex items-center">
@@ -227,6 +227,7 @@ const DMCenterPanelV1: React.FC<DMCenterPanelV1Props> = ({ selectedId, onProfile
 function MessageRow({ message, highlighted, onNameClick, onOpenThread, onAiAssist }: { message: V1Message; highlighted?: boolean; onNameClick?: () => void; onOpenThread?: (msg: V1Message) => void; onAiAssist?: (msg: V1Message) => void }) {
   const [hovered, setHovered] = useState(false);
   const hasReplies = message.replies && message.replies.length > 0;
+  const isAdmin = message.senderName === 'You';
 
   return (
     <div
@@ -236,7 +237,7 @@ function MessageRow({ message, highlighted, onNameClick, onOpenThread, onAiAssis
       onMouseLeave={() => setHovered(false)}
     >
       <button className="shrink-0 focus:outline-none" onClick={onNameClick}>
-        <Avatar name={message.senderName} size="md" />
+        <Avatar src={isAdmin ? '/images/avatars/1.png' : undefined} name={message.senderName} size="md" />
       </button>
       <div className="flex-1 flex flex-col gap-1.5">
         <div className="flex items-center gap-2">

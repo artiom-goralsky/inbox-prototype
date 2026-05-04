@@ -18,11 +18,8 @@ class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught:', error, errorInfo);
-    // #region agent log
-    fetch('http://127.0.0.1:7657/ingest/fd01d022-d456-47e7-9ee3-eabbb6756821',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'adbd37'},body:JSON.stringify({sessionId:'adbd37',runId:'initial',hypothesisId:'H1',location:'src/components/ErrorBoundary.tsx:24',message:'ErrorBoundary captured runtime exception',data:{name:error?.name,message:error?.message,componentStack:errorInfo?.componentStack?.slice(0,500)},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
+  public componentDidCatch(_error: Error, _errorInfo: ErrorInfo) {
+    // Error boundary: optionally send to error reporting service
   }
 
   public render() {

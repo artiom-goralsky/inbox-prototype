@@ -16,7 +16,7 @@ import React, {
   type ReactNode,
 } from 'react';
 import * as Collapsible from '@radix-ui/react-collapsible';
-import { BrainIcon, ChevronDownIcon } from 'lucide-react';
+import { ChevronDownIcon } from 'lucide-react';
 
 /* ── Context ──────────────────────────────────────────────────────── */
 interface ReasoningContextValue {
@@ -150,7 +150,17 @@ export const ReasoningTrigger = memo(({
     >
       {children ?? (
         <>
-          <BrainIcon className="w-4 h-4 shrink-0" />
+          <svg width="20" height="20" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" className="shrink-0" style={{ width: 20, height: 20 }}>
+            <circle cx="32" cy="32" r="4.8" fill="#3C53E7"><animate attributeName="opacity" values="1;0;1" dur="1.111s" begin="0s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0.05 0.55 0.95; 0.45 0.05 0.55 0.95"/></circle>
+            <circle cx="32" cy="14.08" r="4.8" fill="#3C53E7"><animate attributeName="opacity" values="1;0;1" dur="1.111s" begin="-0.123s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0.05 0.55 0.95; 0.45 0.05 0.55 0.95"/></circle>
+            <circle cx="44.67" cy="19.33" r="4.8" fill="#3C53E7"><animate attributeName="opacity" values="1;0;1" dur="1.111s" begin="-0.247s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0.05 0.55 0.95; 0.45 0.05 0.55 0.95"/></circle>
+            <circle cx="49.92" cy="32" r="4.8" fill="#3C53E7"><animate attributeName="opacity" values="1;0;1" dur="1.111s" begin="-0.370s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0.05 0.55 0.95; 0.45 0.05 0.55 0.95"/></circle>
+            <circle cx="44.67" cy="44.67" r="4.8" fill="#3C53E7"><animate attributeName="opacity" values="1;0;1" dur="1.111s" begin="-0.494s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0.05 0.55 0.95; 0.45 0.05 0.55 0.95"/></circle>
+            <circle cx="32" cy="49.92" r="4.8" fill="#3C53E7"><animate attributeName="opacity" values="1;0;1" dur="1.111s" begin="-0.617s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0.05 0.55 0.95; 0.45 0.05 0.55 0.95"/></circle>
+            <circle cx="19.33" cy="44.67" r="4.8" fill="#3C53E7"><animate attributeName="opacity" values="1;0;1" dur="1.111s" begin="-0.741s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0.05 0.55 0.95; 0.45 0.05 0.55 0.95"/></circle>
+            <circle cx="14.08" cy="32" r="4.8" fill="#3C53E7"><animate attributeName="opacity" values="1;0;1" dur="1.111s" begin="-0.864s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0.05 0.55 0.95; 0.45 0.05 0.55 0.95"/></circle>
+            <circle cx="19.33" cy="19.33" r="4.8" fill="#3C53E7"><animate attributeName="opacity" values="1;0;1" dur="1.111s" begin="-0.988s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0.05 0.55 0.95; 0.45 0.05 0.55 0.95"/></circle>
+          </svg>
           {getThinkingMessage(isStreaming, duration)}
           <ChevronDownIcon
             className={`w-4 h-4 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : 'rotate-0'}`}

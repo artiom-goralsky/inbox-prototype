@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Avatar } from '@circleco/compass/components/Avatar';
 import { Badge } from '@circleco/compass/components/Badge';
 import { EmojiIcon } from '@circleco/compass/components/EmojiIcon';
+import { IconButton } from '@circleco/compass/components/IconButton';
 import { Icon } from '@circleco/compass/components/Icon';
 import { Typography } from '@circleco/compass/components/Typography';
-import { CommunitySectionHeader } from '@/components/Community/CommunitySectionHeader';
+import { Divider } from '@circleco/compass/components/Divider';
 
 interface LeaderboardEntry {
   id: string;
@@ -26,6 +27,16 @@ interface Level {
 }
 
 const Leaderboard: React.FC = () => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const handler = () => setIsScrolled(el.scrollTop > 10);
+    el.addEventListener('scroll', handler, { passive: true });
+    return () => el.removeEventListener('scroll', handler);
+  }, []);
+
   const [activeFilter, setActiveFilter] = useState<
     '7 days' | '30 days' | 'All time'
   >('7 days');
@@ -231,21 +242,25 @@ const Leaderboard: React.FC = () => {
   };
 
   return (
-    <div className="bg-secondary w-full h-full flex flex-col items-center gap-6 px-6 py-0 overflow-auto">
-      {/* Header */}
-      <CommunitySectionHeader
-        title="Leaderboard"
-        actions={
-          <button type="button" className="h-9 w-9 rounded-xl border border-primary flex items-center justify-center hover:bg-hover transition-colors" aria-label="More options">
-            <Icon name="dot-menu" size="sm" />
-          </button>
-        }
-      />
-
+    <div className="flex-1 h-full flex flex-col bg-secondary overflow-hidden min-w-0">
+      {/* Sticky header */}
+      <div className={`shrink-0 bg-secondary z-10 transition-all duration-200 ${isScrolled ? 'border-b border-secondary' : 'pt-3'}`} style={{ transitionTimingFunction: 'cubic-bezier(0.23, 1, 0.32, 1)' }}>
+        <div className="max-w-[1280px] mx-auto px-9">
+          <div className={`flex items-center justify-between gap-3 transition-all duration-200 ${isScrolled ? 'py-3' : 'py-6'}`} style={{ transitionTimingFunction: 'cubic-bezier(0.23, 1, 0.32, 1)' }}>
+            <Typography variant={isScrolled ? 'heading-sm' : 'heading-xl'} color="primary">Leaderboard</Typography>
+            <div className="flex items-center gap-2">
+              <IconButton variant="outline" size="sm" icon="dot-menu" aria-label="More options" />
+            </div>
+          </div>
+        </div>
+        {isScrolled && <Divider orientation="horizontal" />}
+      </div>
+      <div ref={scrollRef} className="flex-1 overflow-y-auto">
+      <div className="flex flex-col items-center gap-6 px-9 pt-4 max-w-[1280px] mx-auto w-full">
       {/* Main Content */}
       <div className="flex flex-col gap-9 items-start max-w-[1280px] w-full">
         {/* Profile Progress Card */}
-        <div className="bg-primary rounded-2xl shadow-[0px_0px_0px_1px_rgba(0,0,0,0.04),0px_3px_12px_-4px_rgba(0,0,0,0.1),0px_4px_16px_-8px_rgba(0,0,0,0.1)] w-full p-6">
+        <div className="bg-primary rounded-2xl shadow-2xs w-full p-6">
           {/* Top Section: Avatar, Name & Points, Progress Bar */}
           <div className="flex items-start gap-6 mb-8">
             {/* Avatar */}
@@ -437,7 +452,7 @@ const Leaderboard: React.FC = () => {
           </div>
 
           {/* Leaderboard Entries */}
-          <div className="bg-primary flex flex-col gap-4 items-center justify-center overflow-hidden px-0 py-6 rounded-2xl shadow-[0px_0px_0px_1px_rgba(0,0,0,0.04),0px_3px_12px_-4px_rgba(0,0,0,0.1),0px_4px_16px_-8px_rgba(0,0,0,0.1)] w-full">
+          <div className="bg-primary flex flex-col gap-4 items-center justify-center overflow-hidden px-0 py-6 rounded-2xl shadow-2xs w-full">
             {leaderboardEntries.map((entry, index) => (
               <div
                 key={entry.id}
@@ -485,6 +500,8 @@ const Leaderboard: React.FC = () => {
             ))}
           </div>
         </div>
+      </div>
+      </div>
       </div>
     </div>
   );

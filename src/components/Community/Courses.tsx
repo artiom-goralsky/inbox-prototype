@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Badge } from '@circleco/compass/components/Badge';
+import { Button } from '@circleco/compass/components/Button';
+import { IconButton } from '@circleco/compass/components/IconButton';
 import { Icon } from '@circleco/compass/components/Icon';
 import { Typography } from '@circleco/compass/components/Typography';
-import { CommunitySectionHeader } from '@/components/Community/CommunitySectionHeader';
+import { Divider } from '@circleco/compass/components/Divider';
 
 interface Course {
   id: string;
@@ -20,6 +22,16 @@ interface Course {
 }
 
 const Courses: React.FC = () => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const handler = () => setIsScrolled(el.scrollTop > 10);
+    el.addEventListener('scroll', handler, { passive: true });
+    return () => el.removeEventListener('scroll', handler);
+  }, []);
+
   // Mock data for courses
   const courses: Course[] = [
     {
@@ -97,24 +109,25 @@ const Courses: React.FC = () => {
   };
 
   return (
-    <div className="bg-secondary w-full h-full flex flex-col items-center gap-6 px-6 py-0 overflow-auto">
-      {/* Header */}
-      <CommunitySectionHeader
-        title="Courses"
-        actions={
-          <>
-            <button type="button" className="h-9 px-4 text-sm font-medium border border-primary rounded-lg hover:bg-hover transition-colors">
-              Create a course
-            </button>
-            <button type="button" className="h-9 w-9 rounded-xl border border-primary flex items-center justify-center hover:bg-hover transition-colors" aria-label="More options">
-              <Icon name="dot-menu" size="sm" />
-            </button>
-          </>
-        }
-      />
+    <div className="flex-1 h-full flex flex-col bg-secondary overflow-hidden min-w-0">
+      {/* Sticky header */}
+      <div className={`shrink-0 bg-secondary z-10 transition-all duration-200 ${isScrolled ? 'border-b border-secondary' : 'pt-3'}`} style={{ transitionTimingFunction: 'cubic-bezier(0.23, 1, 0.32, 1)' }}>
+        <div className="max-w-[1280px] mx-auto px-9">
+          <div className={`flex items-center justify-between gap-3 transition-all duration-200 ${isScrolled ? 'py-3' : 'py-6'}`} style={{ transitionTimingFunction: 'cubic-bezier(0.23, 1, 0.32, 1)' }}>
+            <Typography variant={isScrolled ? 'heading-sm' : 'heading-xl'} color="primary">Courses</Typography>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm">Create a course</Button>
+              <IconButton variant="outline" size="sm" icon="dot-menu" aria-label="More options" />
+            </div>
+          </div>
+        </div>
+        {isScrolled && <Divider orientation="horizontal" />}
+      </div>
+      <div ref={scrollRef} className="flex-1 overflow-y-auto">
+      <div className="flex flex-col items-center gap-6 px-9 pt-4 max-w-[1280px] mx-auto w-full">
 
       {/* Cover Banner */}
-      <div className="bg-primary max-w-[1280px] overflow-hidden relative rounded-2xl shadow-[0px_0px_0px_1px_rgba(0,0,0,0.04),0px_3px_12px_-4px_rgba(0,0,0,0.1),0px_4px_16px_-8px_rgba(0,0,0,0.1)] w-full aspect-[894/254] max-h-[363.67px]">
+      <div className="bg-primary max-w-[1280px] overflow-hidden relative rounded-2xl shadow-2xs w-full aspect-[894/254] max-h-[363.67px]">
         {/* Background Image */}
         <img
           src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&h=600&fit=crop"
@@ -243,6 +256,8 @@ const Courses: React.FC = () => {
             </div>
           </div>
         ))}
+      </div>
+    </div>
       </div>
     </div>
   );

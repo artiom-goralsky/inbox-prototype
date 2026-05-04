@@ -19,7 +19,7 @@ const MINE_CATEGORIES: { id: V1_5Category; label: string; iconType: 'avatar' | '
 ];
 
 const SHARED_CATEGORIES: { id: V1_5Category; label: string; iconType: 'icon'; iconName: string }[] = [
-  { id: 'moderation' as V1_5Category, label: 'Moderation', iconType: 'icon' as const, iconName: 'compass' },
+  { id: 'moderation' as V1_5Category, label: 'Moderation', iconType: 'icon' as const, iconName: 'flag' },
   { id: 'course-comments' as V1_5Category, label: 'Course comments', iconType: 'icon' as const, iconName: 'graduate-cap' },
   { id: 'ai-inbox' as V1_5Category, label: 'AI Inbox', iconType: 'icon' as const, iconName: 'ai-box' },
 ];
@@ -34,7 +34,7 @@ const CategoryPanelV1_5: React.FC<CategoryPanelV1_5Props> = ({ activeCategory, o
       }`}
     >
       {item.iconType === 'avatar' ? (
-        <Avatar name="Admin" size="xxs" />
+        <Avatar src="/images/avatars/1.png" name="Rudy" size="xxs" />
       ) : (
         <Icon name={item.iconName as any} size="sm" />
       )}

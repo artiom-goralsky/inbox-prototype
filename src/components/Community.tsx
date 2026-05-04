@@ -443,10 +443,10 @@ const Community: React.FC<CommunityProps> = ({
         {/* Content Area */}
         <div
           className={[
-            'flex-1 flex overflow-hidden relative transition-[transform,opacity] duration-200',
+            'flex-1 flex overflow-hidden relative transition-opacity duration-200',
             isCommunityContentExiting
-              ? 'opacity-0 translate-y-2'
-              : 'opacity-100 translate-y-0',
+              ? 'opacity-0'
+              : 'opacity-100',
           ].join(' ')}
         >
           {/* Left Sidebar - Only for Home (Figma dizajn, Compass ikone) */}

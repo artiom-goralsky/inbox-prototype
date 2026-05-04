@@ -159,7 +159,7 @@ const LibraryCard: React.FC<LibraryCardProps> = ({ item, selected, onClick }) =>
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           icon={badge.icon as any}
           label={badge.label}
-          className="w-fit self-start"
+          className="self-start"
         />
         <Typography variant="label-md" color="primary">
           <span className="line-clamp-2">{item.title}</span>
@@ -207,7 +207,7 @@ const LibraryRow: React.FC<LibraryRowProps> = ({ item, selected, onClick }) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         icon={badge.icon as any}
         label={badge.label}
-        className="shrink-0 w-fit"
+        className="shrink-0"
       />
       <div className="flex-1 min-w-0">
         <Typography variant="label-md" color="primary">
@@ -270,7 +270,7 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ onItemClick, onItemClose, sel
             tabs={TABS}
             selectedValue={activeTab}
             onValueChange={setActiveTab}
-            className="flex-1 min-w-0"
+            className="flex-1"
           >
             <></>
           </Tabs.Root>

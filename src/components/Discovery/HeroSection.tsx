@@ -24,7 +24,10 @@ const HeroSection: React.FC = () => {
 
       {/* Search Bar */}
       <div className="max-w-md mx-auto">
-        <TextInput placeholder="Search" icon="magnifying-glass" />
+        <TextInput
+          placeholder="Search"
+          icon="magnifying-glass"
+        />
       </div>
     </div>
   );

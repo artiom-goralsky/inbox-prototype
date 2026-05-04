@@ -1,4 +1,4 @@
-import { getFirstThreadId as _getFirstThreadId } from '../v1/v1MockData';
+import { getFirstThreadId as _getFirstThreadId, type V1MessageGroup as _V1MessageGroup } from '../v1/v1MockData';
 
 // Re-export everything needed from v1
 export {
@@ -47,11 +47,12 @@ export interface ChatThreadItem {
   isPrivate?: boolean;
   parentPreview: string;
   lastReply: string;
+  lastReplyAuthor?: string;
   time: string;
   unread?: boolean;
   hasReplied?: boolean;
   avatarName: string;
-  priority?: 'high' | 'medium' | 'low';
+  priority?: 'attention' | 'routine';
 }
 
 export interface ChatThreadMessage {
@@ -81,9 +82,10 @@ export const CHAT_THREAD_ITEMS: ChatThreadItem[] = [
     channelLabel: 'Golden hour',
     parentPreview: "Finally got the warm tones right on this series \u2014 any tips for pushing the orange without losing skin detail?",
     lastReply: 'Try masking the skin separately with a radial filter, temp shifted 200K cooler.',
+    lastReplyAuthor: 'Amy Torres',
     time: '9:45',
-    avatarName: 'Maya Rodriguez',
-    priority: 'high',
+    avatarName: 'Amy Torres',
+    priority: 'attention',
   },
   {
     id: 'ct-2',
@@ -93,9 +95,10 @@ export const CHAT_THREAD_ITEMS: ChatThreadItem[] = [
     channelLabel: 'Gear marketplace',
     parentPreview: "Selling my barely-used 50mm f/1.4 \u2014 moving to the 35mm for street work. Priced below market, DM me.",
     lastReply: "I'll take it \u2014 sending a DM now. Can you post the serial for the marketplace log?",
+    lastReplyAuthor: 'James Liu',
     time: '9:45',
-    avatarName: 'Kenji Tanaka',
-    priority: 'medium',
+    avatarName: 'James Liu',
+    priority: 'attention',
   },
   {
     id: 'ct-3',
@@ -105,9 +108,10 @@ export const CHAT_THREAD_ITEMS: ChatThreadItem[] = [
     channelLabel: 'Welcome',
     parentPreview: "Hey everyone! Just joined Cohort 5 \u2014 excited to finally start Photography Masterclass.",
     lastReply: 'Welcome! Cohort 5 starts May 6, so you have a couple weeks to warm up on Lessons 1\u20132.',
+    lastReplyAuthor: 'Rudy Santino',
     time: '9:45',
-    avatarName: 'Emily Park',
-    priority: 'medium',
+    avatarName: 'Rudy Santino',
+    priority: 'attention',
   },
   {
     id: 'ct-4',
@@ -117,9 +121,10 @@ export const CHAT_THREAD_ITEMS: ChatThreadItem[] = [
     channelLabel: 'Announcements',
     parentPreview: "Cohort 5 kickoff is May 6 at 7pm EST. Topic: 'Seeing like a photographer.'",
     lastReply: "Can't wait! Adding to my calendar now.",
+    lastReplyAuthor: 'Maya Rodriguez',
     time: '9:45',
-    avatarName: 'Rudy Santino',
-    priority: 'low',
+    avatarName: 'Maya Rodriguez',
+    priority: 'routine',
   },
   {
     id: 'ct-5',
@@ -127,9 +132,10 @@ export const CHAT_THREAD_ITEMS: ChatThreadItem[] = [
     channelLabel: 'DM',
     parentPreview: 'Sarah, could you take a look at my portrait series when you have a sec?',
     lastReply: "Of course! Send them whenever. Happy to chime in here or in critique circle \u2014 your call.",
+    lastReplyAuthor: 'Sarah Chen',
     time: '9:45',
-    avatarName: 'Amy Torres',
-    priority: 'low',
+    avatarName: 'Sarah Chen',
+    priority: 'routine',
   },
   {
     id: 'ct-6',
@@ -139,9 +145,10 @@ export const CHAT_THREAD_ITEMS: ChatThreadItem[] = [
     channelName: '#community-events',
     parentPreview: "Anyone up for a Lightroom sync session this Saturday? Thinking 2pm EST for ~90 min.",
     lastReply: 'Count me in too.',
+    lastReplyAuthor: 'Nina Patel',
     time: '9:45',
-    avatarName: 'Priya Sharma',
-    priority: 'medium',
+    avatarName: 'Nina Patel',
+    priority: 'attention',
   },
   {
     id: 'ct-7',
@@ -149,9 +156,10 @@ export const CHAT_THREAD_ITEMS: ChatThreadItem[] = [
     channelLabel: 'DM',
     parentPreview: 'Sarah, the iOS 18 autoplay bug \u2014 any update from engineering?',
     lastReply: "Checking now. I'll ping you when I hear back.",
+    lastReplyAuthor: 'Sarah Chen',
     time: '9:45',
-    avatarName: 'Nina Patel',
-    priority: 'low',
+    avatarName: 'Sarah Chen',
+    priority: 'routine',
   },
   {
     id: 'ct-8',
@@ -161,9 +169,10 @@ export const CHAT_THREAD_ITEMS: ChatThreadItem[] = [
     channelName: '#critique-circle',
     parentPreview: 'First attempt at indoor action \u2014 kids basketball at 1/250. Feedback welcome!',
     lastReply: 'Great first attempt! The motion blur on the ball actually adds energy.',
+    lastReplyAuthor: 'Amy Torres',
     time: '9:45',
-    avatarName: 'James Liu',
-    priority: 'low',
+    avatarName: 'Amy Torres',
+    priority: 'routine',
   },
   {
     id: 'ct-9',
@@ -173,9 +182,10 @@ export const CHAT_THREAD_ITEMS: ChatThreadItem[] = [
     channelName: '#questions',
     parentPreview: "Canon R50 \u2014 should I start with aperture priority or jump into manual?",
     lastReply: "Start with Av (aperture priority). Manual will make sense after Lesson 2.",
+    lastReplyAuthor: 'David Kim',
     time: '9:45',
-    avatarName: 'Tom Brown',
-    priority: 'medium',
+    avatarName: 'David Kim',
+    priority: 'attention',
   },
   {
     id: 'ct-10',
@@ -185,9 +195,10 @@ export const CHAT_THREAD_ITEMS: ChatThreadItem[] = [
     channelName: '#general',
     parentPreview: 'Loved the latest critique circle session. The community here is something special.',
     lastReply: "Agreed \u2014 best photography community I've been part of.",
+    lastReplyAuthor: 'Priya Sharma',
     time: '9:45',
-    avatarName: 'David Kim',
-    priority: 'low',
+    avatarName: 'Priya Sharma',
+    priority: 'routine',
   },
 ];
 
@@ -336,7 +347,7 @@ export interface ConnectionRequestItem {
   roleDetail?: string;
   message?: string;
   time: string;
-  priority?: 'high' | 'medium' | 'low';
+  priority?: 'attention' | 'routine';
 }
 
 export interface ConnectionRequestProfile {
@@ -362,7 +373,7 @@ export const CONNECTION_REQUEST_ITEMS: ConnectionRequestItem[] = [
     roleDetail: 'PM at Flux',
     message: "Hi Sarah, I've been lurking in critique circle for weeks \u2014 your community is doing great work. Would love to connect. I'm a PM at Flux, photography is my side obsession.",
     time: '9:45',
-    priority: 'medium',
+    priority: 'attention',
   },
   {
     id: 'cr-2',
@@ -371,7 +382,7 @@ export const CONNECTION_REQUEST_ITEMS: ConnectionRequestItem[] = [
     roleDetail: 'Product lead at Flux',
     message: "Hello Sarah, product lead at Flux here. I've appreciated the community's critiques on my landscape work. Let's connect.",
     time: '9:45',
-    priority: 'low',
+    priority: 'routine',
   },
   {
     id: 'cr-3',
@@ -380,7 +391,7 @@ export const CONNECTION_REQUEST_ITEMS: ConnectionRequestItem[] = [
     roleDetail: 'UX designer at Flux',
     message: "Hi Sarah, UX designer at Flux. Your community's visual-feedback culture has been inspiring \u2014 would love to be in your circle.",
     time: '9:45',
-    priority: 'medium',
+    priority: 'attention',
   },
   {
     id: 'cr-4',
@@ -388,7 +399,7 @@ export const CONNECTION_REQUEST_ITEMS: ConnectionRequestItem[] = [
     role: 'Software engineer',
     roleDetail: 'Senior SWE at Flux',
     time: '9:45',
-    priority: 'low',
+    priority: 'routine',
   },
 ];
 
@@ -461,6 +472,73 @@ export const CONNECTION_REQUEST_PROFILES: Record<string, ConnectionRequestProfil
     comments: 3,
     spaces: 1,
   },
+};
+
+// Prior DM history that exists for some connection requesters. Used by the
+// connection-request conversation preview to render messages under the banner.
+// Keyed by ConnectionRequestItem.id. Absent IDs have no prior conversation.
+export const CONNECTION_REQUEST_CONVERSATIONS: Record<string, _V1MessageGroup[]> = {
+  'cr-1': [
+    {
+      label: 'Yesterday',
+      messages: [
+        {
+          id: 'cr-1-msg-1',
+          senderName: 'Leslie Alexander',
+          text: 'Quick question about the Friday photo critique session — are members able to upload RAW files, or just JPEG?',
+          time: '4:12 PM',
+        },
+        {
+          id: 'cr-1-msg-2',
+          senderName: 'You',
+          text: "JPEG only for now — RAWs were blowing up the upload limit. We're looking at adding a Pro tier that lifts the cap.",
+          time: '4:18 PM',
+        },
+        {
+          id: 'cr-1-msg-3',
+          senderName: 'Leslie Alexander',
+          text: "Makes sense. I'd happily pay for Pro if it lands. Mind if I send a connection request so I can DM you when I have feedback?",
+          time: '4:21 PM',
+        },
+      ],
+    },
+  ],
+  'cr-3': [
+    {
+      label: 'Yesterday',
+      messages: [
+        {
+          id: 'cr-3-msg-1',
+          senderName: 'Paula Mora',
+          text: "Hi Sarah! Saw your post in #design-systems — your component scaling approach is exactly what I'm trying to figure out at Flux.",
+          time: '11:02 AM',
+        },
+        {
+          id: 'cr-3-msg-2',
+          senderName: 'You',
+          text: 'Thanks Paula! Happy to dig in — the trickiest part has been keeping token semantics consistent across product surfaces.',
+          time: '11:24 AM',
+        },
+        {
+          id: 'cr-3-msg-3',
+          senderName: 'Paula Mora',
+          text: "That's exactly where we keep getting stuck. Would love to compare notes properly.",
+          time: '11:28 AM',
+        },
+      ],
+    },
+    {
+      label: 'Today',
+      messages: [
+        {
+          id: 'cr-3-msg-4',
+          senderName: 'Paula Mora',
+          text: "Just sent a connection request — figured we'd keep this thread going somewhere more permanent.",
+          time: '9:42 AM',
+        },
+      ],
+    },
+  ],
 };
 
 // ---------- Helpers ----------

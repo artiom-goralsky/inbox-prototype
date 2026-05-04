@@ -13,6 +13,19 @@ export interface ChatItem {
 
 export const CHAT_DATA: ChatItem[] = [
   {
+    id: '0',
+    date: 'Today',
+    title: 'Copilot conversation improvements',
+    description: 'Explored ways to improve Copilot response quality, conversation flow, and context retention across multi-turn interactions.',
+    messages: [
+      { role: 'user', content: 'What are some ways we could improve the Copilot conversation experience?' },
+      {
+        role: 'assistant',
+        content: "A few high-impact areas to focus on:\n\n**Context retention**: Right now each conversation resets fully. Persisting key facts across sessions — member names, recurring topics, past decisions — would make follow-ups feel much more natural.\n\n**Proactive suggestions**: Instead of waiting to be asked, Copilot could surface relevant actions at the right moment. For example, flagging at-risk members before the user asks, or suggesting a campaign when engagement drops.\n\n**Response formatting**: Shorter, scannable responses for quick questions; detailed breakdowns only when complexity warrants it. The current default leans too long for simple queries.\n\n**Tone calibration**: Letting users set a preferred communication style (direct, conversational, detailed) that persists across sessions.\n\nWant me to prioritize these and draft a quick implementation plan?",
+      },
+    ],
+  },
+  {
     id: '1',
     date: 'Today',
     title: 'Weekly new member onboarding report',
@@ -107,6 +120,18 @@ export const CHAT_DATA: ChatItem[] = [
       {
         role: 'assistant',
         content: "Done. Spaces consolidated and archived. Navigation reordered with General Discussion, Weekly Check-ins, and Resource Library at the top. Your sidebar is now 7 spaces across 3 categories.\n\nOne thing I noticed while making the changes: the \"Getting Started\" space has a pinned welcome post from March last year. It still references your old onboarding flow. Worth refreshing that soon.",
+      },
+    ],
+  },
+  {
+    id: '10',
+    date: 'Today',
+    title: 'New conversation',
+    description: '',
+    messages: [
+      {
+        role: 'assistant',
+        content: "Hey! I'm Circle AI. I have full visibility into your community — member activity, onboarding, content, and revenue. What would you like to work on?",
       },
     ],
   },

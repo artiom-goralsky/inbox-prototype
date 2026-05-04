@@ -184,8 +184,8 @@ const AIInboxCenterPanelV1: React.FC<AIInboxCenterPanelV1Props> = ({ selectedId,
                     onChange={(e) => { setComposerText(e.target.value); if (!e.target.value) setComposerAiDraft(false); }}
                     onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                     placeholder={`Message ${memberName}`}
-                    className="w-full px-4 py-3 text-sm resize-none outline-none bg-transparent min-h-[80px] max-h-[120px] overflow-y-auto"
-                    rows={3}
+                    className="w-full px-4 py-3 text-sm leading-5 resize-none outline-none bg-transparent min-h-[20px]"
+                    rows={1}
                   />
                   <div className="flex items-center justify-end p-2">
                     <IconButton icon="arrow-up" size="md" variant="secondary" aria-label="Send" onClick={handleSend} />

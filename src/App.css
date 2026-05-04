@@ -34,6 +34,37 @@
   overflow: hidden;
 }
 
+/* Copilot breadcrumb — single-line truncation */
+.copilot-breadcrumb nav,
+.copilot-breadcrumb ol {
+  overflow: hidden;
+  min-width: 0;
+}
+.copilot-breadcrumb ol {
+  flex-wrap: nowrap;
+}
+.copilot-breadcrumb li {
+  overflow: hidden;
+  min-width: 0;
+  flex-shrink: 1;
+}
+.copilot-breadcrumb li a,
+.copilot-breadcrumb li > span[aria-current] {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.copilot-breadcrumb li a > span,
+.copilot-breadcrumb li > span[aria-current] > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.copilot-breadcrumb li svg {
+  flex-shrink: 0;
+}
+
 /* Custom scrollbar styles */
 ::-webkit-scrollbar {
   width: 6px;
@@ -62,7 +93,7 @@
 /* Animation utilities */
 @keyframes slideInFromLeft {
   from {
-    transform: translateX(-16px);
+    transform: translateX(-8px);
     opacity: 0;
   }
   to {
@@ -124,7 +155,7 @@ textarea:focus {
 /* Slide-in animations for content */
 @keyframes slideInFromTop {
   from {
-    transform: translateY(-12px);
+    transform: translateY(-8px);
     opacity: 0;
   }
   to {
@@ -135,7 +166,7 @@ textarea:focus {
 
 @keyframes slideInFromBottom {
   from {
-    transform: translateY(12px);
+    transform: translateY(8px);
     opacity: 0;
   }
   to {
@@ -175,7 +206,7 @@ textarea:focus {
     opacity: 1;
   }
   to {
-    transform: translateY(-12px);
+    transform: translateY(-8px);
     opacity: 0;
   }
 }
@@ -186,7 +217,7 @@ textarea:focus {
     opacity: 1;
   }
   to {
-    transform: translateY(12px);
+    transform: translateY(8px);
     opacity: 0;
   }
 }
@@ -206,7 +237,7 @@ textarea:focus {
 /* First Level Navigation Content Animations */
 @keyframes slideUp {
   from {
-    transform: translateY(-16px);
+    transform: translateY(-8px);
     opacity: 0;
   }
   to {
@@ -217,7 +248,7 @@ textarea:focus {
 
 @keyframes slideDown {
   from {
-    transform: translateY(16px);
+    transform: translateY(8px);
     opacity: 0;
   }
   to {

@@ -2,9 +2,19 @@ import React, { useState } from 'react';
 import ContentContainer from '../ContentContainer/ContentContainer';
 import { Button } from '@circleco/compass/components/Button';
 import { Icon } from '@circleco/compass/components/Icon';
+import AnalyticsTableCard, { type AnalyticsTableCardRow } from './AnalyticsTableCard';
+import PopularDayTimeChart from './PopularDayTimeChart';
+import LineAreaChart from './LineAreaChart';
+
+interface AnalyticsContext {
+  id: string;
+  title: string;
+  subtitle?: string;
+}
 
 interface AnalyticsOverviewProps {
   onToggleSidebar: () => void;
+  context?: AnalyticsContext | null;
 }
 
 /* ── Design tokens ────────────────────────────────────────────────────── */
@@ -20,6 +30,38 @@ const CARDS_ROW1 = [
   { label: 'Active members',  period: '30d', value: '2,817', trend: '+2.8%', up: true  },
   { label: 'New members',     period: '30d', value: '1,126', trend: '+2.8%', up: true  },
   { label: 'Retention rate',  period: '30d', value: '94%',   trend: '-2.8%', up: false },
+];
+
+/* ── Onboarding-specific data ─────────────────────────────────────────── */
+const ONBOARDING_CARDS_ROW1 = [
+  { label: 'Members started',    period: '7d', value: '1,126', trend: '+5.3%', up: true  },
+  { label: 'Members completed',  period: '7d', value: '847',   trend: '+8.1%', up: true  },
+  { label: 'Completion rate',    period: '7d', value: '75.2%', trend: '+1.4%', up: true  },
+];
+const ONBOARDING_CARDS_ROW2 = [
+  { label: 'Drop-off rate',      period: '7d', value: '24.8%', trend: '-1.4%', up: true  },
+  { label: 'Avg. time to complete', period: '7d', value: '3.2d', trend: '-0.6d', up: true },
+  { label: 'Re-engaged',         period: '7d', value: '163',   trend: '+8.2%', up: true  },
+];
+
+const ONBOARDING_MEMBERS_ROWS: AnalyticsTableCardRow[] = [
+  { avatar: '/images/avatars/1.png', name: 'Lieve Carter',   subtitle: 'Completed · 2.1d',  score: 10, scoreMax: 10, trend: '100%',  trendUp: true  },
+  { avatar: '/images/avatars/2.png', name: 'Roger Culhane',  subtitle: 'Completed · 1.8d',  score: 10, scoreMax: 10, trend: '100%',  trendUp: true  },
+  { avatar: '/images/avatars/3.png', name: 'Alena George',   subtitle: 'Completed · 3.4d',  score: 10, scoreMax: 10, trend: '100%',  trendUp: true  },
+  { avatar: '/images/avatars/4.png', name: 'Zaire Stanton',  subtitle: 'Completed · 4.1d',  score: 9,  scoreMax: 10, trend: '+4.2%', trendUp: true  },
+  { avatar: '/images/avatars/5.png', name: 'Alfredo Reyes',  subtitle: 'In progress · step 4', score: 6, scoreMax: 10, trend: '60%', trendUp: true  },
+  { avatar: '/images/avatars/6.png', name: 'Omar Herwitz',   subtitle: 'Dropped off · step 2', score: 3, scoreMax: 10, trend: '30%', trendUp: false },
+  { avatar: '/images/avatars/7.png', name: 'Phillip Rosser', subtitle: 'Dropped off · step 1', score: 1, scoreMax: 10, trend: '10%', trendUp: false },
+];
+
+const ONBOARDING_DROPOFF_ROWS: AnalyticsTableCardRow[] = [
+  { name: 'Step 1 · Welcome & profile setup',       subtitle: '1,126 started',   score: 9, scoreMax: 10, trend: '95.1%', trendUp: true  },
+  { name: 'Step 2 · Join your first space',          subtitle: '1,071 reached',   score: 8, scoreMax: 10, trend: '88.3%', trendUp: true  },
+  { name: 'Step 3 · Introduce yourself',             subtitle: '946 reached',     score: 7, scoreMax: 10, trend: '79.2%', trendUp: true  },
+  { name: 'Step 4 · Complete goals survey',          subtitle: '847 reached',     score: 5, scoreMax: 10, trend: '75.2%', trendUp: false },
+  { name: 'Step 5 · Connect with a member',          subtitle: '712 reached',     score: 4, scoreMax: 10, trend: '63.2%', trendUp: false },
+  { name: 'Step 6 · First post or comment',          subtitle: '589 reached',     score: 3, scoreMax: 10, trend: '52.3%', trendUp: false },
+  { name: 'Step 7 · Onboarding complete',            subtitle: '847 completed',   score: 8, scoreMax: 10, trend: '75.2%', trendUp: true  },
 ];
 const CARDS_ROW2 = [
   { label: 'Posts created',   period: '30d', value: '483',   trend: '+5.1%', up: true  },
@@ -54,6 +96,26 @@ const POPULAR_MEMBERS = [
   { name: 'Chris Martinez',  likes: 39,  comments: 121, score: 5, scoreMax: 10, trend: '+2.4%' },
   { name: 'Sarah Thompson',  likes: 31,  comments: 98,  score: 4, scoreMax: 10, trend: '-0.5%' },
   { name: 'David Brown',     likes: 22,  comments: 77,  score: 3, scoreMax: 10, trend: '-1.1%' },
+];
+
+const TOP_CONTENT_ROWS: AnalyticsTableCardRow[] = [
+  { name: 'Getting Started: Your Community Guide', subtitle: 'General Discussion', score: 9, scoreMax: 10, trend: '+8.2%', trendUp: true },
+  { name: 'Weekly Check-in: Goals & Wins',         subtitle: 'General Discussion', score: 7, scoreMax: 10, trend: '+3.5%', trendUp: true },
+  { name: 'Introducing the Resource Library',      subtitle: 'Resources',          score: 7, scoreMax: 10, trend: '+5.1%', trendUp: true },
+  { name: 'AMA: Building Your First Product',      subtitle: 'Events',             score: 6, scoreMax: 10, trend: '+1.9%', trendUp: true },
+  { name: 'Member Spotlight: March 2024',          subtitle: 'Announcements',      score: 5, scoreMax: 10, trend: '+0.7%', trendUp: true },
+  { name: 'Course Kickoff: Module 1 Intro',        subtitle: 'Course: Getting Started', score: 4, scoreMax: 10, trend: '-0.3%', trendUp: false },
+  { name: 'Community Guidelines & Values',         subtitle: 'Announcements',      score: 3, scoreMax: 10, trend: '-1.1%', trendUp: false },
+];
+
+const POST_STARTERS_ROWS: AnalyticsTableCardRow[] = [
+  { avatar: '/images/avatars/1.png', name: 'Lieve Carter',   subtitle: 'lieve.c@mail.com',   score: 5, scoreMax: 10, trend: '+2.8%', trendUp: true },
+  { avatar: '/images/avatars/2.png', name: 'Roger Culhane',  subtitle: 'roger.c@mail.com',   score: 5, scoreMax: 10, trend: '+2.8%', trendUp: true },
+  { avatar: '/images/avatars/3.png', name: 'Alena George',   subtitle: 'alena.g@mail.com',   score: 5, scoreMax: 10, trend: '+2.8%', trendUp: true },
+  { avatar: '/images/avatars/4.png', name: 'Zaire Stanton',  subtitle: 'zaire.s@mail.com',   score: 5, scoreMax: 10, trend: '+2.8%', trendUp: true },
+  { avatar: '/images/avatars/5.png', name: 'Alfredo Reyes',  subtitle: 'alfredo.r@mail.com', score: 4, scoreMax: 10, trend: '+0.5%', trendUp: true },
+  { avatar: '/images/avatars/6.png', name: 'Omar Herwitz',   subtitle: 'omar.h@mail.com',    score: 3, scoreMax: 10, trend: '-0.8%', trendUp: false },
+  { avatar: '/images/avatars/7.png', name: 'Phillip Rosser', subtitle: 'phillip.r@mail.com', score: 2, scoreMax: 10, trend: '-1.5%', trendUp: false },
 ];
 
 /* ── FilterBar ────────────────────────────────────────────────────────── */
@@ -308,7 +370,11 @@ function AnalyticsTable({ title, period, rows }: { title: string; period: string
 }
 
 /* ── Main ─────────────────────────────────────────────────────────────── */
-const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({ onToggleSidebar }) => {
+const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({ onToggleSidebar, context }) => {
+  const isOnboarding = context?.id === 'onboarding';
+  const cardsRow1 = isOnboarding ? ONBOARDING_CARDS_ROW1 : CARDS_ROW1;
+  const cardsRow2 = isOnboarding ? ONBOARDING_CARDS_ROW2 : CARDS_ROW2;
+
   return (
     <ContentContainer
       title="Overview"
@@ -324,31 +390,71 @@ const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({ onToggleSidebar }
 
         {/* Number cards row 1 */}
         <div className="flex gap-6">
-          {CARDS_ROW1.map(c => <NumberCard key={c.label} {...c} />)}
+          {cardsRow1.map(c => <NumberCard key={c.label} {...c} />)}
         </div>
 
         {/* Number cards row 2 */}
         <div className="flex gap-6">
-          {CARDS_ROW2.map(c => <NumberCard key={c.label} {...c} />)}
+          {cardsRow2.map(c => <NumberCard key={c.label} {...c} />)}
         </div>
 
         {/* Bar charts */}
-        <BarChart title="Bar chart standard" period="30d" />
-        <BarChart title="Member engagement" period="30d" />
-        <BarChart title="Content activity" period="30d" />
-        <BarChart title="Community growth" period="90d" />
-        <BarChart title="Space performance" period="30d" />
+        <BarChart title={isOnboarding ? 'Onboarding completion by step' : 'Bar chart standard'} period={isOnboarding ? '7d' : '30d'} />
+        {!isOnboarding && <PopularDayTimeChart />}
+        <LineAreaChart title={isOnboarding ? 'Weekly onboarding completions' : 'Monthly active members'} period={isOnboarding ? '7d' : '30d'} />
+        <LineAreaChart
+          title={isOnboarding ? 'Weekly new members started' : 'Monthly new members'}
+          period={isOnboarding ? '7d' : '30d'}
+          series={[
+            {
+              label: 'Oct 28 – Dec 28',
+              color: '#3b82f6',
+              fill: true,
+              dashed: false,
+              data: [1.2, 0.9, 2.1, 1.8, 3.0, 2.4, 1.1, 2.8, 2.6, 1.3, 1.5, 0.8, 3.4,
+                     2.9, 2.2, 2.5, 1.2, 1.4, 1.1, 1.6, 3.1, 2.3, 1.9, 1.4, 0.9, 1.3,
+                     2.7, 2.4, 0.8, 1.1, 3.2, 3.3, 1.0, 1.2, 3.5],
+            },
+            {
+              label: 'Sep 28 – Oct 28',
+              color: '#93c5fd',
+              fill: false,
+              dashed: true,
+              data: [0.8, 0.6, 1.2, 1.0, 1.9, 1.5, 0.7, 1.7, 1.6, 0.8, 0.9, 0.5, 2.1,
+                     1.8, 1.4, 1.6, 0.7, 0.9, 0.7, 1.0, 1.9, 1.4, 1.2, 0.9, 0.5, 0.8,
+                     1.7, 1.5, 0.5, 0.7, 2.0, 2.1, 0.6, 0.7, 2.2],
+            },
+          ]}
+          yMax={4}
+          yStep={1}
+        />
 
         {/* Tables row 1 */}
-        <div className="flex gap-6">
-          <AnalyticsTable title="Popular spaces"  period="30d" rows={POPULAR_SPACES} />
-          <AnalyticsTable title="Popular members" period="30d" rows={POPULAR_MEMBERS} />
-        </div>
+        {!isOnboarding && (
+          <div className="flex gap-6">
+            <AnalyticsTable title="Popular spaces"  period="30d" rows={POPULAR_SPACES} />
+            <AnalyticsTable title="Popular members" period="30d" rows={POPULAR_MEMBERS} />
+          </div>
+        )}
 
         {/* Tables row 2 */}
         <div className="flex gap-6">
-          <AnalyticsTable title="Top content"     period="30d" rows={POPULAR_SPACES.slice().reverse()} />
-          <AnalyticsTable title="Active courses"  period="30d" rows={POPULAR_MEMBERS.slice().reverse()} />
+          <AnalyticsTableCard
+            title={isOnboarding ? 'Members completing onboarding' : 'Top content'}
+            period={isOnboarding ? '7d' : '30d'}
+            nameLabel={isOnboarding ? 'Member' : 'Name'}
+            scoreLabel={isOnboarding ? 'Progress' : 'Score'}
+            rows={isOnboarding ? ONBOARDING_MEMBERS_ROWS : TOP_CONTENT_ROWS}
+            total={isOnboarding ? 1126 : 21}
+          />
+          <AnalyticsTableCard
+            title={isOnboarding ? 'Drop-off analysis by step' : 'Post starters'}
+            period={isOnboarding ? '7d' : '30d'}
+            nameLabel={isOnboarding ? 'Step' : 'Member'}
+            scoreLabel={isOnboarding ? 'Completion' : 'Posts'}
+            rows={isOnboarding ? ONBOARDING_DROPOFF_ROWS : POST_STARTERS_ROWS}
+            total={isOnboarding ? 7 : 21}
+          />
         </div>
 
         <div className="pb-6" />

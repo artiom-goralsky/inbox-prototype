@@ -1,11 +1,15 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import CategoryPanelV1 from './CategoryPanelV1';
 import ThreadListV1 from './ThreadListV1';
 import CenterPanelV1 from './CenterPanelV1';
 import NewMessagePanelV1 from './NewMessagePanelV1';
 import ProfilePanelV1 from './ProfilePanelV1';
 import ModerationSettingsModal from './ModerationSettingsModal';
+import SupportCategory from './SupportCategory/SupportCategory';
+import { mockSupportThreads, type SupportNewVariant, type SupportPrefill } from './SupportCategory/data/supportThreads';
 import { getFirstThreadId, getProfileData, DM_THREADS, type V1Category, type ProfileData, type V1ThreadItem } from './v1MockData';
+
+type V1CategoryOrSupport = V1Category | 'support';
 
 const MIN_PANEL_WIDTH = 160;
 const MAX_PANEL_WIDTH = 440;
@@ -15,7 +19,7 @@ interface InboxV1Props {
 }
 
 const InboxV1: React.FC<InboxV1Props> = ({ onVersionChange }) => {
-  const [activeCategory, setActiveCategory] = useState<V1Category>('dms');
+  const [activeCategory, setActiveCategory] = useState<V1CategoryOrSupport>('dms');
   const [selectedThreadId, setSelectedThreadId] = useState<string>('dm-3');
   const [panelWidth, setPanelWidth] = useState(364);
 
@@ -23,6 +27,17 @@ const InboxV1: React.FC<InboxV1Props> = ({ onVersionChange }) => {
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [showModSettings, setShowModSettings] = useState(false);
   const [showNewMessage, setShowNewMessage] = useState(false);
+  const [supportPrefill, setSupportPrefill] = useState<SupportPrefill | null>(null);
+  const [supportVariant, setSupportVariant] = useState<SupportNewVariant | null>(null);
+  const [supportLiveChatFirstMessage, setSupportLiveChatFirstMessage] = useState<string | null>(null);
+  const [supportSelectedThreadId, setSupportSelectedThreadId] = useState<string | null>(null);
+
+  // Support badge: count of new_reply threads in initial mock (no live mutation feedback to nav,
+  // matches spec — count is read once for visual cue).
+  const supportBadgeCount = useMemo(
+    () => mockSupportThreads.filter(t => t.state === 'new_reply').length,
+    [],
+  );
 
   const isDragging = useRef(false);
   const startX = useRef(0);
@@ -34,6 +49,32 @@ const InboxV1: React.FC<InboxV1Props> = ({ onVersionChange }) => {
     setShowProfile(false);
     setShowNewMessage(false);
   };
+
+  const handleSupportClick = useCallback(() => {
+    setActiveCategory('support');
+    setShowProfile(false);
+    setShowNewMessage(false);
+  }, []);
+
+  // Listen for an external 'open-support' event so other surfaces (e.g. the Copilot
+  // clarification widget) can route into Support. Detail shape:
+  //   { variant?: 'email'; prefill?: SupportPrefill; liveChatFirstMessage?: string; threadId?: string }
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as
+        | { variant?: SupportNewVariant | 'live_chat'; prefill?: SupportPrefill; liveChatFirstMessage?: string; threadId?: string }
+        | undefined;
+      setActiveCategory('support');
+      setShowProfile(false);
+      setShowNewMessage(false);
+      if (detail?.variant === 'email') setSupportVariant('email');
+      if (detail?.prefill) setSupportPrefill(detail.prefill);
+      if (detail?.liveChatFirstMessage) setSupportLiveChatFirstMessage(detail.liveChatFirstMessage);
+      if (detail?.threadId) setSupportSelectedThreadId(detail.threadId);
+    };
+    window.addEventListener('open-support', handler);
+    return () => window.removeEventListener('open-support', handler);
+  }, []);
 
   // Close profile panel when switching conversations
   useEffect(() => {
@@ -101,37 +142,56 @@ const InboxV1: React.FC<InboxV1Props> = ({ onVersionChange }) => {
         activeCategory={activeCategory}
         onCategoryChange={handleCategoryChange}
         onVersionChange={onVersionChange}
+        onSupportClick={handleSupportClick}
+        supportBadgeCount={supportBadgeCount}
       />
       <div className="flex flex-1 min-h-0 relative overflow-hidden">
-        <div style={{ width: panelWidth }} className="shrink-0 h-full relative overflow-visible">
-          <ThreadListV1
-            category={activeCategory}
-            selectedId={selectedThreadId}
-            onSelect={handleSelectThread}
-            onSettingsOpen={() => setShowModSettings(true)}
-            onNewMessage={() => setShowNewMessage(true)}
+        {activeCategory === 'support' ? (
+          <SupportCategory
+            prefill={supportPrefill}
+            newVariant={supportVariant}
+            liveChatFirstMessage={supportLiveChatFirstMessage}
+            selectedThreadIdOverride={supportSelectedThreadId}
+            onPrefillConsumed={() => {
+              setSupportPrefill(null);
+              setSupportVariant(null);
+              setSupportLiveChatFirstMessage(null);
+              setSupportSelectedThreadId(null);
+            }}
           />
-          <div
-            className="absolute inset-y-0 right-0 w-[4px] cursor-col-resize z-20 group"
-            onMouseDown={handleDragStart}
-          >
-            <div className="absolute inset-y-0 left-[1px] w-[2px] group-hover:bg-info/40 transition-colors rounded-full" />
-          </div>
-        </div>
-        {showNewMessage && activeCategory === 'dms' ? (
-          <NewMessagePanelV1 onSend={handleNewMessageSend} />
         ) : (
-          <CenterPanelV1
-            category={activeCategory}
-            selectedId={selectedThreadId}
-            onProfileOpen={handleProfileOpen}
-          />
-        )}
-        {showProfile && profileData && (
-          <ProfilePanelV1
-            data={profileData}
-            onClose={() => setShowProfile(false)}
-          />
+          <>
+            <div style={{ width: panelWidth }} className="shrink-0 h-full relative overflow-visible">
+              <ThreadListV1
+                category={activeCategory as V1Category}
+                selectedId={selectedThreadId}
+                onSelect={handleSelectThread}
+                onSettingsOpen={() => setShowModSettings(true)}
+                onNewMessage={() => setShowNewMessage(true)}
+              />
+              <div
+                className="absolute inset-y-0 right-0 w-[4px] cursor-col-resize z-20 group"
+                onMouseDown={handleDragStart}
+              >
+                <div className="absolute inset-y-0 left-[1px] w-[2px] group-hover:bg-info/40 transition-colors rounded-full" />
+              </div>
+            </div>
+            {showNewMessage && activeCategory === 'dms' ? (
+              <NewMessagePanelV1 onSend={handleNewMessageSend} />
+            ) : (
+              <CenterPanelV1
+                category={activeCategory as V1Category}
+                selectedId={selectedThreadId}
+                onProfileOpen={handleProfileOpen}
+              />
+            )}
+            {showProfile && profileData && (
+              <ProfilePanelV1
+                data={profileData}
+                onClose={() => setShowProfile(false)}
+              />
+            )}
+          </>
         )}
       </div>
       <ModerationSettingsModal

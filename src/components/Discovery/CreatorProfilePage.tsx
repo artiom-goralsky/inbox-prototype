@@ -125,7 +125,7 @@ const CreatorProfilePage: React.FC<CreatorProfilePageProps> = ({
             <Typography variant="label-lg" color="primary">
               <span className="font-semibold">About</span>
             </Typography>
-            <Typography variant="body-md" color="secondary" className="leading-relaxed">
+            <Typography variant="body-md" color="secondary">
               {creator.description ??
                 `${creator.title} is a thriving community for ${creator.category.toLowerCase()} professionals looking to connect, learn, and grow together. Led by ${creator.creator}, members get access to exclusive content, live events, and a supportive network of peers.`}
             </Typography>
@@ -147,7 +147,6 @@ const CreatorProfilePage: React.FC<CreatorProfilePageProps> = ({
                       <Icon
                         name={product.type === 'Community' ? 'group' : product.type === 'Course' ? 'video' : 'calendar'}
                         size="sm"
-                        className="text-tertiary"
                       />
                     </div>
                     <div>
@@ -173,9 +172,9 @@ const CreatorProfilePage: React.FC<CreatorProfilePageProps> = ({
               <Typography variant="body-sm" color="tertiary">
                 <span className="group-hover:text-primary transition-colors">Thought</span>
               </Typography>
-              <Icon name="chevron-right" size="sm" className="text-tertiary" />
+              <Icon name="chevron-right" size="sm" />
             </button>
-            <Typography variant="body-md" color="secondary" className="leading-relaxed">
+            <Typography variant="body-md" color="secondary">
               I&apos;ll get your {creator.title} experience set up now — let me configure it right away.
             </Typography>
           </div>
@@ -200,7 +199,7 @@ const CreatorProfilePage: React.FC<CreatorProfilePageProps> = ({
                         : 'bg-secondary text-primary'
                     }`}
                   >
-                    <Typography variant="body-md" color={msg.role === 'user' ? undefined : 'primary'} className={msg.role === 'user' ? 'text-white' : ''}>
+                    <Typography variant="body-md" color={msg.role === 'user' ? 'inverse' : 'primary'}>
                       {msg.text}
                     </Typography>
                   </div>

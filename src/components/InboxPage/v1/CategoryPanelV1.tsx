@@ -2,14 +2,19 @@ import React from 'react';
 import { Typography } from '@circleco/compass/components/Typography';
 import { Icon } from '@circleco/compass/components/Icon';
 import { Avatar } from '@circleco/compass/components/Avatar';
+import { Badge } from '@circleco/compass/components/Badge';
 import { Select } from '@circleco/compass/components/Select';
 import type { V1Category } from './v1MockData';
 import NotificationsPopover from '../NotificationsPopover';
 
+type V1CategoryOrSupport = V1Category | 'support';
+
 interface CategoryPanelV1Props {
-  activeCategory: V1Category;
+  activeCategory: V1CategoryOrSupport;
   onCategoryChange: (category: V1Category) => void;
   onVersionChange: (version: 'v1' | 'v1.5' | 'v2') => void;
+  onSupportClick?: () => void;
+  supportBadgeCount?: number;
 }
 
 const MINE_CATEGORIES: { id: V1Category; label: string; iconType: 'avatar' | 'icon'; iconName?: string }[] = [
@@ -17,12 +22,18 @@ const MINE_CATEGORIES: { id: V1Category; label: string; iconType: 'avatar' | 'ic
 ];
 
 const SHARED_CATEGORIES: { id: V1Category; label: string; iconType: 'icon'; iconName: string }[] = [
-  { id: 'moderation', label: 'Moderation', iconType: 'icon', iconName: 'compass' },
+  { id: 'moderation', label: 'Moderation', iconType: 'icon', iconName: 'flag' },
   { id: 'course-comments', label: 'Course comments', iconType: 'icon', iconName: 'graduate-cap' },
   { id: 'ai-inbox', label: 'AI Inbox', iconType: 'icon', iconName: 'ai-box' },
 ];
 
-const CategoryPanelV1: React.FC<CategoryPanelV1Props> = ({ activeCategory, onCategoryChange, onVersionChange }) => {
+const CategoryPanelV1: React.FC<CategoryPanelV1Props> = ({
+  activeCategory,
+  onCategoryChange,
+  onVersionChange,
+  onSupportClick,
+  supportBadgeCount = 0,
+}) => {
   const renderItem = (item: { id: V1Category; label: string; iconType: 'avatar' | 'icon'; iconName?: string }) => (
     <button
       key={item.id}
@@ -69,21 +80,41 @@ const CategoryPanelV1: React.FC<CategoryPanelV1Props> = ({ activeCategory, onCat
         </div>
       </div>
 
-      {/* Version switcher */}
-      <div className="p-3 shrink-0">
-        <Select
-          aria-label="Prototype version"
-          placeholder="v 1"
-          options={[
-            { label: 'v 1', value: 'v1' },
-            { label: 'v 1.5', value: 'v1.5' },
-            { label: 'v 2', value: 'v2' },
-          ]}
-          onValueChange={(v) => {
-            if (v?.value === 'v1.5') onVersionChange('v1.5');
-            if (v?.value === 'v2') onVersionChange('v2');
-          }}
-        />
+      {/* Footer: Support + version switcher, separated by divider from Mine/Shared */}
+      <div className="shrink-0 border-t border-secondary mt-2">
+        {onSupportClick && (
+          <div className="px-2 pt-2">
+            <button
+              onClick={onSupportClick}
+              className={`flex items-center gap-3 h-9 w-full px-3 py-1 rounded-lg text-left transition-colors ${
+                activeCategory === 'support' ? 'bg-active' : 'hover:bg-hover'
+              }`}
+            >
+              <Icon name="circle-questionmark" size="sm" />
+              <Typography variant="body-sm" color="primary" className="truncate flex-1">
+                Support
+              </Typography>
+              {supportBadgeCount > 0 && (
+                <Badge variant="secondary" label={String(supportBadgeCount)} />
+              )}
+            </button>
+          </div>
+        )}
+        <div className="p-3">
+          <Select
+            aria-label="Prototype version"
+            placeholder="v 1"
+            options={[
+              { label: 'v 1', value: 'v1' },
+              { label: 'v 1.5', value: 'v1.5' },
+              { label: 'v 2', value: 'v2' },
+            ]}
+            onValueChange={(v) => {
+              if (v?.value === 'v1.5') onVersionChange('v1.5');
+              if (v?.value === 'v2') onVersionChange('v2');
+            }}
+          />
+        </div>
       </div>
     </div>
   );

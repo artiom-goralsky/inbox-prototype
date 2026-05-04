@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { Avatar } from '@circleco/compass/components/Avatar';
 import { Button } from '@circleco/compass/components/Button';
@@ -47,7 +48,15 @@ import AIHelperChat from '../AIHelperChat';
 import CopilotView, { type CopilotAsset } from '../CopilotView/CopilotView';
 import AssetDetailSidebar from '../CopilotView/AssetDetailSidebar';
 import LandingPageArtifact from '../CopilotView/LandingPageArtifact';
+import EventDetailPanel from '../CopilotView/EventDetailPanel';
+import CourseDetailPanel from '../CopilotView/CourseDetailPanel';
 import FlyingInput from '../shared/FlyingInput';
+import { type LaunchProjectData, type LaunchPlanStep, buildLaunchProject } from '../ProjectsPage/launchProjectData';
+import LaunchProjectView from '../ProjectsPage/LaunchProjectView';
+import NewCommunityFlow from '../Dashboard/NewCommunityFlow';
+import AgentMessageBox from '../shared/AgentMessageBox';
+import { BreadCrumbs } from '@circleco/compass/components/BreadCrumbs';
+import { Menu } from '@circleco/compass/components/Menu';
 import Onboarding from '../Onboarding';
 import Gamification from '../Gamification';
 import Live from '../Live';
@@ -68,6 +77,7 @@ import {
   Legal,
 } from '../Settings';
 import Knowledge from '../Knowledge';
+import EventsAdminPage from '../Events/EventsAdminPage';
 import Agents from '../Agents';
 import SubscriptionGroups from '../SubscriptionGroups';
 import Transactions from '../Transactions';
@@ -87,9 +97,11 @@ import PaywallsSettings from '../PaywallsSettings';
 import AffiliatesSettings from '../AffiliatesSettings';
 import BrandedApp from '../BrandedApp';
 import AIInbox from '../AIInbox';
+import InboxPage from '../InboxPage/InboxPage';
 import Dashboard from '../Dashboard/Dashboard';
 import AnalyticsOverview from '../AnalyticsSection/AnalyticsOverview';
 import AgentsPage from '../AgentsPage/AgentsPage';
+import AgentsManagementPage from '../AgentsManagementPage/AgentsManagementPage';
 import TeamPage from '../TeamPage/TeamPage';
 import AgentDetailView, { type Agent } from '../TeamPage/AgentDetailView';
 import LibraryPage from '../LibraryPage/LibraryPage';
@@ -112,6 +124,7 @@ interface AdminSectionProps {
   onBuildMode?: (active: boolean) => void;
   initialView?: 'community';
   onCopilotStateChange?: (open: boolean, isNewChat?: boolean) => void;
+  onStartContentFadeOut?: () => void;
   onCopilotMaximizedChange?: (maximized: boolean) => void;
   onArtifactStateChange?: (type: string | null) => void;
   onSidebarCollapsedChange?: (collapsed: boolean) => void;
@@ -192,6 +205,7 @@ const AdminSection: React.FC<AdminSectionProps> = ({
   onBuildMode,
   initialView,
   onCopilotStateChange,
+  onStartContentFadeOut,
   onCopilotMaximizedChange,
   onArtifactStateChange,
   onSidebarCollapsedChange,
@@ -213,11 +227,55 @@ const AdminSection: React.FC<AdminSectionProps> = ({
   // Keep state for local updates and transitions
 
   const [isCopilotMaximized, setIsCopilotMaximized] = useState(false);
+  // Support inbox overlay — when CopilotView's clarification widget routes to
+  // Support, render the Inbox alongside (instead of navigating away and
+  // unmounting the Copilot side panel).
+  const [supportInboxOpen, setSupportInboxOpen] = useState(false);
+  useEffect(() => {
+    const handler = () => {
+      // The first listener-fire opens the overlay and unmaximizes Copilot;
+      // the InboxPage we then mount has its own listener that catches a
+      // re-emitted event for the prefill payload.
+      if (supportInboxOpen) return;
+      setSupportInboxOpen(true);
+      setIsCopilotMaximized(false);
+    };
+    window.addEventListener('open-support', handler);
+    return () => window.removeEventListener('open-support', handler);
+  }, [supportInboxOpen]);
+  // Re-emit the most recent open-support detail once InboxPage has mounted so
+  // its internal listener picks up variant/prefill/liveChatFirstMessage.
+  const pendingSupportDetailRef = useRef<unknown>(null);
+  useEffect(() => {
+    const captureHandler = (e: Event) => {
+      pendingSupportDetailRef.current = (e as CustomEvent).detail;
+    };
+    window.addEventListener('open-support', captureHandler);
+    return () => window.removeEventListener('open-support', captureHandler);
+  }, []);
+  useEffect(() => {
+    if (!supportInboxOpen) return;
+    const detail = pendingSupportDetailRef.current;
+    if (!detail) return;
+    const t = window.setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('open-support', { detail }));
+      pendingSupportDetailRef.current = null;
+    }, 50);
+    return () => window.clearTimeout(t);
+  }, [supportInboxOpen]);
+  // Sidebar navigation should clear the support overlay so the user can return
+  // to normal admin content.
+  useEffect(() => {
+    setSupportInboxOpen(false);
+  }, [propCurrentSection, propActiveSubItem]);
   const [activeAgent, setActiveAgent] = useState<Agent | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(
     () => {
+      // When entering from community: collapse on narrow screens, expand on wide
+      if (initialView === 'community' || onBackToCommunity) {
+        return window.innerWidth < 1440;
+      }
       const stored = localStorage.getItem('sidebarCollapsed');
-      // Default to collapsed if no preference saved
       return stored === null ? true : stored === 'true';
     }
   );
@@ -228,7 +286,14 @@ const AdminSection: React.FC<AdminSectionProps> = ({
   );
   const [isAIHelperOpen, setIsAIHelperOpen] = useState(false);
   const [isCopilotOpen, setIsCopilotOpen] = useState(initialView === 'community');
-  const [copilotEntering, setCopilotEntering] = useState(false);
+  const [copilotEntering, setCopilotEntering] = useState(initialView === 'community');
+  // When entering from community sparkle, clear the entering state after panel is sized
+  useEffect(() => {
+    if (initialView === 'community') {
+      const t = setTimeout(() => setCopilotEntering(false), 400);
+      return () => clearTimeout(t);
+    }
+  }, [initialView]);
   const [copilotLeaving] = useState(false);
   const [copilotInitialMessage, setCopilotInitialMessage] = useState<string | undefined>();
   const [flyingPhase] = useState<'idle' | 'flying' | 'fading'>('idle');
@@ -237,14 +302,18 @@ const AdminSection: React.FC<AdminSectionProps> = ({
   const [flyingMessage] = useState('');
   const [isAssetDetailOpen, setIsAssetDetailOpen] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<CopilotAsset | null>(null);
-  const [activeCopilotChatId, setActiveCopilotChatId] = useState<string>('1');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeCopilotChatId, setActiveCopilotChatId] = useState<string>(() => searchParams.get('chat') ?? '1');
+  const [copilotEntryPoint, setCopilotEntryPoint] = useState<string | undefined>(undefined);
   const [dashboardInputPulse, setDashboardInputPulse] = useState(0);
   const [copilotSkillMention, setCopilotSkillMention] = useState<string | null>(null);
   const [copilotSkillUseCase, setCopilotSkillUseCase] = useState<string | null>(null);
   const [copilotShortcutTask, setCopilotShortcutTask] = useState<string | null>(null);
   const [copilotArtifact, setCopilotArtifact] = useState<CopilotAsset | null>(null);
+  const [analyticsContext, setAnalyticsContext] = useState<CopilotAsset | null>(null);
   const [builderTrigger, setBuilderTrigger] = useState(0);
   const wasMaximizedRef = useRef(false);
+  const copilotFromDashboardRef = useRef(false);
   const [currentAudienceData, setCurrentAudienceData] =
     useState<AudienceData>(audienceData);
   const [isContentTransitioning, setIsContentTransitioning] = useState(false);
@@ -255,14 +324,47 @@ const AdminSection: React.FC<AdminSectionProps> = ({
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [, setIsPreviewOpen] = useState(false);
   const [pendingProjectTitle, setPendingProjectTitle] = useState<string | null>(null);
+  const [launchProjectData, setLaunchProjectData] = useState<LaunchProjectData | null>(null);
+  const [projectCardShimmer, setProjectCardShimmer] = useState(false);
+  const [projectStepsOverride, setProjectStepsOverride] = useState<LaunchPlanStep[] | null>(null);
+  const handleUpdateProjectSteps = (newSteps: LaunchPlanStep[]) => {
+    setProjectCardShimmer(true);
+    setTimeout(() => {
+      setProjectStepsOverride(newSteps);
+      // Also update launchProjectData if it exists (inset path)
+      setLaunchProjectData(prev => prev ? { ...prev, steps: newSteps } : prev);
+    }, 500);
+    setTimeout(() => setProjectCardShimmer(false), 3000);
+  };
+  const [launchConvoState, setLaunchConvoState] = useState<{ typeId: string; answers: string[] } | null>(null);
+  const [launchBuildingDone, setLaunchBuildingDone] = useState(false);
   const [isCopilotDrawerOpen, setIsCopilotDrawerOpen] = useState(false);
   const [expandedBuildL1, setExpandedBuildL1] = useState<string | null>(null);
   const [communitySwitcherOpen, setCommunitySwitcherOpen] = useState(false);
+  const communitySwitcherTriggerRef = useRef<HTMLDivElement>(null);
+  const communitySwitcherLeaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleCsMouseEnter = () => {
+    if (communitySwitcherLeaveTimer.current) {
+      clearTimeout(communitySwitcherLeaveTimer.current);
+      communitySwitcherLeaveTimer.current = null;
+    }
+    setCommunitySwitcherOpen(true);
+  };
+  const handleCsMouseLeave = () => {
+    communitySwitcherLeaveTimer.current = setTimeout(() => setCommunitySwitcherOpen(false), 120);
+  };
   const [showMoreBuild, setShowMoreBuild] = useState(false);
   const [openNavMenuId, setOpenNavMenuId] = useState<string | null>(null);
   const navMenuCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isRecentChatsOpen, setIsRecentChatsOpen] = useState(false);
   const [drawerSearch, setDrawerSearch] = useState('');
+  const [loadingChatId, setLoadingChatId] = useState<string | null>(null);
+  const [, setIsCopilotGenerating] = useState(false);
+  const [generatingChatIds, setGeneratingChatIds] = useState<Set<string>>(new Set());
+  const [unreadChatIds, setUnreadChatIds] = useState<Set<string>>(new Set());
+  const [scrollToBottomTrigger, setScrollToBottomTrigger] = useState(0);
+  const isCopilotOpenRef = useRef(isCopilotOpen);
+  const activeCopilotChatIdRef = useRef(activeCopilotChatId);
 
   /* ── Inset sidebar nav data ──────────────────────────────────────── */
   const allAdminItems = useMemo(() => adminNavDataV5.flatMap(z => z.items), []);
@@ -280,10 +382,41 @@ const AdminSection: React.FC<AdminSectionProps> = ({
     { id: 'copilot', sectionId: 'copilot', icon: 'sparkles' as const, activeIcon: 'sparkles-filled' as const, label: 'Circle AI' },
     { id: 'new-chat', sectionId: 'dashboard', icon: 'circle-plus' as const, activeIcon: 'circle-plus-filled' as const, label: 'New chat' },
     { id: 'ai-inbox', sectionId: 'ai-inbox', icon: 'inbox-empty' as const, activeIcon: 'inbox-empty-filled' as const, label: 'Inbox' },
+    // { id: 'agents-management', sectionId: 'agents-management', icon: 'sparkle-box' as const, activeIcon: 'sparkle-box-filled' as const, label: 'Agents' },
     { id: 'agents-page', sectionId: 'agents-page', icon: 'ai-box' as const, activeIcon: 'ai-box-filled' as const, label: 'Skills' },
     { id: 'projects', sectionId: 'projects', icon: 'folder' as const, activeIcon: 'folder-filled' as const, label: 'Projects' },
-    { id: 'library', sectionId: 'library', icon: 'layers' as const, activeIcon: 'layers-filled' as const, label: 'Library' },
   ], []);
+
+  // Keep refs in sync for use in stable callbacks
+  useEffect(() => { isCopilotOpenRef.current = isCopilotOpen; }, [isCopilotOpen]);
+  useEffect(() => { activeCopilotChatIdRef.current = activeCopilotChatId; }, [activeCopilotChatId]);
+
+  // Clear unread when user views a chat
+  useEffect(() => {
+    if (isCopilotOpen) {
+      setUnreadChatIds(prev => {
+        if (!prev.has(activeCopilotChatId)) return prev;
+        const next = new Set(prev);
+        next.delete(activeCopilotChatId);
+        return next;
+      });
+    }
+  }, [isCopilotOpen, activeCopilotChatId]);
+
+  const handleGenerating = useCallback((generating: boolean) => {
+    const chatId = activeCopilotChatIdRef.current;
+    setIsCopilotGenerating(generating);
+    if (generating) {
+      setGeneratingChatIds(prev => new Set(Array.from(prev).concat(chatId)));
+    } else {
+      setGeneratingChatIds(prev => { const next = new Set(prev); next.delete(chatId); return next; });
+      const isViewingThisChat = isCopilotOpenRef.current && activeCopilotChatIdRef.current === chatId;
+      if (!isViewingThisChat) {
+        setUnreadChatIds(prev => new Set(Array.from(prev).concat(chatId)));
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /** Navigate from the inset sidebar — handles state cleanup + routing */
   const handleInsetNavClick = (sectionId: string) => {
@@ -297,6 +430,14 @@ const AdminSection: React.FC<AdminSectionProps> = ({
       } else {
         openCopilot(undefined, undefined, undefined, false);
       }
+      return;
+    }
+    // New chat: only when copilot was opened from dashboard, fade out then close
+    if (sectionId === 'dashboard' && isCopilotOpen && activeCopilotChatId !== 'new' && copilotFromDashboardRef.current) {
+      onStartContentFadeOut?.();          // 0ms: start content card fade-out immediately
+      setActiveCopilotChatId('new');      // 0ms: fade CopilotView content out (80ms)
+      setTimeout(() => closeCopilot(), 220);                                    // 220ms: close copilot once content is invisible
+      setTimeout(() => { if (onItemClick) onItemClick('dashboard'); }, 240);    // 240ms: swap to dashboard while still locked
       return;
     }
     // Close copilot so the navigated page is fully visible
@@ -336,7 +477,12 @@ const AdminSection: React.FC<AdminSectionProps> = ({
   };
 
   /** Check if a section is currently active */
+  // True when the user is viewing a specific saved chat (not new/shortcut)
+  const isViewingRecentChat = isCopilotOpen && CHAT_DATA.some(c => c.id === activeCopilotChatId);
+
   const isInsetSectionActive = (sectionId: string) => {
+    // When viewing a saved recent chat, nothing else in the nav is active
+    if (isViewingRecentChat) return false;
     if (sectionId === 'copilot') return isCopilotOpen;
     // Don't mark 'dashboard' (New chat) as active when community inset is visible
     if (sectionId === 'dashboard' && showCommunityInset) return false;
@@ -345,6 +491,7 @@ const AdminSection: React.FC<AdminSectionProps> = ({
 
   /** Check if a Build L1 or its children is active */
   const isBuildItemActive = (item: AdminNavItemV5) => {
+    if (isViewingRecentChat) return false;
     const effectiveId = item.landingId || item.children?.[0]?.id || item.id;
     const route = activeIdToAppRoute(effectiveId);
     if (propCurrentSection === route.sectionId && propActiveSubItem === route.subItemId) return true;
@@ -409,8 +556,13 @@ const AdminSection: React.FC<AdminSectionProps> = ({
   }, [copilotArtifact, onArtifactStateChange]);
   useEffect(() => {
     // Reset maximized when copilot closes
-    if (!isCopilotOpen) setIsCopilotMaximized(false);
-    onCopilotStateChange?.(isCopilotOpen, activeCopilotChatId === 'new');
+    if (!isCopilotOpen) {
+      setIsCopilotMaximized(false);
+      copilotFromDashboardRef.current = false;
+    }
+    // Use fade transition when opening from new-chat dashboard context
+    const isFromDashboard = copilotFromDashboardRef.current;
+    onCopilotStateChange?.(isCopilotOpen, isFromDashboard || activeCopilotChatId === 'new');
   }, [isCopilotOpen, activeCopilotChatId, onCopilotStateChange]);
 
   useEffect(() => {
@@ -525,8 +677,19 @@ const AdminSection: React.FC<AdminSectionProps> = ({
     if (onItemClick) onItemClick(route.sectionId, route.subItemId);
   };
 
-  const openCopilot = (chatId?: string, message?: string, _sourceRect?: DOMRect, startMaximized = true) => {
-    setActiveCopilotChatId(chatId ?? (message ? 'new' : '1'));
+  const openCopilot = (chatId?: string, message?: string, _sourceRect?: DOMRect, startMaximized = true, entryPoint?: string) => {
+    // Flag fade transition when opening from dashboard (no slide animation)
+    if (currentSection === 'dashboard' && !isCopilotOpen) {
+      copilotFromDashboardRef.current = true;
+      if (chatId && chatId !== 'new' && onItemClick) {
+        setTimeout(() => onItemClick('projects'), 80);
+      }
+    }
+
+    const resolvedChatId = chatId ?? (message ? 'new' : '1');
+    setActiveCopilotChatId(resolvedChatId);
+    setSearchParams(prev => { const next = new URLSearchParams(prev); next.set('chat', resolvedChatId); return next; }, { replace: true });
+    setCopilotEntryPoint(entryPoint ?? 'Chats');
     setCopilotSkillMention(null);
     setCopilotSkillUseCase(null);
     setCopilotShortcutTask(null);
@@ -539,6 +702,20 @@ const AdminSection: React.FC<AdminSectionProps> = ({
     setIsCopilotOpen(true);
     setTimeout(() => setCopilotEntering(false), 350);
   };
+
+  // Listen for sparkles reference — open copilot if not already open
+  useEffect(() => {
+    const handler = () => {
+      if (!isCopilotOpen) {
+        setCopilotEntering(true);
+        setIsCopilotOpen(true);
+        setIsCopilotMaximized(false);
+        setTimeout(() => setCopilotEntering(false), 350);
+      }
+    };
+    window.addEventListener('copilot-add-reference', handler);
+    return () => window.removeEventListener('copilot-add-reference', handler);
+  }, [isCopilotOpen]);
 
   const closeCopilot = () => {
     setIsCopilotOpen(false);
@@ -554,6 +731,22 @@ const AdminSection: React.FC<AdminSectionProps> = ({
       setIsCopilotMaximized(true);
       wasMaximizedRef.current = false;
     }
+  };
+
+  const handleSeeAllEvents = () => {
+    setCopilotArtifact(null);
+    wasMaximizedRef.current = false;
+    if (onItemClick) onItemClick('content', 'events');
+  };
+
+  const viewInAnalytics = () => {
+    // Close artifact without restoring maximized state, shrink copilot to side panel
+    wasMaximizedRef.current = false;
+    setAnalyticsContext(copilotArtifact); // capture source before clearing
+    setCopilotArtifact(null);
+    setIsCopilotMaximized(false);
+    setShowCommunityInset(false);
+    onItemClick?.('analytics-overview');
   };
 
   const handleAssetClick = (asset: CopilotAsset) => {
@@ -584,6 +777,9 @@ const AdminSection: React.FC<AdminSectionProps> = ({
   };
 
   const renderContent = () => {
+    if (supportInboxOpen) {
+      return <InboxPage />;
+    }
     if (showCommunityInset) {
       return <FullCommunity communityId={activeCommunity || 'clarity'} />;
     }
@@ -611,7 +807,16 @@ const AdminSection: React.FC<AdminSectionProps> = ({
             onOpenCopilot={openCopilot}
             onItemClick={handleAssetClick}
             pulseInput={dashboardInputPulse}
+            onCreateProject={(typeId, answers) => {
+              setLaunchProjectData(buildLaunchProject(typeId, answers));
+              setLaunchConvoState({ typeId, answers });
+              setLaunchBuildingDone(true);
+              // Open copilot state so App.tsx applies the card inset styling
+              setIsCopilotMaximized(false);
+              setIsCopilotOpen(true);
+            }}
             onShortcutClick={(label) => {
+              copilotFromDashboardRef.current = true;
               setActiveCopilotChatId('shortcut');
               setCopilotShortcutTask(label);
               setCopilotSkillMention(null);
@@ -619,10 +824,22 @@ const AdminSection: React.FC<AdminSectionProps> = ({
               setIsCopilotMaximized(true);
               setCopilotEntering(true);
               setIsCopilotOpen(true);
-              setTimeout(() => setCopilotEntering(false), 400);
+              // Fade the whole background out (90ms) in sync with the copilot content fade (70ms)
+              setIsContentTransitioning(true);
+              // At 120ms everything is invisible — swap the route and copilot content
+              setTimeout(() => {
+                if (onItemClick) onItemClick('projects');
+              }, 120);
+              // At 160ms start fading everything back in together
+              setTimeout(() => {
+                setIsContentTransitioning(false);
+                setCopilotEntering(false);
+              }, 160);
             }}
           />
         );
+      case 'agents-management':
+        return <AgentsManagementPage />;
       case 'agents-page':
         return <AgentsPage onToggleSidebar={toggleSidebar} onItemClick={handleAssetClick} onItemClose={() => { setIsAssetDetailOpen(false); setSelectedAsset(null); }} selectedSkillId={isAssetDetailOpen ? selectedAsset?.id : undefined} />;
       case 'team':
@@ -641,6 +858,43 @@ const AdminSection: React.FC<AdminSectionProps> = ({
             onItemClick={handleAssetClick}
             pendingProjectTitle={pendingProjectTitle}
             onClearPendingProject={() => setPendingProjectTitle(null)}
+            launchProject={launchProjectData}
+            onClearLaunchProject={() => setLaunchProjectData(null)}
+            onOpenCopilot={() => {
+              setIsCopilotMaximized(false);
+              if (!isCopilotOpen) {
+                setCopilotEntering(true);
+                setIsCopilotOpen(true);
+                setTimeout(() => setCopilotEntering(false), 350);
+              }
+            }}
+            onNewChat={() => {
+              // Open with clean new chat state — just the AI greeting + message input
+              setActiveCopilotChatId('10');
+              setIsCopilotMaximized(true);
+              setCopilotEntering(true);
+              setIsCopilotOpen(true);
+              setTimeout(() => setCopilotEntering(false), 350);
+            }}
+            onOpenChat={(_chatId, _title, _messages) => {
+              // Map project chats to existing CopilotView chat IDs
+              const chatIds = ['2', '3', '4', '5', '6'];
+              const mapped = chatIds[Math.abs(_chatId.charCodeAt(1) || 0) % chatIds.length];
+              if (isCopilotOpen) {
+                // Copilot sidebar is open — refresh its content
+                setActiveCopilotChatId(mapped);
+              } else {
+                // Copilot closed — open full screen
+                setActiveCopilotChatId(mapped);
+                setIsCopilotMaximized(true);
+                setCopilotEntering(true);
+                setIsCopilotOpen(true);
+                setTimeout(() => setCopilotEntering(false), 350);
+              }
+            }}
+            onEntryPointChange={(label) => setCopilotEntryPoint(label)}
+            shimmerProgress={projectCardShimmer}
+            projectStepsOverride={projectStepsOverride}
           />
         );
       case 'manage-audience':
@@ -680,6 +934,8 @@ const AdminSection: React.FC<AdminSectionProps> = ({
         return <Moderation onToggleSidebar={toggleSidebar} />;
       case 'media-manager':
         return <MediaManager onToggleSidebar={toggleSidebar} />;
+      case 'events':
+        return <EventsAdminPage onToggleSidebar={toggleSidebar} />;
       case 'live':
         return <Live onToggleSidebar={toggleSidebar} />;
       case 'access-groups':
@@ -797,7 +1053,7 @@ const AdminSection: React.FC<AdminSectionProps> = ({
       case 'analytics-overview':
       case 'analytics-reports':
       case 'analytics-insights':
-        return <AnalyticsOverview onToggleSidebar={toggleSidebar} />;
+        return <AnalyticsOverview onToggleSidebar={toggleSidebar} context={analyticsContext} />;
       default:
         return (
           <ContentSidebar
@@ -822,6 +1078,18 @@ const AdminSection: React.FC<AdminSectionProps> = ({
     );
   }
 
+  const handleCopilotChatSelect = (chatId: string) => {
+    const movingFromNewToSavedChat = activeCopilotChatId === 'new' && chatId !== 'new';
+    setActiveCopilotChatId(chatId);
+
+    // Switch background to Projects as soon as content fades out (80ms), before drawer slides
+    if (movingFromNewToSavedChat && currentSection === 'dashboard' && onItemClick) {
+      setTimeout(() => {
+        onItemClick('projects');
+      }, 80);
+    }
+  };
+
   /* ── Shared fragments ── */
   const copilotViewProps = {
     isEntering: copilotEntering,
@@ -830,16 +1098,25 @@ const AdminSection: React.FC<AdminSectionProps> = ({
     onClose: closeCopilot,
     onAssetClick: handleAssetClick,
     activeChatId: activeCopilotChatId,
-    onChatSelect: setActiveCopilotChatId,
+    onChatSelect: handleCopilotChatSelect,
     skillMention: copilotSkillMention,
     skillUseCase: copilotSkillUseCase,
     shortcutTask: copilotShortcutTask,
+    entryPointLabel: copilotEntryPoint,
+    onEntryPointClick: () => {
+      closeCopilot();
+      const target = copilotEntryPoint === 'Chats' ? 'dashboard' : 'projects';
+      if (onItemClick) onItemClick(target);
+    },
+    onUpdateProjectSteps: handleUpdateProjectSteps,
     onBuildMode,
     onDrawerOpenChange: setIsCopilotDrawerOpen,
     onMaximize: () => setIsCopilotMaximized(m => !m),
     isMaximized: isCopilotMaximized,
     artifactOpen: !!copilotArtifact,
     openBuilder: builderTrigger,
+    onGenerating: handleGenerating,
+    scrollToBottom: scrollToBottomTrigger,
     onArtifactOpen: (asset: CopilotAsset | null) => {
       if (asset) {
         wasMaximizedRef.current = isCopilotMaximized;
@@ -912,12 +1189,15 @@ const AdminSection: React.FC<AdminSectionProps> = ({
   const mainContent = (
     <main className="flex-1 overflow-hidden min-h-0 shrink-0 relative">
       <div
-        className={`absolute inset-0 transition-opacity duration-300 ${
+        className={`absolute inset-0 transition-opacity ${
           isContentTransitioning || isRouteEntering
             ? 'opacity-0'
             : 'opacity-100'
         }`}
-        style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
+        style={{
+          transitionDuration: isContentTransitioning ? '90ms' : '350ms',
+          transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+        }}
       >
         {activeAgent ? (
           <AgentDetailView
@@ -1018,107 +1298,172 @@ const AdminSection: React.FC<AdminSectionProps> = ({
             <div className="h-full flex flex-col justify-between pb-3 pt-4 px-4">
               <div className="flex flex-col gap-4 flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-hide">
                 {/* Community switcher */}
-                <div className="flex items-center gap-1 min-w-0">
-                  <Tooltip content="Back to community" side="right" sideOffset={8}>
-                    <div className="group relative w-9 h-9 shrink-0 cursor-pointer" onClick={onBackToCommunity}>
-                      {/* Community state — fades out on hover */}
+                {sidebarSmall ? (
+                  /* Collapsed: logo only — hover opens menu, click goes to community */
+                  <div
+                    className="relative"
+                    onMouseEnter={handleCsMouseEnter}
+                    onMouseLeave={handleCsMouseLeave}
+                  >
+                    <div
+                      ref={communitySwitcherTriggerRef}
+                      className="group relative w-9 h-9 shrink-0 cursor-pointer"
+                      onClick={onBackToCommunity}
+                    >
                       <div className="absolute inset-0 transition-opacity duration-200 group-hover:opacity-0 pointer-events-none">
-                        <img
-                          src={circleLogo}
-                          alt=""
-                          aria-hidden="true"
-                          className="absolute rounded-md opacity-20"
-                          style={{ width: 30, height: 30, left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
-                        />
-                        <img
-                          src="/images/clarity-logo.png"
-                          alt="Clarity"
-                          className="absolute rounded-md object-cover"
-                          style={{ width: 30, height: 30, left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
-                        />
+                        <img src={circleLogo} alt="" aria-hidden="true" className="absolute rounded-md opacity-20" style={{ width: 30, height: 30, left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }} />
+                        <img src="/images/clarity-logo.png" alt="Clarity" className="absolute rounded-md object-cover" style={{ width: 30, height: 30, left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }} />
                       </div>
-                      {/* Back state — arrow fades in on hover */}
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                         <Icon name="arrow-left" size="sm" className="text-primary" />
                       </div>
                     </div>
-                  </Tooltip>
-                  {!sidebarSmall && (
-                    <>
+                    {communitySwitcherOpen && (
+                      <>
+                        <div
+                          className="fixed z-[9999] w-[272px] pt-4 pb-2 px-4 animate-[fadeIn_150ms_ease-out]"
+                          style={{
+                            top: (() => {
+                              if (!communitySwitcherTriggerRef.current) return 16;
+                              const rect = communitySwitcherTriggerRef.current.getBoundingClientRect();
+                              return rect.top;
+                            })(),
+                            left: 76,
+                            borderRadius: 'var(--radius-xl)',
+                            border: '1px solid var(--color-border-default)',
+                            background: 'var(--color-background-primary-default, white)',
+                            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.06), 0 1px 4px 0 rgba(0,0,0,0.03), 0 1px 4px 0 rgba(0,0,0,0.03)',
+                          }}
+                          onMouseEnter={handleCsMouseEnter}
+                          onMouseLeave={handleCsMouseLeave}
+                        >
+                          <div className="border-b border-secondary pb-3">
+                            <div className="flex items-center gap-2 py-1">
+                              <div className="relative w-9 h-9 shrink-0">
+                                <img src={circleLogo} alt="" className="absolute rounded-md opacity-20" style={{ width: 27, height: 27, left: 5, top: 9 }} />
+                                <img src="/images/clarity-logo.png" alt="Clarity" className="absolute rounded-md object-cover" style={{ width: 30, height: 30, left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }} />
+                              </div>
+                              <span className="text-sm font-medium text-primary flex-1">Clarity</span>
+                              <Icon name="checkmark-small" size="md" style={{ color: 'var(--color-icon-primary)' }} />
+                            </div>
+                            <div className="flex flex-col gap-0.5 mt-2">
+                              <button type="button" onClick={() => { setCommunitySwitcherOpen(false); handleInsetNavClick('settings'); }} className="flex items-center gap-3 h-9 px-2 py-1 rounded-md transition-colors duration-100 w-full text-left hover:bg-secondary">
+                                <Icon name="settings-gear" size="md" className="shrink-0" style={{ color: 'var(--color-icon-primary)' }} />
+                                <span className="text-sm text-primary">Settings</span>
+                              </button>
+                              <button type="button" onClick={() => setCommunitySwitcherOpen(false)} className="flex items-center gap-3 h-9 px-2 py-1 rounded-md transition-colors duration-100 w-full text-left hover:bg-secondary">
+                                <Icon name="people-add" size="md" className="shrink-0" style={{ color: 'var(--color-icon-primary)' }} />
+                                <span className="text-sm text-primary">Add members</span>
+                              </button>
+                              <button type="button" onClick={() => { setCommunitySwitcherOpen(false); if (onBackToCommunity) (onBackToCommunity as () => void)(); }} className="flex items-center gap-3 h-9 px-2 py-1 rounded-md transition-colors duration-100 w-full text-left hover:bg-secondary">
+                                <Icon name={'wrap-left' as IconName} size="md" className="shrink-0" style={{ color: 'var(--color-icon-primary)' }} />
+                                <span className="text-sm text-primary">Go back to community</span>
+                              </button>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 py-1 mt-1 cursor-pointer rounded-md hover:bg-secondary px-0 transition-colors duration-100">
+                            <div className="relative w-9 h-9 shrink-0">
+                              <img src={circleLogo} alt="" className="absolute rounded-md opacity-20" style={{ width: 27, height: 27, left: 5, top: 9 }} />
+                              <div className="absolute rounded-md bg-white overflow-hidden" style={{ width: 30, height: 30, left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
+                                <div className="w-full h-full bg-green-100 flex items-center justify-center text-green-800 font-semibold text-xs">E</div>
+                              </div>
+                            </div>
+                            <span className="text-sm font-medium text-primary flex-1">Elevate Community</span>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  /* Expanded: Select-style trigger — logo click = community, rest = open menu */
+                  <div className="relative w-full">
+                    <div
+                      ref={communitySwitcherTriggerRef}
+                      className="flex items-center gap-2 w-full rounded-lg border border-[#E4E7EB] bg-white shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] cursor-pointer hover:bg-[#F7F9FA] transition-colors duration-100"
+                      onClick={() => setCommunitySwitcherOpen(prev => !prev)}
+                    >
+                      <Tooltip content="Back to community" side="right" sideOffset={8}>
+                        <div
+                          className="group relative w-9 h-9 shrink-0 cursor-pointer"
+                          onClick={(e) => { e.stopPropagation(); onBackToCommunity?.(); }}
+                        >
+                          <div className="absolute inset-0 transition-opacity duration-200 group-hover:opacity-0 pointer-events-none">
+                            <img src={circleLogo} alt="" aria-hidden="true" className="absolute rounded-md opacity-20" style={{ width: 30, height: 30, left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }} />
+                            <img src="/images/clarity-logo.png" alt="Clarity" className="absolute rounded-md object-cover" style={{ width: 30, height: 30, left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }} />
+                          </div>
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <Icon name="arrow-left" size="sm" className="text-primary" />
+                          </div>
+                        </div>
+                      </Tooltip>
                       <span className="text-sm font-medium text-primary truncate leading-tight flex-1">
                         {PORTAL_NAV_COMMUNITIES.find(c => c.value === adminCommunity)?.label ?? 'Clarity'}
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => setCommunitySwitcherOpen(prev => !prev)}
-                        className="flex items-center justify-center w-6 h-6 shrink-0 rounded-md hover:bg-active transition-all duration-150"
-                        aria-label="Switch community"
-                      >
+                      <div className="flex items-center justify-center w-6 h-6 shrink-0 mr-1">
                         <Icon name="chevron-down" size="sm" style={{ color: 'var(--color-icon-primary)' }} />
-                      </button>
-                      {/* Community switcher dropdown — rendered inline, escapes overflow via fixed positioning */}
-                      {communitySwitcherOpen && (
-                        <>
-                          {/* Invisible backdrop to catch outside clicks */}
-                          <div className="fixed inset-0 z-[9998]" onClick={() => setCommunitySwitcherOpen(false)} />
-                          {/* Dropdown panel */}
-                          <div
-                            className="fixed z-[9999] w-[272px] pt-4 pb-2 px-4 animate-[fadeIn_150ms_ease-out]"
-                            style={{
-                              top: (() => {
-                                const el = document.querySelector('[aria-label="Switch community"]');
-                                if (!el) return 60;
-                                const rect = el.getBoundingClientRect();
-                                return rect.bottom + 8;
-                              })(),
-                              left: 196,
-                              borderRadius: 'var(--radius-xl)',
-                              border: '1px solid var(--color-border-default)',
-                              background: 'var(--color-background-primary-default, white)',
-                              boxShadow: '0 4px 20px 0 rgba(0,0,0,0.06), 0 1px 4px 0 rgba(0,0,0,0.03), 0 1px 4px 0 rgba(0,0,0,0.03)',
-                            }}
-                          >
-                            {/* Active community */}
-                            <div className="border-b border-secondary pb-3">
-                              <div className="flex items-center gap-2 py-1">
-                                <div className="relative w-9 h-9 shrink-0">
-                                  <img src={circleLogo} alt="" className="absolute rounded-md opacity-20" style={{ width: 27, height: 27, left: 5, top: 9 }} />
-                                  <img src="/images/clarity-logo.png" alt="Clarity" className="absolute rounded-md object-cover" style={{ width: 30, height: 30, left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }} />
-                                </div>
-                                <span className="text-sm font-medium text-primary flex-1">Clarity</span>
-                                <Icon name="checkmark-small" size="md" style={{ color: 'var(--color-icon-primary)' }} />
-                              </div>
-                              <div className="flex flex-col gap-0.5 mt-2">
-                                <button type="button" onClick={() => { setCommunitySwitcherOpen(false); handleInsetNavClick('settings'); }} className="flex items-center gap-3 h-9 px-2 py-1 rounded-md transition-all duration-150 w-full text-left hover:bg-secondary">
-                                  <Icon name="settings-gear" size="md" className="shrink-0" style={{ color: 'var(--color-icon-primary)' }} />
-                                  <span className="text-sm text-primary">Settings</span>
-                                </button>
-                                <button type="button" onClick={() => setCommunitySwitcherOpen(false)} className="flex items-center gap-3 h-9 px-2 py-1 rounded-md transition-all duration-150 w-full text-left hover:bg-secondary">
-                                  <Icon name="people-add" size="md" className="shrink-0" style={{ color: 'var(--color-icon-primary)' }} />
-                                  <span className="text-sm text-primary">Add members</span>
-                                </button>
-                                <button type="button" onClick={() => { setCommunitySwitcherOpen(false); if (onBackToCommunity) (onBackToCommunity as () => void)(); }} className="flex items-center gap-3 h-9 px-2 py-1 rounded-md transition-all duration-150 w-full text-left hover:bg-secondary">
-                                  <Icon name={'wrap-left' as IconName} size="md" className="shrink-0" style={{ color: 'var(--color-icon-primary)' }} />
-                                  <span className="text-sm text-primary">Go back to community</span>
-                                </button>
-                              </div>
-                            </div>
-                            {/* Other communities */}
-                            <div className="flex items-center gap-2 py-1 mt-1 cursor-pointer rounded-md hover:bg-secondary px-0 transition-all duration-150">
+                      </div>
+                    </div>
+                    {communitySwitcherOpen && (
+                      <>
+                        <div className="fixed inset-0 z-[9998]" onClick={() => setCommunitySwitcherOpen(false)} />
+                        <div
+                          className="fixed z-[9999] w-[272px] pt-4 pb-2 px-4 animate-[fadeIn_150ms_ease-out]"
+                          style={{
+                            top: (() => {
+                              if (!communitySwitcherTriggerRef.current) return 60;
+                              const rect = communitySwitcherTriggerRef.current.getBoundingClientRect();
+                              return rect.bottom + 8;
+                            })(),
+                            left: (() => {
+                              if (!communitySwitcherTriggerRef.current) return 12;
+                              const rect = communitySwitcherTriggerRef.current.getBoundingClientRect();
+                              return rect.left;
+                            })(),
+                            borderRadius: 'var(--radius-xl)',
+                            border: '1px solid var(--color-border-default)',
+                            background: 'var(--color-background-primary-default, white)',
+                            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.06), 0 1px 4px 0 rgba(0,0,0,0.03), 0 1px 4px 0 rgba(0,0,0,0.03)',
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="border-b border-secondary pb-3">
+                            <div className="flex items-center gap-2 py-1">
                               <div className="relative w-9 h-9 shrink-0">
                                 <img src={circleLogo} alt="" className="absolute rounded-md opacity-20" style={{ width: 27, height: 27, left: 5, top: 9 }} />
-                                <div className="absolute rounded-md bg-white overflow-hidden" style={{ width: 30, height: 30, left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
-                                  <div className="w-full h-full bg-green-100 flex items-center justify-center text-green-800 font-semibold text-xs">E</div>
-                                </div>
+                                <img src="/images/clarity-logo.png" alt="Clarity" className="absolute rounded-md object-cover" style={{ width: 30, height: 30, left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }} />
                               </div>
-                              <span className="text-sm font-medium text-primary flex-1">Elevate Community</span>
+                              <span className="text-sm font-medium text-primary flex-1">Clarity</span>
+                              <Icon name="checkmark-small" size="md" style={{ color: 'var(--color-icon-primary)' }} />
+                            </div>
+                            <div className="flex flex-col gap-0.5 mt-2">
+                              <button type="button" onClick={() => { setCommunitySwitcherOpen(false); handleInsetNavClick('settings'); }} className="flex items-center gap-3 h-9 px-2 py-1 rounded-md transition-colors duration-100 w-full text-left hover:bg-secondary">
+                                <Icon name="settings-gear" size="md" className="shrink-0" style={{ color: 'var(--color-icon-primary)' }} />
+                                <span className="text-sm text-primary">Settings</span>
+                              </button>
+                              <button type="button" onClick={() => setCommunitySwitcherOpen(false)} className="flex items-center gap-3 h-9 px-2 py-1 rounded-md transition-colors duration-100 w-full text-left hover:bg-secondary">
+                                <Icon name="people-add" size="md" className="shrink-0" style={{ color: 'var(--color-icon-primary)' }} />
+                                <span className="text-sm text-primary">Add members</span>
+                              </button>
+                              <button type="button" onClick={() => { setCommunitySwitcherOpen(false); if (onBackToCommunity) (onBackToCommunity as () => void)(); }} className="flex items-center gap-3 h-9 px-2 py-1 rounded-md transition-colors duration-100 w-full text-left hover:bg-secondary">
+                                <Icon name={'wrap-left' as IconName} size="md" className="shrink-0" style={{ color: 'var(--color-icon-primary)' }} />
+                                <span className="text-sm text-primary">Go back to community</span>
+                              </button>
                             </div>
                           </div>
-                        </>
-                      )}
-                    </>
-                  )}
-                </div>
+                          <div className="flex items-center gap-2 py-1 mt-1 cursor-pointer rounded-md hover:bg-secondary px-0 transition-colors duration-100">
+                            <div className="relative w-9 h-9 shrink-0">
+                              <img src={circleLogo} alt="" className="absolute rounded-md opacity-20" style={{ width: 27, height: 27, left: 5, top: 9 }} />
+                              <div className="absolute rounded-md bg-white overflow-hidden" style={{ width: 30, height: 30, left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
+                                <div className="w-full h-full bg-green-100 flex items-center justify-center text-green-800 font-semibold text-xs">E</div>
+                              </div>
+                            </div>
+                            <span className="text-sm font-medium text-primary flex-1">Elevate Community</span>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
                 {/* Top nav items */}
                 <div className="flex flex-col gap-0.5">
                   {insetTopLinks.map(link => {
@@ -1127,7 +1472,7 @@ const AdminSection: React.FC<AdminSectionProps> = ({
                       <button
                         type="button"
                         onClick={() => handleInsetNavClick(link.sectionId)}
-                        className={`flex items-center gap-3 h-9 px-2 py-1 rounded-md transition-all duration-150 w-full text-left ${
+                        className={`flex items-center gap-3 h-9 px-2 py-1 rounded-md transition-colors duration-100 w-full text-left ${
                           isActive ? 'bg-active font-medium' : 'hover:bg-active'
                         }`}
                         aria-label={link.label}
@@ -1145,13 +1490,13 @@ const AdminSection: React.FC<AdminSectionProps> = ({
                 </div>
                 {/* Collapsed: dividers + recent chats icon + build icons */}
                 {sidebarSmall && (
-                  <div className="flex flex-col items-center gap-0.5">
+                  <div className="flex flex-col items-center gap-2">
                     <div className="w-9 h-px bg-secondary my-2" />
                     <Tooltip content="Recent chats" side="right" sideOffset={8}>
                       <button
                         type="button"
                         onClick={() => setIsRecentChatsOpen(true)}
-                        className="flex items-center justify-center h-9 w-9 rounded-md hover:bg-active transition-all duration-150"
+                        className="flex items-center justify-center h-9 w-9 rounded-md hover:bg-active transition-colors duration-100"
                         aria-label="Recent chats"
                       >
                         <Icon name={'clock-dash' as IconName} size="md" style={{ color: 'var(--color-icon-primary)' }} />
@@ -1164,7 +1509,7 @@ const AdminSection: React.FC<AdminSectionProps> = ({
                       const iconBtn = (
                         <button
                           type="button"
-                          className={`flex items-center justify-center h-9 w-9 rounded-md transition-all duration-150 ${isActive ? 'bg-active' : 'hover:bg-active'}`}
+                          className={`flex items-center justify-center h-9 w-9 rounded-md transition-colors duration-100 ${isActive ? 'bg-active' : 'hover:bg-active'}`}
                           aria-label={item.label}
                         >
                           <Icon name={iconName} size="md" style={{ color: 'var(--color-icon-primary)' }} />
@@ -1189,7 +1534,7 @@ const AdminSection: React.FC<AdminSectionProps> = ({
                             type="button"
                             onClick={() => handleBuildNavClick(item)}
                             onMouseEnter={() => openNavMenu(null)}
-                            className={`flex items-center justify-center h-9 w-9 rounded-md transition-all duration-150 ${isActive ? 'bg-active' : 'hover:bg-active'}`}
+                            className={`flex items-center justify-center h-9 w-9 rounded-md transition-colors duration-100 ${isActive ? 'bg-active' : 'hover:bg-active'}`}
                             aria-label={item.label}
                           >
                             <Icon name={iconName} size="md" style={{ color: 'var(--color-icon-primary)' }} />
@@ -1210,7 +1555,7 @@ const AdminSection: React.FC<AdminSectionProps> = ({
                             trigger={
                               <button
                                 type="button"
-                                className="flex items-center justify-center h-9 w-9 rounded-md hover:bg-active transition-all duration-150"
+                                className="flex items-center justify-center h-9 w-9 rounded-md hover:bg-active transition-colors duration-100"
                                 aria-label="More"
                               >
                                 <Icon name="dot-menu" size="md" style={{ color: 'var(--color-icon-disabled)' }} />
@@ -1233,21 +1578,43 @@ const AdminSection: React.FC<AdminSectionProps> = ({
                       <div className="px-2 pt-3 pb-1">
                         <span className="text-xs font-semibold text-tertiary">Recent chats</span>
                       </div>
-                      {CHAT_DATA.slice(0, 2).map(chat => (
-                        <button
-                          key={chat.id}
-                          type="button"
-                          onClick={() => openCopilot(chat.id, undefined, undefined, true)}
-                          className="flex items-center gap-3 h-9 px-2 py-1 rounded-md transition-all duration-150 w-full text-left hover:bg-active"
-                        >
-                          <Icon name={'clock' as IconName} size="md" className="shrink-0" style={{ color: 'var(--color-icon-primary)' }} />
-                          <span className="text-sm text-primary truncate">{chat.title}</span>
-                        </button>
-                      ))}
+                      {CHAT_DATA.slice(0, 2).map(chat => {
+                        const isGenerating = generatingChatIds.has(chat.id);
+                        const hasUnread = unreadChatIds.has(chat.id);
+                        return (
+                          <button
+                            key={chat.id}
+                            type="button"
+                            onClick={() => {
+                              setUnreadChatIds(prev => { const next = new Set(prev); next.delete(chat.id); return next; });
+                              if (!(isCopilotOpen && activeCopilotChatId === chat.id)) {
+                                setLoadingChatId(chat.id);
+                                openCopilot(chat.id, undefined, undefined, true);
+                                setTimeout(() => setLoadingChatId(null), 1500);
+                              }
+                              setScrollToBottomTrigger(t => t + 1);
+                            }}
+                            className={`flex items-center gap-3 h-9 px-2 py-1 rounded-md transition-colors duration-100 w-full text-left ${isCopilotOpen && activeCopilotChatId === chat.id ? 'bg-active font-medium' : 'hover:bg-active'}`}
+                          >
+                            {(isGenerating || loadingChatId === chat.id) ? (
+                              <svg className="shrink-0 animate-spin" style={{ color: 'var(--color-icon-primary)', width: 16, height: 16 }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                              </svg>
+                            ) : (
+                              <Icon name={'clock' as IconName} size="md" className="shrink-0" style={{ color: 'var(--color-icon-primary)' }} />
+                            )}
+                            <span className="text-sm text-primary truncate flex-1">{chat.title}</span>
+                            {hasUnread && (
+                              <span className="shrink-0 w-2 h-2 rounded-full bg-blue-500" />
+                            )}
+                          </button>
+                        );
+                      })}
                       <button
                         type="button"
                         onClick={() => setIsRecentChatsOpen(true)}
-                        className="flex items-center gap-3 h-9 px-2 py-1 rounded-md transition-all duration-150 w-full text-left hover:bg-active"
+                        className="flex items-center gap-3 h-9 px-2 py-1 rounded-md transition-colors duration-100 w-full text-left hover:bg-active"
                       >
                         <Icon
                           name={'dot-menu' as IconName}
@@ -1273,7 +1640,7 @@ const AdminSection: React.FC<AdminSectionProps> = ({
                             <button
                               type="button"
                               onClick={() => handleBuildNavClick(item)}
-                              className={`group flex items-center gap-3 h-9 px-2 py-1 rounded-md transition-all duration-150 w-full text-left ${
+                              className={`group flex items-center gap-3 h-9 px-2 py-1 rounded-md transition-colors duration-100 w-full text-left ${
                                 isActive ? 'bg-active font-semibold text-primary' : 'hover:bg-active text-primary'
                               }`}
                             >
@@ -1292,7 +1659,7 @@ const AdminSection: React.FC<AdminSectionProps> = ({
                                     {item.children?.map(child => {
                                       const childActive = isBuildChildActive(child.id);
                                       return (
-                                        <button key={child.id} type="button" onClick={() => handleBuildChildClick(child.id)} className={`flex items-center gap-3 h-9 px-2 pr-3 py-1 rounded-md transition-all duration-150 w-full text-left ${childActive ? 'bg-active font-medium text-primary' : 'text-secondary hover:bg-active'}`}>
+                                        <button key={child.id} type="button" onClick={() => handleBuildChildClick(child.id)} className={`flex items-center gap-3 h-9 px-2 pr-3 py-1 rounded-md transition-colors duration-100 w-full text-left ${childActive ? 'bg-active font-medium text-primary' : 'text-secondary hover:bg-active'}`}>
                                           <span className="shrink-0 w-5 h-5 flex items-center justify-center">
                                             <span className={`w-[5px] h-[5px] rounded-full transition-colors duration-150 ${childActive ? 'bg-[color:var(--color-text-primary)]' : 'bg-[color:var(--color-icon-disabled)]'}`} />
                                           </span>
@@ -1308,7 +1675,7 @@ const AdminSection: React.FC<AdminSectionProps> = ({
                         );
                       })}
                       {/* Show more toggle */}
-                      <button type="button" onClick={() => setShowMoreBuild(!showMoreBuild)} className="flex items-center gap-3 h-9 px-2 py-1 rounded-md hover:bg-active transition-all duration-150 w-full text-left text-disabled">
+                      <button type="button" onClick={() => setShowMoreBuild(!showMoreBuild)} className="flex items-center gap-3 h-9 px-2 py-1 rounded-md hover:bg-active transition-colors duration-100 w-full text-left text-disabled">
                         <Icon name="dot-menu" size="md" className="shrink-0 w-5 h-5" />
                         <span className="text-sm flex-1 text-primary">More</span>
                         <Icon name="chevron-down" size="sm" className={`shrink-0 w-4 h-4 transition-transform duration-200 ${showMoreBuild ? 'rotate-0' : '-rotate-90'}`} />
@@ -1323,7 +1690,7 @@ const AdminSection: React.FC<AdminSectionProps> = ({
                               const iconName = (isActive ? item.activeIconName : item.iconName) as IconName;
                               return (
                                 <React.Fragment key={item.id}>
-                                  <button type="button" onClick={() => handleBuildNavClick(item)} className={`group flex items-center gap-3 h-9 px-2 py-1 rounded-md transition-all duration-150 w-full text-left ${isActive ? 'bg-active font-semibold text-primary' : 'hover:bg-active text-primary'}`}>
+                                  <button type="button" onClick={() => handleBuildNavClick(item)} className={`group flex items-center gap-3 h-9 px-2 py-1 rounded-md transition-colors duration-100 w-full text-left ${isActive ? 'bg-active font-semibold text-primary' : 'hover:bg-active text-primary'}`}>
                                     <Icon name={iconName} size="md" className="shrink-0 w-5 h-5" style={{ color: 'var(--color-icon-primary)' }} />
                                     <span className="text-sm truncate flex-1">{item.label}</span>
                                     {hasChildren && (
@@ -1337,7 +1704,7 @@ const AdminSection: React.FC<AdminSectionProps> = ({
                                           {item.children?.map(child => {
                                             const childActive = isBuildChildActive(child.id);
                                             return (
-                                              <button key={child.id} type="button" onClick={() => handleBuildChildClick(child.id)} className={`flex items-center gap-3 h-9 px-2 pr-3 py-1 rounded-md transition-all duration-150 w-full text-left ${childActive ? 'bg-active font-medium text-primary' : 'text-secondary hover:bg-active'}`}>
+                                              <button key={child.id} type="button" onClick={() => handleBuildChildClick(child.id)} className={`flex items-center gap-3 h-9 px-2 pr-3 py-1 rounded-md transition-colors duration-100 w-full text-left ${childActive ? 'bg-active font-medium text-primary' : 'text-secondary hover:bg-active'}`}>
                                                 <span className="shrink-0 w-5 h-5 flex items-center justify-center">
                                                   <span className={`w-[5px] h-[5px] rounded-full transition-colors duration-150 ${childActive ? 'bg-[color:var(--color-text-primary)]' : 'bg-[color:var(--color-icon-disabled)]'}`} />
                                                 </span>
@@ -1360,35 +1727,52 @@ const AdminSection: React.FC<AdminSectionProps> = ({
                 )}
               </div>
               {/* Bottom nav — Avatar + Collapse sidebar */}
-              <div className="flex flex-col gap-0 shrink-0">
-                <AvatarDropdown
-                  trigger={
-                    <button type="button" className="flex items-center gap-3 h-9 px-2 py-1 rounded-md transition-all duration-150 w-full text-left hover:bg-active" aria-label="Profile menu">
-                      <Avatar src="/images/avatars/1.png" name="Michal" size="xs" className="shrink-0" />
-                      <span className={`nav-label ${sidebarSmall ? 'nav-label-hidden' : 'nav-label-visible'} text-sm text-primary truncate`}>Michal</span>
-                    </button>
-                  }
-                  triggerClassName=""
-                  menuSide="right"
-                  menuAlign="end"
-                />
-                {(() => {
-                  const collapseBtn = (
+              {sidebarSmall ? (
+                <div className="flex flex-col gap-0 shrink-0 items-center">
+                  <Tooltip content="Expand sidebar" side="right" sideOffset={8}>
                     <button
                       type="button"
                       onClick={toggleSidebar}
-                      className="flex items-center gap-3 h-9 px-2 py-1 rounded-md transition-all duration-150 w-full text-left hover:bg-active"
-                      aria-label={sidebarSmall ? 'Expand sidebar' : 'Collapse sidebar'}
+                      className="flex items-center justify-center h-9 w-9 rounded-md transition-colors duration-100 hover:bg-active"
+                      aria-label="Expand sidebar"
                     >
                       <Icon name={'layout-left' as IconName} size="md" className="shrink-0" style={{ color: 'var(--color-icon-disabled)' }} />
-                      <span className={`nav-label ${sidebarSmall ? 'nav-label-hidden' : 'nav-label-visible'} text-sm text-disabled`}>Collapse sidebar</span>
                     </button>
-                  );
-                  return sidebarSmall ? (
-                    <Tooltip content="Expand sidebar" side="right" sideOffset={8}>{collapseBtn}</Tooltip>
-                  ) : collapseBtn;
-                })()}
-              </div>
+                  </Tooltip>
+                  <AvatarDropdown
+                    trigger={
+                      <button type="button" className="flex items-center justify-center h-9 w-9 rounded-md transition-colors duration-100 hover:bg-active" aria-label="Profile menu">
+                        <Avatar src="/images/avatars/1.png" name="Rudy" size="xs" className="shrink-0" />
+                      </button>
+                    }
+                    triggerClassName=""
+                    menuSide="right"
+                    menuAlign="end"
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center shrink-0">
+                  <AvatarDropdown
+                    trigger={
+                      <button type="button" className="flex items-center gap-3 h-9 px-2 py-1 rounded-md transition-colors duration-100 flex-1 text-left hover:bg-active min-w-0" aria-label="Profile menu">
+                        <Avatar src="/images/avatars/1.png" name="Michal" size="xs" className="shrink-0" />
+                        <span className="text-sm text-primary truncate">Rudy</span>
+                      </button>
+                    }
+                    triggerClassName="flex-1 min-w-0"
+                    menuSide="right"
+                    menuAlign="end"
+                  />
+                  <button
+                    type="button"
+                    onClick={toggleSidebar}
+                    className="flex items-center justify-center h-9 w-9 rounded-md transition-colors duration-100 shrink-0 hover:bg-active"
+                    aria-label="Collapse sidebar"
+                  >
+                    <Icon name={'layout-left' as IconName} size="md" className="shrink-0" style={{ color: 'var(--color-icon-disabled)' }} />
+                  </button>
+                </div>
+              )}
             </div>
 
           </div>,
@@ -1398,8 +1782,56 @@ const AdminSection: React.FC<AdminSectionProps> = ({
         {/* Portal: copilot rendered between nav and content card */}
         {copilotPortal && createPortal(
           <div className="h-full w-full overflow-hidden">
-            {isCopilotOpen && (
-              <div className="h-full w-full overflow-y-auto bg-primary border-l border-primary shadow-2xs">
+            {launchConvoState ? (
+              /* Onboarding conversation in building mode — full copilot shell */
+              <div className="h-full w-full overflow-hidden bg-primary border-l border-primary shadow-2xs flex flex-col">
+                {/* Header — matches CopilotView header */}
+                <div className="shrink-0 px-5 py-3 flex items-center gap-2">
+                  <div className="flex-1 min-w-0 overflow-hidden" onClick={(e) => {
+                    const anchor = (e.target as HTMLElement).closest('a');
+                    if (anchor) {
+                      e.preventDefault();
+                      setLaunchConvoState(null);
+                      setLaunchProjectData(null);
+                      closeCopilot();
+                      if (onItemClick) onItemClick('projects');
+                    }
+                  }}>
+                    <BreadCrumbs
+                      size="sm"
+                      items={[{ label: 'Projects', href: '#' }, { label: 'Launch your community' }]}
+                      className="copilot-breadcrumb flex-1 min-w-0 overflow-hidden"
+                    />
+                  </div>
+                  <Menu
+                    options={[
+                      { label: 'Delete conversation', icon: 'trash-can', onClick: () => { /* noop */ }, danger: true },
+                    ]}
+                    trigger={<IconButton type="button" variant="ghost" size="sm" icon="dot-menu" aria-label="More options" className="shrink-0" />}
+                    side="bottom" align="end" sideOffset={4}
+                  />
+                  <IconButton type="button" variant="ghost" size="sm" icon="expand" aria-label="Maximize"
+                    onClick={() => { setIsCopilotMaximized(true); }} className="shrink-0" />
+                  <IconButton type="button" variant="ghost" size="sm" icon="arrow-wall-left" aria-label="Collapse"
+                    onClick={() => { setLaunchConvoState(null); setLaunchProjectData(null); closeCopilot(); }} className="shrink-0" />
+                </div>
+                {/* Conversation body */}
+                <div className="flex-1 min-h-0 overflow-y-auto">
+                  <NewCommunityFlow
+                    onSkipToChat={() => { /* noop */ }}
+                    onCreateProject={() => { /* noop */ }}
+                    isBuilding={!launchBuildingDone}
+                    initialSelectedType={launchConvoState.typeId}
+                    initialAnswers={launchConvoState.answers}
+                  />
+                </div>
+                {/* Message input */}
+                <div className="shrink-0 px-4 pt-4 pb-4">
+                  <AgentMessageBox placeholder="Message Circle AI..." onSubmit={() => { /* noop */ }} />
+                </div>
+              </div>
+            ) : (
+              <div className={`h-full w-full overflow-y-auto bg-primary border-l border-primary shadow-2xs ${!isCopilotOpen ? 'hidden' : ''}`}>
                 <CopilotView {...copilotViewProps} />
               </div>
             )}
@@ -1409,9 +1841,34 @@ const AdminSection: React.FC<AdminSectionProps> = ({
 
         {/* Main content + right panels (inside the card) */}
         <div className="relative flex flex-1 bg-primary min-h-0 overflow-hidden">
-          {copilotArtifact ? (
+          {launchProjectData ? (
+            /* Launch project in the content card */
+            <LaunchProjectView
+              project={launchProjectData}
+              shimmerProgress={projectCardShimmer}
+              onBack={() => {
+                setLaunchProjectData(null);
+                if (onItemClick) onItemClick('projects');
+              }}
+              onOpenThread={(thread) => {
+                // Open copilot full-screen with the thread title as initial message
+                openCopilot(undefined, thread.title);
+              }}
+              onNewConversation={() => {
+                openCopilot('new');
+              }}
+            />
+          ) : copilotArtifact ? (
             /* Artifact replaces page content when open from conversation */
-            copilotArtifact.type === 'page' ? (
+            copilotArtifact.type === 'event' ? (
+              <div className="h-full w-[960px] max-w-full ml-auto flex flex-col animate-[fadeIn_0.3s_cubic-bezier(0.16,1,0.3,1)]">
+                <EventDetailPanel onClose={closeArtifact} onSeeAllEvents={handleSeeAllEvents} />
+              </div>
+            ) : copilotArtifact.type === 'course' ? (
+              <div className="h-full w-[960px] max-w-full ml-auto flex flex-col animate-[fadeIn_0.3s_cubic-bezier(0.16,1,0.3,1)]">
+                <CourseDetailPanel onClose={closeArtifact} />
+              </div>
+            ) : copilotArtifact.type === 'page' ? (
               <LandingPageArtifact
                 onOpenBuilder={() => {
                   closeArtifact();
@@ -1473,7 +1930,7 @@ const AdminSection: React.FC<AdminSectionProps> = ({
                     <span className="font-semibold">{copilotArtifact.title}</span>
                   </Typography>
                   <div className="flex items-center gap-1">
-                    <Button type="button" variant="secondary" size="sm">View in analytics</Button>
+                    <Button type="button" variant="secondary" size="sm" onClick={viewInAnalytics}>View in analytics</Button>
                     <IconButton type="button" variant="ghost" size="sm" icon="cross" aria-label="Close" onClick={closeArtifact} />
                   </div>
                 </div>
@@ -1481,6 +1938,7 @@ const AdminSection: React.FC<AdminSectionProps> = ({
                   <AssetDetailSidebar
                     asset={copilotArtifact}
                     onClose={closeArtifact}
+                    onViewInAnalytics={viewInAnalytics}
                     hideHeader
                   />
                 </div>
@@ -1523,16 +1981,17 @@ const AdminSection: React.FC<AdminSectionProps> = ({
         <main className="flex-1 overflow-hidden min-h-0 shrink-0 relative">
           {/* Page content (Dashboard, Library, etc.) */}
           <div
-            className={`absolute inset-0 transition-opacity duration-300 ${
+            className={`absolute inset-0 transition-opacity ${
               isContentTransitioning || isRouteEntering
                 ? 'opacity-0'
                 : 'opacity-100'
             }`}
-            style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
+            style={{
+              transitionDuration: isContentTransitioning ? '90ms' : '350ms',
+              transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
           >
-            {isCopilotOpen ? (
-              <CopilotView {...copilotViewProps} />
-            ) : activeAgent ? (
+            {activeAgent ? (
               <AgentDetailView
                 agent={activeAgent}
                 onBack={() => setActiveAgent(null)}
@@ -1541,17 +2000,17 @@ const AdminSection: React.FC<AdminSectionProps> = ({
               renderContent()
             )}
           </div>
-          {/* CopilotView overlay — fades in via internal stagger, fades out on close */}
-          {isCopilotOpen && (
-            <div
-              className={`absolute inset-0 transition-opacity duration-300 ${
-                copilotLeaving ? 'opacity-0' : 'opacity-100'
-              }`}
-              style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
-            >
-              <CopilotView {...copilotViewProps} />
-            </div>
-          )}
+          {/* CopilotView overlay — always mounted to preserve state during generation */}
+          <div
+            className={`absolute inset-0 transition-opacity duration-300 ${
+              isCopilotOpen
+                ? (copilotLeaving ? 'opacity-0' : 'opacity-100')
+                : 'opacity-0 pointer-events-none'
+            }`}
+            style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
+          >
+            <CopilotView {...copilotViewProps} />
+          </div>
         </main>
         {rightPanels}
       </div>

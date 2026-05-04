@@ -9,6 +9,7 @@ import { TextInput } from '@circleco/compass/components/TextInput';
 import { Icon } from '@circleco/compass/components/Icon';
 import { getThreadsForCategory, INITIAL_REVIEWED_IDS, INITIAL_DECISIONS, type V1Category } from './v1MockData';
 import CourseCommentRow from '../CourseCommentRow';
+import SortViewDropdown, { type ViewMode } from '../v2/SortViewDropdown';
 
 const AGENT_OPTIONS = [
   { label: 'All agents', value: 'all' },
@@ -53,9 +54,10 @@ interface ThreadListV1Props {
   titleOverride?: string;
   onNewMessage?: () => void;
   showSortSelect?: boolean;
+  enableViewModes?: boolean;
 }
 
-const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSelect, onSettingsOpen, titleOverride, onNewMessage, showSortSelect = false }) => {
+const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSelect, onSettingsOpen, titleOverride, onNewMessage, showSortSelect = false, enableViewModes = false }) => {
   const threads = getThreadsForCategory(category);
 
   // Moderation: local reviewed set + decisions + dismiss animation
@@ -116,6 +118,16 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
   // Sort state
   const [sortMode, setSortMode] = useState('newest');
 
+  // View mode state — only meaningful when enableViewModes is true.
+  // For single categories, grouping is supported only under AI Priority sort;
+  // when sort changes away from AI Priority, viewMode resets to flat below.
+  const [viewMode, setViewMode] = useState<ViewMode>('flat');
+
+  const handleSortChange = (next: string) => {
+    setSortMode(next);
+    if (enableViewModes && next !== 'ai-priority') setViewMode('flat');
+  };
+
   // Search state
   const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -166,15 +178,14 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
     }
   };
 
-  const PRIORITY_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2 };
+  const PRIORITY_ORDER: Record<string, number> = { attention: 0, routine: 1 };
   const PRIORITY_LEVELS: Array<{ key: string; label: string; dotColor: string; estimate: string }> = [
-    { key: 'high', label: 'High priority', dotColor: '#E24B4A', estimate: '~2 min' },
-    { key: 'medium', label: 'Medium priority', dotColor: '#BA7517', estimate: '~3 min' },
-    { key: 'low', label: 'Low priority', dotColor: 'var(--color-text-tertiary, #717680)', estimate: '~2 min' },
+    { key: 'attention', label: 'Needs attention', dotColor: '#E24B4A', estimate: '~3 min' },
+    { key: 'routine', label: 'Routine', dotColor: 'var(--color-text-tertiary, #717680)', estimate: '~2 min' },
   ];
   const filtered = getFilteredThreads();
   const filteredThreads = sortMode === 'ai-priority'
-    ? [...filtered].sort((a, b) => PRIORITY_ORDER[a.priority ?? 'low'] - PRIORITY_ORDER[b.priority ?? 'low'])
+    ? [...filtered].sort((a, b) => PRIORITY_ORDER[a.priority ?? 'routine'] - PRIORITY_ORDER[b.priority ?? 'routine'])
     : filtered;
   const isAiPriority = sortMode === 'ai-priority';
 
@@ -248,10 +259,21 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
               size="md"
             />
             {showSortSelect && (
-              <Menu
-                options={getSortOptions().map(o => ({ label: o.label, onClick: () => setSortMode(o.value) }))}
-                trigger={<IconButton icon="arrow-bottom-top" size="md" variant="outline" aria-label="Sort" />}
-              />
+              enableViewModes ? (
+                <SortViewDropdown
+                  sortOptions={getSortOptions() ?? []}
+                  sortValue={sortMode}
+                  onSortChange={handleSortChange}
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode}
+                  showViewSection={sortMode === 'ai-priority'}
+                />
+              ) : (
+                <Menu
+                  options={getSortOptions().map(o => ({ label: o.label, onClick: () => setSortMode(o.value) }))}
+                  trigger={<IconButton icon="arrow-bottom-top" size="md" variant="outline" aria-label="Sort" />}
+                />
+              )
             )}
           </div>
         );
@@ -277,10 +299,23 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
                 onValueChange={v => setCourseScope((v as any)?.value ?? 'all')}
               />
             </div>
-            <Menu
-              options={getSortOptions().map(o => ({ label: o.label, onClick: () => setSortMode(o.value) }))}
-              trigger={<IconButton icon="arrow-bottom-top" size="md" variant="outline" aria-label="Sort" />}
-            />
+            {showSortSelect && (
+              enableViewModes ? (
+                <SortViewDropdown
+                  sortOptions={getSortOptions() ?? []}
+                  sortValue={sortMode}
+                  onSortChange={handleSortChange}
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode}
+                  showViewSection={sortMode === 'ai-priority'}
+                />
+              ) : (
+                <Menu
+                  options={getSortOptions().map(o => ({ label: o.label, onClick: () => setSortMode(o.value) }))}
+                  trigger={<IconButton icon="arrow-bottom-top" size="md" variant="outline" aria-label="Sort" />}
+                />
+              )
+            )}
           </div>
         );
       case 'ai-inbox': {
@@ -307,10 +342,21 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
                 onValueChange={v => setAiAgent((v as any)?.value ?? 'all')}
               />
             </div>
-            <Menu
-              options={getSortOptions().map(o => ({ label: o.label, onClick: () => setSortMode(o.value) }))}
-              trigger={<IconButton icon="arrow-bottom-top" size="md" variant="outline" aria-label="Sort" />}
-            />
+            {enableViewModes ? (
+              <SortViewDropdown
+                sortOptions={getSortOptions() ?? []}
+                sortValue={sortMode}
+                onSortChange={handleSortChange}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                showViewSection={sortMode === 'ai-priority'}
+              />
+            ) : (
+              <Menu
+                options={getSortOptions().map(o => ({ label: o.label, onClick: () => setSortMode(o.value) }))}
+                trigger={<IconButton icon="arrow-bottom-top" size="md" variant="outline" aria-label="Sort" />}
+              />
+            )}
           </div>
         );
       }
@@ -422,20 +468,24 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
           <div className="flex items-center justify-center flex-1 py-8">
             <Typography variant="body-sm" color="tertiary">No results</Typography>
           </div>
-        ) : isAiPriority ? (
+        ) : (enableViewModes ? viewMode === 'grouped' && isAiPriority : isAiPriority) ? (
           PRIORITY_LEVELS.map(({ key, label, dotColor, estimate }) => {
-            const groupItems = filteredThreads.filter(i => (i.priority ?? 'low') === key);
+            const groupItems = filteredThreads.filter(i => (i.priority ?? 'routine') === key);
             if (groupItems.length === 0) return null;
             return (
               <div key={key}>
                 <div className="sticky top-0 z-10 flex items-center gap-2 h-9 pl-4 pr-3 bg-primary">
-                  <div className="size-1.5 rounded-full shrink-0" style={{ backgroundColor: dotColor }} />
-                  <Typography variant="caption" color="tertiary" className="font-semibold">
+                  {!enableViewModes && (
+                    <div className="size-1.5 rounded-full shrink-0" style={{ backgroundColor: dotColor }} />
+                  )}
+                  <Typography variant="caption" color="tertiary" className="font-medium">
                     {label} · {groupItems.length}
                   </Typography>
-                  <Typography variant="caption" color="tertiary" className="ml-auto shrink-0">
-                    {estimate}
-                  </Typography>
+                  {!enableViewModes && (
+                    <Typography variant="caption" color="tertiary" className="ml-auto shrink-0">
+                      {estimate}
+                    </Typography>
+                  )}
                 </div>
                 {groupItems.map(item => renderThreadItem(item))}
               </div>
