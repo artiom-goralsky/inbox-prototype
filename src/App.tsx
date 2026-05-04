@@ -433,6 +433,7 @@ function AppContent() {
             onCopilotMaximizedChange={handleCopilotMaximizedChange}
             onArtifactStateChange={(type) => setAdminArtifactOpen(type)}
             onSidebarCollapsedChange={setAdminSidebarCollapsed}
+            initialSidebarCollapsed={adminSidebarCollapsed}
             adminOuterPortal={adminOuterEl}
             copilotPortal={copilotPortalEl}
           />
@@ -463,7 +464,11 @@ function AppContent() {
   // Portal targets for admin sidebar and copilot (rendered outside the content card)
   const [adminOuterEl, setAdminOuterEl] = useState<HTMLDivElement | null>(null);
   const [copilotPortalEl, setCopilotPortalEl] = useState<HTMLDivElement | null>(null);
-  const [adminSidebarCollapsed, setAdminSidebarCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
+  const [adminSidebarCollapsed, setAdminSidebarCollapsed] = useState(() => {
+    const stored = localStorage.getItem('sidebarCollapsed');
+    if (stored !== null) return stored === 'true';
+    return window.innerWidth < 1440;
+  });
 
   const handleCopilotMaximizedChange = useCallback((maximized: boolean) => {
     if (maximized) {
