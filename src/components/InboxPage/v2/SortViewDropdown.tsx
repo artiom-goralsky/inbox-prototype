@@ -53,7 +53,7 @@ const SortViewDropdown: React.FC<SortViewDropdownProps> = ({
   return (
     <Menu
       options={options}
-      trigger={<IconButton icon="arrow-bottom-top" size="md" variant="outline" aria-label="Sort" />}
+      trigger={<IconButton icon="arrow-bottom-top" size="md" variant="ghost" aria-label="Sort" />}
     />
   );
 };

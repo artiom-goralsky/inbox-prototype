@@ -215,11 +215,35 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
     }
   };
 
+  const renderSortControl = () => {
+    if (category === 'moderation') return null;
+    if ((category === 'dms' || category === 'course-comments') && !showSortSelect) return null;
+    if (enableViewModes) {
+      return (
+        <SortViewDropdown
+          sortOptions={getSortOptions() ?? []}
+          sortValue={sortMode}
+          onSortChange={handleSortChange}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          showViewSection={sortMode === 'ai-priority'}
+        />
+      );
+    }
+    return (
+      <Menu
+        options={getSortOptions().map(o => ({ label: o.label, onClick: () => setSortMode(o.value) }))}
+        trigger={<IconButton icon="arrow-bottom-top" size="md" variant="ghost" aria-label="Sort" />}
+      />
+    );
+  };
+
   const renderTitleIcons = () => {
     switch (category) {
       case 'dms':
         return (
           <>
+            {renderSortControl()}
             <IconButton icon="magnifying-glass" size="md" variant="ghost" aria-label="Search" onClick={toggleSearch} />
             <IconButton icon="checkmark-double" size="md" variant="ghost" aria-label="Mark all read" />
             <IconButton icon="plus" size="md" variant="ghost" aria-label="New message" onClick={onNewMessage} />
@@ -230,10 +254,13 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
           <IconButton icon="settings-gear" size="md" variant="ghost" aria-label="Settings" onClick={onSettingsOpen} />
         );
       case 'course-comments':
-        return null;
+        return renderSortControl();
       case 'ai-inbox':
         return (
-          <IconButton icon="magnifying-glass" size="md" variant="ghost" aria-label="Search" onClick={toggleSearch} />
+          <>
+            {renderSortControl()}
+            <IconButton icon="magnifying-glass" size="md" variant="ghost" aria-label="Search" onClick={toggleSearch} />
+          </>
         );
     }
   };
@@ -243,39 +270,20 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
       case 'dms': {
         const dmTab = dmScope === 'ai' ? 'agents' : dmStatus === 'unread' ? 'unread' : 'all';
         return (
-          <div className="flex items-center justify-between w-full">
-            <Tabs.Root
-              tabs={[{ value: 'all', label: 'Inbox' }, { value: 'unread', label: 'Unread' }, { value: 'agents', label: 'Agents' }]}
-              selectedValue={dmTab}
-              onValueChange={v => {
-                if (v === 'agents') {
-                  setDmScope('ai');
-                  setDmStatus('all');
-                } else {
-                  setDmScope('all');
-                  setDmStatus(v as 'all' | 'unread');
-                }
-              }}
-              size="md"
-            />
-            {showSortSelect && (
-              enableViewModes ? (
-                <SortViewDropdown
-                  sortOptions={getSortOptions() ?? []}
-                  sortValue={sortMode}
-                  onSortChange={handleSortChange}
-                  viewMode={viewMode}
-                  onViewModeChange={setViewMode}
-                  showViewSection={sortMode === 'ai-priority'}
-                />
-              ) : (
-                <Menu
-                  options={getSortOptions().map(o => ({ label: o.label, onClick: () => setSortMode(o.value) }))}
-                  trigger={<IconButton icon="arrow-bottom-top" size="md" variant="outline" aria-label="Sort" />}
-                />
-              )
-            )}
-          </div>
+          <Tabs.Root
+            tabs={[{ value: 'all', label: 'Inbox' }, { value: 'unread', label: 'Unread' }, { value: 'agents', label: 'Agents' }]}
+            selectedValue={dmTab}
+            onValueChange={v => {
+              if (v === 'agents') {
+                setDmScope('ai');
+                setDmStatus('all');
+              } else {
+                setDmScope('all');
+                setDmStatus(v as 'all' | 'unread');
+              }
+            }}
+            size="md"
+          />
         );
       }
       case 'moderation':
@@ -289,33 +297,14 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
         );
       case 'course-comments':
         return (
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center shrink-0">
-              <Select
-                aria-label="Course scope"
-                value={{ label: COURSE_SCOPE_OPTIONS.find(o => o.value === courseScope)?.label ?? 'All courses', value: courseScope }}
-                placeholder="All courses"
-                options={COURSE_SCOPE_OPTIONS}
-                onValueChange={v => setCourseScope((v as any)?.value ?? 'all')}
-              />
-            </div>
-            {showSortSelect && (
-              enableViewModes ? (
-                <SortViewDropdown
-                  sortOptions={getSortOptions() ?? []}
-                  sortValue={sortMode}
-                  onSortChange={handleSortChange}
-                  viewMode={viewMode}
-                  onViewModeChange={setViewMode}
-                  showViewSection={sortMode === 'ai-priority'}
-                />
-              ) : (
-                <Menu
-                  options={getSortOptions().map(o => ({ label: o.label, onClick: () => setSortMode(o.value) }))}
-                  trigger={<IconButton icon="arrow-bottom-top" size="md" variant="outline" aria-label="Sort" />}
-                />
-              )
-            )}
+          <div className="flex items-center shrink-0">
+            <Select
+              aria-label="Course scope"
+              value={{ label: COURSE_SCOPE_OPTIONS.find(o => o.value === courseScope)?.label ?? 'All courses', value: courseScope }}
+              placeholder="All courses"
+              options={COURSE_SCOPE_OPTIONS}
+              onValueChange={v => setCourseScope((v as any)?.value ?? 'all')}
+            />
           </div>
         );
       case 'ai-inbox': {
@@ -325,38 +314,21 @@ const ThreadListV1: React.FC<ThreadListV1Props> = ({ category, selectedId, onSel
           { label: 'AI Paused', value: 'paused' },
         ];
         return (
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-2">
-              <Select
-                aria-label="Status filter"
-                value={{ label: AI_STATUS_OPTIONS.find(o => o.value === aiStatusFilter)?.label ?? 'All', value: aiStatusFilter }}
-                placeholder="All"
-                options={AI_STATUS_OPTIONS}
-                onValueChange={v => setAiStatusFilter(((v as any)?.value ?? 'all') as 'all' | 'unread' | 'paused')}
-              />
-              <Select
-                aria-label="Agent filter"
-                value={{ label: AGENT_OPTIONS.find(o => o.value === aiAgent)?.label ?? 'All agents', value: aiAgent }}
-                placeholder="All agents"
-                options={AGENT_OPTIONS}
-                onValueChange={v => setAiAgent((v as any)?.value ?? 'all')}
-              />
-            </div>
-            {enableViewModes ? (
-              <SortViewDropdown
-                sortOptions={getSortOptions() ?? []}
-                sortValue={sortMode}
-                onSortChange={handleSortChange}
-                viewMode={viewMode}
-                onViewModeChange={setViewMode}
-                showViewSection={sortMode === 'ai-priority'}
-              />
-            ) : (
-              <Menu
-                options={getSortOptions().map(o => ({ label: o.label, onClick: () => setSortMode(o.value) }))}
-                trigger={<IconButton icon="arrow-bottom-top" size="md" variant="outline" aria-label="Sort" />}
-              />
-            )}
+          <div className="flex items-center gap-2">
+            <Select
+              aria-label="Status filter"
+              value={{ label: AI_STATUS_OPTIONS.find(o => o.value === aiStatusFilter)?.label ?? 'All', value: aiStatusFilter }}
+              placeholder="All"
+              options={AI_STATUS_OPTIONS}
+              onValueChange={v => setAiStatusFilter(((v as any)?.value ?? 'all') as 'all' | 'unread' | 'paused')}
+            />
+            <Select
+              aria-label="Agent filter"
+              value={{ label: AGENT_OPTIONS.find(o => o.value === aiAgent)?.label ?? 'All agents', value: aiAgent }}
+              placeholder="All agents"
+              options={AGENT_OPTIONS}
+              onValueChange={v => setAiAgent((v as any)?.value ?? 'all')}
+            />
           </div>
         );
       }
