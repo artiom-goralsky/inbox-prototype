@@ -1,0 +1,30 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" fill="#ffffff"/>
+  <circle cx="32.00" cy="32.00" r="4.80" fill="#3C53E7">
+    <animate attributeName="opacity" values="1;0;1" dur="1.1111111111111112s" begin="0s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0.05 0.55 0.95; 0.45 0.05 0.55 0.95"/>
+  </circle>
+  <circle cx="32.00" cy="14.08" r="4.80" fill="#3C53E7">
+    <animate attributeName="opacity" values="1;0;1" dur="1.1111111111111112s" begin="-0.12345679012345678s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0.05 0.55 0.95; 0.45 0.05 0.55 0.95"/>
+  </circle>
+  <circle cx="44.67" cy="19.33" r="4.80" fill="#3C53E7">
+    <animate attributeName="opacity" values="1;0;1" dur="1.1111111111111112s" begin="-0.24691358024691357s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0.05 0.55 0.95; 0.45 0.05 0.55 0.95"/>
+  </circle>
+  <circle cx="49.92" cy="32.00" r="4.80" fill="#3C53E7">
+    <animate attributeName="opacity" values="1;0;1" dur="1.1111111111111112s" begin="-0.37037037037037035s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0.05 0.55 0.95; 0.45 0.05 0.55 0.95"/>
+  </circle>
+  <circle cx="44.67" cy="44.67" r="4.80" fill="#3C53E7">
+    <animate attributeName="opacity" values="1;0;1" dur="1.1111111111111112s" begin="-0.49382716049382713s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0.05 0.55 0.95; 0.45 0.05 0.55 0.95"/>
+  </circle>
+  <circle cx="32.00" cy="49.92" r="4.80" fill="#3C53E7">
+    <animate attributeName="opacity" values="1;0;1" dur="1.1111111111111112s" begin="-0.617283950617284s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0.05 0.55 0.95; 0.45 0.05 0.55 0.95"/>
+  </circle>
+  <circle cx="19.33" cy="44.67" r="4.80" fill="#3C53E7">
+    <animate attributeName="opacity" values="1;0;1" dur="1.1111111111111112s" begin="-0.7407407407407407s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0.05 0.55 0.95; 0.45 0.05 0.55 0.95"/>
+  </circle>
+  <circle cx="14.08" cy="32.00" r="4.80" fill="#3C53E7">
+    <animate attributeName="opacity" values="1;0;1" dur="1.1111111111111112s" begin="-0.8641975308641976s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0.05 0.55 0.95; 0.45 0.05 0.55 0.95"/>
+  </circle>
+  <circle cx="19.33" cy="19.33" r="4.80" fill="#3C53E7">
+    <animate attributeName="opacity" values="1;0;1" dur="1.1111111111111112s" begin="-0.9876543209876543s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0.05 0.55 0.95; 0.45 0.05 0.55 0.95"/>
+  </circle>
+</svg>

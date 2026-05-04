@@ -27,32 +27,33 @@ export const firstLevelNavItems: FirstLevelNavItem[] = [
       <Icon
         name="sparkles"
         size="md"
+        color="primary"
       />
     ),
     activeIcon: <Icon name="sparkles-filled" size="md" />,
   },
-  {
-    id: 'inbox',
-    title: 'Inbox',
-    icon: <Icon name="inbox-empty" size="lg" className="w-6 h-6" />,
-    activeIcon: (
-      <Icon name="inbox-empty-filled" size="lg" className="w-6 h-6" />
-    ),
-  },
-  {
-    id: 'notifications',
-    title: 'Notifications',
-    icon: <Icon name="bell" size="lg" className="w-6 h-6" />,
-    activeIcon: <Icon name="bell-filled" size="lg" className="w-6 h-6" />,
-  },
-  {
-    id: 'manage',
-    title: 'Manage',
-    icon: <Icon name="settings-gear" size="lg" className="w-6 h-6" />,
-    activeIcon: (
-      <Icon name="settings-gear-filled" size="lg" className="w-6 h-6" />
-    ),
-  },
+  // {
+  //   id: 'inbox',
+  //   title: 'Inbox',
+  //   icon: <Icon name="inbox-empty" size="lg" className="w-6 h-6" />,
+  //   activeIcon: (
+  //     <Icon name="inbox-empty-filled" size="lg" className="w-6 h-6" />
+  //   ),
+  // },
+  // {
+  //   id: 'notifications',
+  //   title: 'Notifications',
+  //   icon: <Icon name="bell" size="lg" className="w-6 h-6" />,
+  //   activeIcon: <Icon name="bell-filled" size="lg" className="w-6 h-6" />,
+  // },
+  // {
+  //   id: 'manage',
+  //   title: 'Manage',
+  //   icon: <Icon name="settings-gear" size="lg" className="w-6 h-6" />,
+  //   activeIcon: (
+  //     <Icon name="settings-gear-filled" size="lg" className="w-6 h-6" />
+  //   ),
+  // },
   {
     id: 'clarity',
     title: 'Clarity',
@@ -89,12 +90,12 @@ export const firstLevelNavItems: FirstLevelNavItem[] = [
       />
     ),
   },
-  {
-    id: 'more',
-    title: 'More',
-    icon: <Icon name="circle-dots-center" size="lg" className="w-6 h-6" />,
-    activeIcon: (
-      <Icon name="circle-dots-center" size="lg" className="w-6 h-6" />
-    ),
-  },
+  // {
+  //   id: 'more',
+  //   title: 'More',
+  //   icon: <Icon name="circle-dots-center" size="lg" className="w-6 h-6" />,
+  //   activeIcon: (
+  //     <Icon name="circle-dots-center" size="lg" className="w-6 h-6" />
+  //   ),
+  // },
 ];

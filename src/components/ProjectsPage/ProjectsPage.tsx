@@ -5,13 +5,18 @@ import { Typography } from '@circleco/compass/components/Typography';
 import { Avatar } from '@circleco/compass/components/Avatar';
 import { Tabs } from '@circleco/compass/components/Tabs';
 import { Icon } from '@circleco/compass/components/Icon';
+import { Menu } from '@circleco/compass/components/Menu';
 import type { AssetItem } from '../shared/AssetDetailSidebar';
 import ProjectDetailView from './ProjectDetailView';
+import LaunchProjectView from './LaunchProjectView';
+import { type LaunchProjectData, type LaunchPlanStep, buildLaunchProject } from './launchProjectData';
 
+const AVATAR_1 = '/images/avatars/1.png';
+const AVATAR_2 = '/images/avatars/4.png';
+const AVATAR_3 = '/images/avatars/6.png';
+const AVATAR_CLARA = '/images/avatars/3.png';
+const AVATAR_MAYA = '/images/avatars/5.png';
 const AI_AVATAR = '/ai-avatar.png';
-const AVATAR_CLARA = AI_AVATAR;
-const AVATAR_DAN = AI_AVATAR;
-const AVATAR_MAYA = AI_AVATAR;
 
 type ProjectStatus = 'active' | 'completed';
 
@@ -24,51 +29,42 @@ export interface Project {
   agents: { name: string; avatar: string }[];
   chats: number;
   artifacts: number;
+  lastActive: string;
 }
 
 const PROJECTS: Project[] = [
   {
-    id: '1',
+    id: 'launch-community',
     emoji: '🚀',
-    title: 'Q2 Growth Campaign',
-    description:
-      'Drive member acquisition and activation through targeted onboarding improvements and outreach campaigns.',
+    title: 'Launch your community',
+    description: 'Coordinate the launch and initial setup for your community.',
     status: 'active',
-    agents: [
-      { name: 'Clara', avatar: AVATAR_CLARA },
-      { name: 'Dan', avatar: AVATAR_DAN },
-      { name: 'Maya', avatar: AVATAR_MAYA },
-    ],
-    chats: 14,
-    artifacts: 8,
+    agents: [{ name: 'Agent 1', avatar: AVATAR_1 }, { name: 'Agent 2', avatar: AVATAR_3 }],
+    chats: 6,
+    artifacts: 1,
+    lastActive: 'Yesterday',
   },
   {
     id: '2',
     emoji: '📊',
     title: 'Churn Reduction Initiative',
-    description:
-      'Analyze churn patterns and implement retention strategies to reduce monthly churn below 5%.',
+    description: 'Analyze churn patterns and implement retention strategies.',
     status: 'active',
-    agents: [
-      { name: 'Dan', avatar: AVATAR_DAN },
-      { name: 'Clara', avatar: AVATAR_CLARA },
-    ],
+    agents: [{ name: 'Agent 1', avatar: '/images/avatars/3.png' }, { name: 'Agent 2', avatar: '/images/avatars/5.png' }, { name: 'Agent 3', avatar: '/images/avatars/7.png' }],
     chats: 9,
     artifacts: 5,
+    lastActive: '2d ago',
   },
   {
     id: '3',
     emoji: '✉️',
     title: 'Welcome Email Redesign',
-    description:
-      'Redesign the welcome email sequence to improve open rates and first-week engagement.',
+    description: 'Redesign the welcome email sequence to improve open rates.',
     status: 'completed',
-    agents: [
-      { name: 'Clara', avatar: AVATAR_CLARA },
-      { name: 'Maya', avatar: AVATAR_MAYA },
-    ],
-    chats: 6,
-    artifacts: 3,
+    agents: [{ name: 'Agent 1', avatar: '/images/avatars/2.png' }, { name: 'Agent 2', avatar: '/images/avatars/4.png' }],
+    chats: 0,
+    artifacts: 0,
+    lastActive: '5d ago',
   },
 ];
 
@@ -92,31 +88,40 @@ interface ProjectCardProps {
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick }) => (
   <div
     onClick={onClick}
-    className="bg-primary border border-secondary rounded-xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-[0px_2px_8px_-2px_rgba(0,0,0,0.08)] transition-shadow"
+    className="flex-1 min-w-[280px] max-w-[420px] bg-primary rounded-lg p-5 flex flex-col gap-4 cursor-pointer hover:shadow-[0px_4px_20px_-8px_rgba(0,0,0,0.14),0px_3px_12px_-4px_rgba(0,0,0,0.1),0px_0px_0px_1px_rgba(0,0,0,0.04)] transition-shadow"
+    style={{ boxShadow: '0px 4px 16px -8px rgba(0,0,0,0.1), 0px 3px 12px -4px rgba(0,0,0,0.1), 0px 0px 0px 1px rgba(0,0,0,0.04)' }}
   >
-    <div className="flex items-center justify-between gap-2">
-      <div className="flex items-center">
-        {project.agents.map((agent, i) => (
-          <div key={agent.name} className={`rounded-full${i > 0 ? ' -ml-2' : ''}`}>
-            <img src={agent.avatar} alt={agent.name} className="w-[22px] h-[22px] rounded-full" />
-          </div>
-        ))}
-      </div>
-      <IconButton
-        variant="ghost"
-        size="sm"
-        icon="dot-menu"
-        aria-label="More options"
-        onClick={e => e.stopPropagation()}
-      />
-    </div>
-    <div className="flex flex-col gap-1 flex-1">
+    {/* Title + description */}
+    <div className="flex flex-col gap-2">
       <Typography variant="label-md" color="primary">
-        <span className="font-semibold line-clamp-1">{project.title}</span>
+        <span className="font-semibold">{project.title}</span>
       </Typography>
-      <Typography variant="body-sm" color="tertiary">
+      <Typography variant="body-sm" color="secondary">
         <span className="line-clamp-2">{project.description}</span>
       </Typography>
+    </div>
+    {/* Bottom row: chats, last active, pin */}
+    <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
+        <Icon name="message" size="sm" className="text-tertiary" />
+        <Typography variant="body-sm" color="tertiary">{project.chats} chats</Typography>
+      </div>
+      <div className="flex items-center gap-2 flex-1">
+        <Icon name="clock-dash" size="sm" className="text-tertiary" />
+        <Typography variant="body-sm" color="tertiary">{project.lastActive}</Typography>
+      </div>
+      <div onClick={e => e.stopPropagation()}>
+        <Menu
+          options={[
+            { label: 'Edit project', icon: 'pencil', onClick: () => {} },
+            { label: 'Delete project', icon: 'trash-can', onClick: () => {}, danger: true },
+          ]}
+          trigger={<IconButton variant="ghost" size="sm" icon="dot-menu" aria-label="More options" />}
+          side="bottom"
+          align="end"
+          sideOffset={4}
+        />
+      </div>
     </div>
   </div>
 );
@@ -125,6 +130,14 @@ interface ProjectsPageProps {
   onItemClick?: (item: AssetItem) => void;
   pendingProjectTitle?: string | null;
   onClearPendingProject?: () => void;
+  launchProject?: LaunchProjectData | null;
+  onClearLaunchProject?: () => void;
+  onOpenCopilot?: () => void;
+  onNewChat?: () => void;
+  onOpenChat?: (chatId: string, title: string, messages: { role: 'user' | 'assistant'; content: string }[]) => void;
+  onEntryPointChange?: (label: string) => void;
+  shimmerProgress?: boolean;
+  projectStepsOverride?: LaunchPlanStep[] | null;
 }
 
 const SHORTCUT_TASKS: Record<string, string[]> = {
@@ -292,89 +305,62 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
       onClick={onClose}
     >
+      {/* Outer — bg-secondary with rounded + shadow */}
       <div
-        className="bg-primary rounded-2xl shadow-2xl w-full max-w-[720px] max-h-[85vh] flex flex-col overflow-hidden"
+        className="bg-secondary rounded-2xl p-1 w-full max-w-[720px] max-h-[85vh] flex flex-col"
+        style={{ boxShadow: '0px 8px 10px -6px rgba(0,0,0,0.1), 0px 20px 25px -5px rgba(0,0,0,0.1)' }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-0 shrink-0">
-          <div />
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-secondary transition-colors text-tertiary"
-            aria-label="Close"
-          >
-            <Icon name="x" size="sm" />
-          </button>
-        </div>
-
-        {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto px-6 pb-6">
-          {/* Avatars */}
-          <div className="flex justify-center mt-2 mb-4">
-            <div className="flex items-center">
-              <div className="rounded-full"><img src={AI_AVATAR} alt="Clara" className="w-[22px] h-[22px] rounded-full" /></div>
-              <div className="rounded-full -ml-3"><img src={AI_AVATAR} alt="Dan" className="w-[22px] h-[22px] rounded-full" /></div>
-              <div className="rounded-full -ml-3"><img src={AI_AVATAR} alt="Maya" className="w-[22px] h-[22px] rounded-full" /></div>
-            </div>
-          </div>
-
-          {/* Prompt */}
-          <Typography variant="heading-md" color="primary" className="mb-5">
-            <span className="text-center font-semibold block">{`What should your project accomplish?`}</span>
-          </Typography>
-
-          {/* Text area */}
-          <div className="relative mb-8">
-            <textarea
-              value={prompt}
-              onChange={e => setPrompt(e.target.value)}
-              placeholder="Describe your project goal..."
-              rows={3}
-              className="w-full rounded-xl border border-tertiary px-4 py-3 text-[15px] text-primary placeholder:text-disabled resize-none focus:outline-none focus:ring-2 focus:ring-[#2563eb] focus:border-transparent"
-            />
-            <div className="absolute bottom-3 right-3">
-              <IconButton
-                variant="primary"
-                size="md"
-                icon="arrow-up"
-                aria-label="Create project"
-                onClick={() => {
-                  if (prompt.trim()) onCreateBlank(prompt.trim());
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Templates header */}
-          <div className="flex items-center gap-2 mb-4">
-            <Icon name="sparkle" size="sm" className="text-tertiary" />
-            <Typography variant="label-sm" color="secondary">
-              <span className="font-medium">Or start from a template</span>
+        {/* Inner card */}
+        <div className="bg-primary rounded-xl flex flex-col flex-1 min-h-0 overflow-hidden" style={{ boxShadow: '0px 1px 4px 0px rgba(0,0,0,0.03)' }}>
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 pt-6 pb-4 shrink-0">
+            <Typography variant="heading-md" color="primary">
+              <span className="font-semibold">What do you want to accomplish?</span>
             </Typography>
+            <IconButton variant="ghost" size="sm" icon="cross" aria-label="Close" onClick={onClose} />
           </div>
 
-          {/* Template categories */}
-          <div className="flex flex-col gap-6">
+          {/* Scrollable body */}
+          <div className="flex-1 overflow-y-auto px-6 pb-6 flex flex-col gap-10">
+            {/* Message box */}
+            <div className="relative">
+              <textarea
+                value={prompt}
+                onChange={e => setPrompt(e.target.value)}
+                placeholder="Describe your project goal..."
+                rows={3}
+                className="w-full rounded-2xl border border-[#E4E7EB] px-4 py-3 text-base text-primary placeholder:text-[#545861] resize-none focus:outline-none focus:ring-2 focus:ring-[#2563eb] focus:border-transparent shadow-2xs min-h-[131px]"
+              />
+              <div className="absolute bottom-3 right-3">
+                <IconButton
+                  variant="primary"
+                  size="sm"
+                  icon="arrow-up"
+                  aria-label="Create project"
+                  onClick={() => { if (prompt.trim()) onCreateBlank(prompt.trim()); }}
+                />
+              </div>
+            </div>
+
+            {/* Template sections */}
             {PROJECT_TEMPLATES.map(category => (
-              <div key={category.label} className="flex flex-col gap-2">
+              <div key={category.label} className="flex flex-col gap-3">
                 <Typography variant="label-sm" color="tertiary">
-                  <span className="font-semibold flex items-center gap-1.5"><span>{category.emoji}</span> {category.label}
-                  <span className="text-disabled font-normal ml-1">({category.items.length})</span></span>
+                  <span className="font-semibold flex items-center gap-1.5"><span>{category.emoji}</span> {category.label}</span>
                 </Typography>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col gap-2">
                   {category.items.map(item => (
                     <button
                       key={item.title}
                       onClick={() => onSelectTemplate(item.title)}
-                      className="text-left rounded-xl border border-secondary p-4 hover:shadow-[0px_2px_8px_-2px_rgba(0,0,0,0.08)] hover:border-[#c4c9cf] transition-[shadow,border-color] cursor-pointer bg-primary"
+                      className="text-left rounded-lg border border-secondary px-4 py-3 hover:bg-hover transition-colors cursor-pointer bg-primary flex items-center gap-3"
                     >
-                      <Typography variant="label-sm" color="primary" className="mb-1">
-                        <span className="font-semibold">{item.title}</span>
-                      </Typography>
-                      <Typography variant="body-sm" color="tertiary">
-                        <span className="line-clamp-2 text-[12px]">{item.description}</span>
-                      </Typography>
+                      <div className="flex-1 min-w-0">
+                        <Typography variant="label-sm" color="primary">
+                          <span className="font-medium">{item.title}</span>
+                        </Typography>
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -391,9 +377,18 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
   onItemClick,
   pendingProjectTitle,
   onClearPendingProject,
+  launchProject,
+  onClearLaunchProject,
+  onOpenCopilot,
+  onNewChat,
+  onOpenChat,
+  onEntryPointChange,
+  shimmerProgress,
+  projectStepsOverride,
 }) => {
   const [activeTab, setActiveTab] = useState('all');
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
+  const [showDemoLaunchProject, setShowDemoLaunchProject] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(() => {
     if (pendingProjectTitle) {
       return {
@@ -403,11 +398,12 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
         description: `A new project created from your dashboard shortcut.`,
         status: 'active' as ProjectStatus,
         agents: [
-          { name: 'Clara', avatar: AVATAR_CLARA },
-          { name: 'Maya', avatar: AVATAR_MAYA },
+          { name: 'Agent 1', avatar: AVATAR_1 },
+          { name: 'Agent 2', avatar: AVATAR_2 },
         ],
         chats: 0,
         artifacts: 0,
+        lastActive: 'Just now',
       };
     }
     return null;
@@ -434,8 +430,45 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
       ],
       chats: 0,
       artifacts: 0,
+      lastActive: 'Just now',
     });
   };
+
+  // Launch project takes priority
+  if (launchProject) {
+    return (
+      <LaunchProjectView
+        project={projectStepsOverride ? { ...launchProject, steps: projectStepsOverride } : launchProject}
+        shimmerProgress={shimmerProgress}
+        onBack={() => onClearLaunchProject?.()}
+        onNewConversation={onNewChat}
+        onOpenChat={onOpenChat}
+        onEntryPointChange={onEntryPointChange}
+      />
+    );
+  }
+
+  // Demo "Launch your community" project — uses the new layout
+  if (showDemoLaunchProject) {
+    const demoProject = buildLaunchProject('course', [
+      'Small but growing — under 500',
+      'Yes — paid from day one',
+      'Set up my structure and launch',
+    ]);
+    const displayProject = projectStepsOverride
+      ? { ...demoProject, steps: projectStepsOverride }
+      : demoProject;
+    return (
+      <LaunchProjectView
+        project={displayProject}
+        shimmerProgress={shimmerProgress}
+        onBack={() => setShowDemoLaunchProject(false)}
+        onNewConversation={onNewChat}
+        onOpenChat={onOpenChat}
+        onEntryPointChange={onEntryPointChange}
+      />
+    );
+  }
 
   if (selectedProject) {
     const customTasks = selectedProject.id === 'pending'
@@ -445,8 +478,9 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
       <ProjectDetailView
         project={selectedProject}
         onBack={() => setSelectedProject(null)}
-        onItemClick={onItemClick}
         customTasks={customTasks}
+        onNewChat={onNewChat}
+        onOpenChat={onOpenChat}
       />
     );
   }
@@ -463,7 +497,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
               Projects
             </Typography>
           </div>
-          <Button variant="primary" size="md" startIcon="plus" onClick={() => setShowNewProjectModal(true)} className="[&_svg]:!text-icon-inverse">
+          <Button variant="primary" size="md" startIcon="plus" onClick={() => setShowNewProjectModal(true)}>
             New project
           </Button>
         </div>
@@ -485,12 +519,18 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
             </Typography>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-4">
+          <div className="flex flex-wrap gap-3">
             {filtered.map(project => (
               <ProjectCard
                 key={project.id}
                 project={project}
-                onClick={() => setSelectedProject(project)}
+                onClick={() => {
+                  if (project.id === 'launch-community') {
+                    setShowDemoLaunchProject(true);
+                  } else {
+                    setSelectedProject(project);
+                  }
+                }}
               />
             ))}
           </div>

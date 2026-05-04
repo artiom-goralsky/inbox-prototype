@@ -75,7 +75,7 @@ const AgentDetailView: React.FC<AgentDetailViewProps> = ({ agent, onBack }) => {
               {agent.description}
             </Typography>
             <div className="flex items-center gap-2.5">
-              <Icon name="clock-dash" size="sm" className="text-disabled shrink-0" />
+              <Icon name="clock-dash" size="sm" className="shrink-0" />
               <Typography variant="body-sm" color="disabled">
                 {agent.lastActive}
               </Typography>

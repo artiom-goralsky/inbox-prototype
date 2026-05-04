@@ -19,7 +19,7 @@ export interface V1ThreadItem {
   // AI Inbox
   aiStatus?: 'active' | 'paused' | 'resolved';
   agentId?: 'support' | 'clarity';
-  priority?: 'high' | 'medium' | 'low';
+  priority?: 'attention' | 'routine';
 }
 
 export interface V1Message {
@@ -81,6 +81,7 @@ export interface V1CourseComment {
 
 export interface V1CourseCommentThread {
   headerLabel: string;
+  courseTitle: string;
   courseName: string;
   comments: V1CourseComment[];
 }
@@ -94,22 +95,22 @@ export interface V1AIConversation {
 // ── DM Threads ──
 
 export const DM_THREADS: V1ThreadItem[] = [
-  { id: 'dm-1', name: 'Emily Park', time: '9:45', preview: 'Hey Sarah! Just hit Lesson 5 \u2014 want to grab a virtual coffee to talk portrait lighting sometime?', unread: false, priority: 'low' },
-  { id: 'dm-2', name: 'Maya Rodriguez', time: '9:45', preview: "Please let me know if there's anything else you need for the critique circle session tomorrow \u2014 I'm bringing 3 pieces.", unread: false, priority: 'medium' },
-  { id: 'dm-3', name: 'Alex Chen', time: '9:45', preview: "Hey Sarah, I'd like to request a refund on Advanced Lighting. Marcus has been inactive 3 weeks and I've barely gotten value out of it.", unread: true, priority: 'high' },
-  { id: 'dm-agent-1', name: 'Onboarding Assistant', time: '9:30', preview: 'Welcome to Photography Masterclass! Here are 3 things I recommend for your first week\u2026', unread: true, isAgent: true, priority: 'medium' },
-  { id: 'dm-4', name: 'Amy Torres', time: '9:45', preview: "HAHAHA his face in the BTS clip from yesterday's live \u2014 priceless.", unread: false, priority: 'low' },
-  { id: 'dm-5', name: 'Chen Wei', time: '9:45', preview: 'Sarah, quick question on billing \u2014 when does my Pro renew? And is there an annual option?', unread: false, priority: 'medium' },
-  { id: 'dm-agent-2', name: 'Support Bot', time: '8:12', preview: 'Your ticket #4821 has been resolved. Billing cycle updated as requested.', unread: false, isAgent: true, priority: 'low' },
-  { id: 'dm-6', name: 'Nina Patel', time: '9:45', preview: "I submitted the bug report on the mobile critique viewer \u2014 video doesn't autoplay on iOS 18.", unread: false, priority: 'medium' },
-  { id: 'dm-7', name: 'James Liu', time: '9:45', preview: 'Hey Sarah, quick one: is there a Cohort 5 orientation session happening?', unread: false, priority: 'low' },
-  { id: 'dm-8', name: 'David Kim', time: '9:45', preview: 'Still working on the Lesson 9 street photography assignment \u2014 planning to post to critique circle Sunday.', unread: false, priority: 'low' },
-  { id: 'dm-agent-3', name: 'Content Coach', time: 'Yesterday', preview: 'Your post draft looks great! A few suggestions on the opening hook \u2014 want me to share?', unread: false, isAgent: true, priority: 'low' },
-  { id: 'dm-9', name: 'Priya Sharma', time: '9:45', preview: "Let me go grab some test shots \u2014 I'll send landscape attempts for the Lesson 7 exercise in an hour.", unread: false, priority: 'medium' },
-  { id: 'dm-10', name: 'Tom Brown', time: '9:45', preview: "Haven't installed the Lightroom presets you sent yet \u2014 will try this weekend and report back.", unread: false, priority: 'low' },
-  { id: 'dm-11', name: 'Kenji Tanaka', time: '9:45', preview: 'Sarah, the star trail tutorial from last week was incredible. Any chance of a follow-up on Milky Way composition?', unread: false, priority: 'low' },
-  { id: 'dm-12', name: 'Lisa Wong', time: '9:45', preview: 'Wanted to check \u2014 can I switch my monthly Pro plan to annual? Trying to save a bit.', unread: false, priority: 'medium' },
-  { id: 'dm-13', name: 'Omar Hassan', time: '9:45', preview: 'Payment failed on my renewal \u2014 card on file expired. Still want to stay, just need to update it.', unread: false, priority: 'low' },
+  { id: 'dm-1', name: 'Emily Park', time: '9:45', preview: 'Hey Sarah! Just hit Lesson 5 \u2014 want to grab a virtual coffee to talk portrait lighting sometime?', unread: false, priority: 'routine' },
+  { id: 'dm-2', name: 'Maya Rodriguez', time: '9:45', preview: "Please let me know if there's anything else you need for the critique circle session tomorrow \u2014 I'm bringing 3 pieces.", unread: false, priority: 'attention' },
+  { id: 'dm-3', name: 'Alex Chen', time: '9:45', preview: "Hey Sarah, I'd like to request a refund on Advanced Lighting. Marcus has been inactive 3 weeks and I've barely gotten value out of it.", unread: true, priority: 'attention' },
+  { id: 'dm-agent-1', name: 'Onboarding Assistant', time: '9:30', preview: 'Welcome to Photography Masterclass! Here are 3 things I recommend for your first week\u2026', unread: true, isAgent: true, priority: 'attention' },
+  { id: 'dm-4', name: 'Amy Torres', time: '9:45', preview: "HAHAHA his face in the BTS clip from yesterday's live \u2014 priceless.", unread: false, priority: 'routine' },
+  { id: 'dm-5', name: 'Chen Wei', time: '9:45', preview: 'Sarah, quick question on billing \u2014 when does my Pro renew? And is there an annual option?', unread: false, priority: 'attention' },
+  { id: 'dm-agent-2', name: 'Support Bot', time: '8:12', preview: 'Your ticket #4821 has been resolved. Billing cycle updated as requested.', unread: false, isAgent: true, priority: 'routine' },
+  { id: 'dm-6', name: 'Nina Patel', time: '9:45', preview: "I submitted the bug report on the mobile critique viewer \u2014 video doesn't autoplay on iOS 18.", unread: false, priority: 'attention' },
+  { id: 'dm-7', name: 'James Liu', time: '9:45', preview: 'Hey Sarah, quick one: is there a Cohort 5 orientation session happening?', unread: false, priority: 'routine' },
+  { id: 'dm-8', name: 'David Kim', time: '9:45', preview: 'Still working on the Lesson 9 street photography assignment \u2014 planning to post to critique circle Sunday.', unread: false, priority: 'routine' },
+  { id: 'dm-agent-3', name: 'Content Coach', time: 'Yesterday', preview: 'Your post draft looks great! A few suggestions on the opening hook \u2014 want me to share?', unread: false, isAgent: true, priority: 'routine' },
+  { id: 'dm-9', name: 'Priya Sharma', time: '9:45', preview: "Let me go grab some test shots \u2014 I'll send landscape attempts for the Lesson 7 exercise in an hour.", unread: false, priority: 'attention' },
+  { id: 'dm-10', name: 'Tom Brown', time: '9:45', preview: "Haven't installed the Lightroom presets you sent yet \u2014 will try this weekend and report back.", unread: false, priority: 'routine' },
+  { id: 'dm-11', name: 'Kenji Tanaka', time: '9:45', preview: 'Sarah, the star trail tutorial from last week was incredible. Any chance of a follow-up on Milky Way composition?', unread: false, priority: 'routine' },
+  { id: 'dm-12', name: 'Lisa Wong', time: '9:45', preview: 'Wanted to check \u2014 can I switch my monthly Pro plan to annual? Trying to save a bit.', unread: false, priority: 'attention' },
+  { id: 'dm-13', name: 'Omar Hassan', time: '9:45', preview: 'Payment failed on my renewal \u2014 card on file expired. Still want to stay, just need to update it.', unread: false, priority: 'routine' },
 ];
 
 // ── DM Conversations ──
@@ -161,19 +162,19 @@ export const DM_CONVERSATIONS: Record<string, V1MessageGroup[]> = {
 // Pre-reviewed: mod-6, mod-7, mod-8, mod-11, mod-13 (see INITIAL_REVIEWED_IDS)
 
 export const MODERATION_THREADS: V1ThreadItem[] = [
-  { id: 'mod-1',  name: 'Derek Hoffman',       time: '9:45',      preview: 'My meetup group is running a $29 Lightroom preset pack drop \u2014 Circle members get 40% off\u2026',   badgeLabel: 'Post', priority: 'high' },
-  { id: 'mod-2',  name: 'Maria Santos',        time: '9:45',      preview: 'Pro DSLRs starting at $299 \u2014 photogeardeals.store, use CIRCLE20 for 20% off.',   badgeLabel: 'Post', priority: 'medium' },
-  { id: 'mod-3',  name: 'Derek Hoffman',       time: '9:45',      preview: "That's a pretty ignorant take. Maybe try actually learning the fundamentals\u2026",             badgeLabel: 'Comment', priority: 'high' },
-  { id: 'mod-4',  name: 'Maria Santos',        time: '9:30',      preview: 'Best deals on tripods this weekend \u2014 photogeardeals.store. Flash sale ends Sunday.',            badgeLabel: 'Post', priority: 'medium' },
-  { id: 'mod-5',  name: 'Jake Miller',         time: '9:45',      preview: 'holy shit this is perfect. How did you get that rim light on the edge of the face?',                  badgeLabel: 'Comment', priority: 'medium' },
-  { id: 'mod-6',  name: 'Jake Miller',         time: '8:12',      preview: 'damn these tones are insane. Absolutely gorgeous work.',             badgeLabel: 'Comment', priority: 'medium' },
-  { id: 'mod-7',  name: 'seo_expert_2026',     time: 'Yesterday',  preview: 'Top 10 SEO strategies for photographers in 2026 \u2014 free tools at seomaster.biz.',    badgeLabel: 'Post', priority: 'low' },
-  { id: 'mod-8',  name: 'Derek Hoffman',       time: 'Yesterday',  preview: 'Quick tip from last night\u2019s meetup \u2014 always carry a gray card for mixed lighting.',         badgeLabel: 'Post', priority: 'low' },
-  { id: 'mod-9',  name: 'Maria Santos',        time: '9:45',      preview: 'Flash sale on editing software \u2014 CIRCLE20 at photogeardeals.store for 50% off.',             badgeLabel: 'Post', priority: 'medium' },
-  { id: 'mod-10', name: 'digital_growth_pro',  time: '9:45',      preview: 'Connection request to Rudy Santino',     badgeLabel: 'Connection', priority: 'low' },
-  { id: 'mod-11', name: 'Maria Santos',        time: 'Mon',        preview: 'Upgrade your kit \u2014 exclusive discounts at photogeardeals.store, reply for link.',     badgeLabel: 'Post', priority: 'low' },
-  { id: 'mod-12', name: 'Derek Hoffman',       time: '9:45',      preview: 'New urban grit preset pack out today \u2014 derekphoto.com/presets, $29 launch price.', badgeLabel: 'Post', priority: 'low' },
-  { id: 'mod-13', name: 'photo_tools_2026',    time: 'Mon',        preview: 'Free AI photo enhancer \u2014 try it free at photoai.tools, link in bio.',                 badgeLabel: 'Post', priority: 'low' },
+  { id: 'mod-1',  name: 'Derek Hoffman',       time: '9:45',      preview: 'My meetup group is running a $29 Lightroom preset pack drop \u2014 Circle members get 40% off\u2026',   badgeLabel: 'Post', priority: 'attention' },
+  { id: 'mod-2',  name: 'Maria Santos',        time: '9:45',      preview: 'Pro DSLRs starting at $299 \u2014 photogeardeals.store, use CIRCLE20 for 20% off.',   badgeLabel: 'Post', priority: 'attention' },
+  { id: 'mod-3',  name: 'Derek Hoffman',       time: '9:45',      preview: "That's a pretty ignorant take. Maybe try actually learning the fundamentals\u2026",             badgeLabel: 'Comment', priority: 'attention' },
+  { id: 'mod-4',  name: 'Maria Santos',        time: '9:30',      preview: 'Best deals on tripods this weekend \u2014 photogeardeals.store. Flash sale ends Sunday.',            badgeLabel: 'Post', priority: 'attention' },
+  { id: 'mod-5',  name: 'Jake Miller',         time: '9:45',      preview: 'holy shit this is perfect. How did you get that rim light on the edge of the face?',                  badgeLabel: 'Comment', priority: 'attention' },
+  { id: 'mod-6',  name: 'Jake Miller',         time: '8:12',      preview: 'damn these tones are insane. Absolutely gorgeous work.',             badgeLabel: 'Comment', priority: 'attention' },
+  { id: 'mod-7',  name: 'seo_expert_2026',     time: 'Yesterday',  preview: 'Top 10 SEO strategies for photographers in 2026 \u2014 free tools at seomaster.biz.',    badgeLabel: 'Post', priority: 'routine' },
+  { id: 'mod-8',  name: 'Derek Hoffman',       time: 'Yesterday',  preview: 'Quick tip from last night\u2019s meetup \u2014 always carry a gray card for mixed lighting.',         badgeLabel: 'Post', priority: 'routine' },
+  { id: 'mod-9',  name: 'Maria Santos',        time: '9:45',      preview: 'Flash sale on editing software \u2014 CIRCLE20 at photogeardeals.store for 50% off.',             badgeLabel: 'Post', priority: 'attention' },
+  { id: 'mod-10', name: 'digital_growth_pro',  time: '9:45',      preview: 'Connection request to Rudy Santino',     badgeLabel: 'Connection', priority: 'routine' },
+  { id: 'mod-11', name: 'Maria Santos',        time: 'Mon',        preview: 'Upgrade your kit \u2014 exclusive discounts at photogeardeals.store, reply for link.',     badgeLabel: 'Post', priority: 'routine' },
+  { id: 'mod-12', name: 'Derek Hoffman',       time: '9:45',      preview: 'New urban grit preset pack out today \u2014 derekphoto.com/presets, $29 launch price.', badgeLabel: 'Post', priority: 'routine' },
+  { id: 'mod-13', name: 'photo_tools_2026',    time: 'Mon',        preview: 'Free AI photo enhancer \u2014 try it free at photoai.tools, link in bio.',                 badgeLabel: 'Post', priority: 'routine' },
 ];
 
 // ── Moderation Cards ──
@@ -363,16 +364,16 @@ export const MODERATION_CARDS: Record<string, V1ModerationCard> = {
 // ── Course Comments Threads ──
 
 export const COURSE_THREADS: V1ThreadItem[] = [
-  { id: 'cc-1', name: 'James Liu', time: '9:45', preview: "Struggling to freeze motion indoor \u2014 shutter 1/500, ISO blown out. What am I missing?", lessonName: 'Lesson 4: Action shots', lessonCoverUrl: 'https://picsum.photos/seed/action-shots/104/64', isUnanswered: true, priority: 'high' },
-  { id: 'cc-2', name: 'Priya Sharma', time: '9:45', preview: "For the foreground interest exercise \u2014 does it count if the foreground is isolated with a wide aperture, or should it be in focus too?", lessonName: 'Lesson 7: Landscape basics', lessonCoverUrl: 'https://picsum.photos/seed/landscape/104/64', isUnanswered: true, priority: 'medium' },
-  { id: 'cc-3', name: 'Maya Rodriguez', time: '9:45', preview: "Would love to see how Rudy handles mixed color temperature with tungsten + daylight \u2014 the demo was brief.", lessonName: 'Lesson 5: Portrait photography', lessonCoverUrl: 'https://picsum.photos/seed/portrait/104/64', priority: 'medium' },
-  { id: 'cc-4', name: 'Kenji Tanaka', time: '9:45', preview: "The color-channel mixing section went fast. Is there a cheat sheet for which filter emulation to use for sky vs skin?", lessonName: 'Lesson 8: Black and white', lessonCoverUrl: 'https://picsum.photos/seed/blackwhite/104/64', isUnanswered: true, priority: 'medium' },
-  { id: 'cc-5', name: 'Amy Torres', time: '9:45', preview: "Using a Sony A7IV \u2014 the live view goes almost black at the apertures Rudy recommends. Is there a setting I'm missing?", lessonName: 'Lesson 6: Night photography', lessonCoverUrl: 'https://picsum.photos/seed/nightphoto/104/64', isUnanswered: true, priority: 'high' },
-  { id: 'cc-6', name: 'Emily Park', time: '9:45', preview: "Just wanted to say the golden hour window explanation finally clicked for me \u2014 thanks.", lessonName: 'Lesson 2: Natural lighting', lessonCoverUrl: 'https://picsum.photos/seed/lighting/104/64', priority: 'low' },
-  { id: 'cc-7', name: 'David Kim', time: '9:45', preview: "Love the 'pre-focus and wait' technique. Tried it at Union Square yesterday, 3 keepers out of 40 \u2014 best ratio I've ever had.", lessonName: 'Lesson 9: Street photography', lessonCoverUrl: 'https://picsum.photos/seed/street/104/64', priority: 'low' },
-  { id: 'cc-8', name: 'Nina Patel', time: '9:45', preview: "Would a homemade light tent work for the product shot exercise, or does reflection quality depend on pro equipment?", lessonName: 'Lesson 10: Still life', lessonCoverUrl: 'https://picsum.photos/seed/stilllife/104/64', isUnanswered: true, priority: 'medium' },
-  { id: 'cc-9', name: 'Tom Brown', time: '9:45', preview: "Coming from iPhone-only \u2014 any reason to not jump straight into manual mode, or should I start with aperture priority?", lessonName: 'Lesson 1: Camera basics', lessonCoverUrl: 'https://picsum.photos/seed/camera-basics/104/64', isUnanswered: true, priority: 'low' },
-  { id: 'cc-10', name: 'Chen Wei', time: '9:45', preview: "Finished! The exposure triangle analogy made it click \u2014 thanks Rudy.", lessonName: 'Lesson 1: Camera basics', lessonCoverUrl: 'https://picsum.photos/seed/camera-basics/104/64', priority: 'low' },
+  { id: 'cc-1', name: 'James Liu', time: '9:45', preview: "Struggling to freeze motion indoor \u2014 shutter 1/500, ISO blown out. What am I missing?", lessonName: 'Lesson 4: Action shots', lessonCoverUrl: 'https://picsum.photos/seed/action-shots/104/64', isUnanswered: true, priority: 'attention' },
+  { id: 'cc-2', name: 'Priya Sharma', time: '9:45', preview: "For the foreground interest exercise \u2014 does it count if the foreground is isolated with a wide aperture, or should it be in focus too?", lessonName: 'Lesson 7: Landscape basics', lessonCoverUrl: 'https://picsum.photos/seed/landscape/104/64', isUnanswered: true, priority: 'attention' },
+  { id: 'cc-3', name: 'Maya Rodriguez', time: '9:45', preview: "Would love to see how Rudy handles mixed color temperature with tungsten + daylight \u2014 the demo was brief.", lessonName: 'Lesson 5: Portrait photography', lessonCoverUrl: 'https://picsum.photos/seed/portrait/104/64', priority: 'attention' },
+  { id: 'cc-4', name: 'Kenji Tanaka', time: '9:45', preview: "The color-channel mixing section went fast. Is there a cheat sheet for which filter emulation to use for sky vs skin?", lessonName: 'Lesson 8: Black and white', lessonCoverUrl: 'https://picsum.photos/seed/blackwhite/104/64', isUnanswered: true, priority: 'attention' },
+  { id: 'cc-5', name: 'Amy Torres', time: '9:45', preview: "Using a Sony A7IV \u2014 the live view goes almost black at the apertures Rudy recommends. Is there a setting I'm missing?", lessonName: 'Lesson 6: Night photography', lessonCoverUrl: 'https://picsum.photos/seed/nightphoto/104/64', isUnanswered: true, priority: 'attention' },
+  { id: 'cc-6', name: 'Emily Park', time: '9:45', preview: "Just wanted to say the golden hour window explanation finally clicked for me \u2014 thanks.", lessonName: 'Lesson 2: Natural lighting', lessonCoverUrl: 'https://picsum.photos/seed/lighting/104/64', priority: 'routine' },
+  { id: 'cc-7', name: 'David Kim', time: '9:45', preview: "Love the 'pre-focus and wait' technique. Tried it at Union Square yesterday, 3 keepers out of 40 \u2014 best ratio I've ever had.", lessonName: 'Lesson 9: Street photography', lessonCoverUrl: 'https://picsum.photos/seed/street/104/64', priority: 'routine' },
+  { id: 'cc-8', name: 'Nina Patel', time: '9:45', preview: "Would a homemade light tent work for the product shot exercise, or does reflection quality depend on pro equipment?", lessonName: 'Lesson 10: Still life', lessonCoverUrl: 'https://picsum.photos/seed/stilllife/104/64', isUnanswered: true, priority: 'attention' },
+  { id: 'cc-9', name: 'Tom Brown', time: '9:45', preview: "Coming from iPhone-only \u2014 any reason to not jump straight into manual mode, or should I start with aperture priority?", lessonName: 'Lesson 1: Camera basics', lessonCoverUrl: 'https://picsum.photos/seed/camera-basics/104/64', isUnanswered: true, priority: 'routine' },
+  { id: 'cc-10', name: 'Chen Wei', time: '9:45', preview: "Finished! The exposure triangle analogy made it click \u2014 thanks Rudy.", lessonName: 'Lesson 1: Camera basics', lessonCoverUrl: 'https://picsum.photos/seed/camera-basics/104/64', priority: 'routine' },
 ];
 
 // ── Course Comment Threads ──
@@ -380,6 +381,7 @@ export const COURSE_THREADS: V1ThreadItem[] = [
 export const COURSE_COMMENT_DATA: Record<string, V1CourseCommentThread> = {
   'cc-2': {
     headerLabel: 'Comment',
+    courseTitle: 'Photography Masterclass',
     courseName: 'Lesson 7: Landscape basics',
     comments: [
       {
@@ -431,6 +433,7 @@ export const COURSE_COMMENT_DATA: Record<string, V1CourseCommentThread> = {
   },
   'cc-1': {
     headerLabel: 'Comment',
+    courseTitle: 'Photography Masterclass',
     courseName: 'Lesson 4: Action shots',
     comments: [
       {
@@ -473,6 +476,7 @@ export const COURSE_COMMENT_DATA: Record<string, V1CourseCommentThread> = {
   },
   'cc-3': {
     headerLabel: 'Comment',
+    courseTitle: 'Photography Masterclass',
     courseName: 'Lesson 5: Portrait photography',
     comments: [
       {
@@ -515,6 +519,7 @@ export const COURSE_COMMENT_DATA: Record<string, V1CourseCommentThread> = {
   },
   'cc-4': {
     headerLabel: 'Comment',
+    courseTitle: 'Photography Masterclass',
     courseName: 'Lesson 8: Black and white',
     comments: [
       {
@@ -557,6 +562,7 @@ export const COURSE_COMMENT_DATA: Record<string, V1CourseCommentThread> = {
   },
   'cc-5': {
     headerLabel: 'Comment',
+    courseTitle: 'Photography Masterclass',
     courseName: 'Lesson 6: Night photography',
     comments: [
       {
@@ -599,6 +605,7 @@ export const COURSE_COMMENT_DATA: Record<string, V1CourseCommentThread> = {
   },
   'cc-6': {
     headerLabel: 'Comment',
+    courseTitle: 'Photography Masterclass',
     courseName: 'Lesson 2: Natural lighting',
     comments: [
       {
@@ -641,6 +648,7 @@ export const COURSE_COMMENT_DATA: Record<string, V1CourseCommentThread> = {
   },
   'cc-7': {
     headerLabel: 'Comment',
+    courseTitle: 'Photography Masterclass',
     courseName: 'Lesson 9: Street photography',
     comments: [
       {
@@ -683,6 +691,7 @@ export const COURSE_COMMENT_DATA: Record<string, V1CourseCommentThread> = {
   },
   'cc-8': {
     headerLabel: 'Comment',
+    courseTitle: 'Photography Masterclass',
     courseName: 'Lesson 10: Still life',
     comments: [
       {
@@ -725,6 +734,7 @@ export const COURSE_COMMENT_DATA: Record<string, V1CourseCommentThread> = {
   },
   'cc-9': {
     headerLabel: 'Comment',
+    courseTitle: 'Photography Masterclass',
     courseName: 'Lesson 1: Camera basics',
     comments: [
       {
@@ -767,6 +777,7 @@ export const COURSE_COMMENT_DATA: Record<string, V1CourseCommentThread> = {
   },
   'cc-10': {
     headerLabel: 'Comment',
+    courseTitle: 'Photography Masterclass',
     courseName: 'Lesson 1: Camera basics',
     comments: [
       {
@@ -812,16 +823,16 @@ export const COURSE_COMMENT_DATA: Record<string, V1CourseCommentThread> = {
 // ── AI Inbox Threads ──
 
 export const AI_THREADS: V1ThreadItem[] = [
-  { id: 'ai-1',  name: 'Maya Rodriguez',   time: '9:45',      preview: "I'd like to upgrade to annual \u2014 can you walk me through it?",       aiStatus: 'active',  agentId: 'support', priority: 'medium' },
-  { id: 'ai-2',  name: 'Maya Rodriguez',   time: '9:30',      preview: "I've tried the password reset three times and I'm still locked out.",     aiStatus: 'paused',  agentId: 'clarity', priority: 'high' },
-  { id: 'ai-3',  name: 'Priya Sharma',     time: '9:15',      preview: "My connection keeps dropping during the live session\u2026",    aiStatus: 'active',  agentId: 'clarity', priority: 'medium' },
-  { id: 'ai-4',  name: 'Emily Park',       time: '8:50',      preview: 'Your course progress looks great! You\u2019re 40% through Lesson 3\u2026',    aiStatus: 'active',  agentId: 'support', priority: 'low' },
-  { id: 'ai-5',  name: 'Kenji Tanaka',     time: '8:30',      preview: "Getting 401 Unauthorized on the course-events webhook\u2026",       aiStatus: 'paused',  agentId: 'support', priority: 'high' },
-  { id: 'ai-6',  name: 'Nina Patel',       time: 'Yesterday',  preview: "Following up on the iOS 18 autoplay bug \u2014 any update?",    aiStatus: 'active',  agentId: 'clarity', priority: 'medium' },
-  { id: 'ai-7',  name: 'James Liu',        time: 'Yesterday',  preview: 'Cohort 5 starts May 6 \u2014 here\u2019s your orientation schedule\u2026',    aiStatus: 'active',  agentId: 'support', priority: 'low' },
-  { id: 'ai-8',  name: 'David Kim',        time: 'Yesterday',  preview: "I've updated your assignment submission \u2014 it's now marked received.",      aiStatus: 'active',  agentId: 'clarity', priority: 'low' },
-  { id: 'ai-9',  name: 'Derek Hoffman',    time: 'Mon',        preview: "This is getting frustrating \u2014 I've explained this three times already.",  aiStatus: 'paused',  agentId: 'support', priority: 'high' },
-  { id: 'ai-10', name: 'Tom Brown',        time: 'Mon',        preview: "Can I get a guest pass for a photographer friend?",     aiStatus: 'active',  agentId: 'clarity', priority: 'low' },
+  { id: 'ai-1',  name: 'Maya Rodriguez',   time: '9:45',      preview: "I'd like to upgrade to annual \u2014 can you walk me through it?",       aiStatus: 'active',  agentId: 'support', priority: 'attention' },
+  { id: 'ai-2',  name: 'Maya Rodriguez',   time: '9:30',      preview: "I've tried the password reset three times and I'm still locked out.",     aiStatus: 'paused',  agentId: 'clarity', priority: 'attention' },
+  { id: 'ai-3',  name: 'Priya Sharma',     time: '9:15',      preview: "My connection keeps dropping during the live session\u2026",    aiStatus: 'active',  agentId: 'clarity', priority: 'attention' },
+  { id: 'ai-4',  name: 'Emily Park',       time: '8:50',      preview: 'Your course progress looks great! You\u2019re 40% through Lesson 3\u2026',    aiStatus: 'active',  agentId: 'support', priority: 'routine' },
+  { id: 'ai-5',  name: 'Kenji Tanaka',     time: '8:30',      preview: "Getting 401 Unauthorized on the course-events webhook\u2026",       aiStatus: 'paused',  agentId: 'support', priority: 'attention' },
+  { id: 'ai-6',  name: 'Nina Patel',       time: 'Yesterday',  preview: "Following up on the iOS 18 autoplay bug \u2014 any update?",    aiStatus: 'active',  agentId: 'clarity', priority: 'attention' },
+  { id: 'ai-7',  name: 'James Liu',        time: 'Yesterday',  preview: 'Cohort 5 starts May 6 \u2014 here\u2019s your orientation schedule\u2026',    aiStatus: 'active',  agentId: 'support', priority: 'routine' },
+  { id: 'ai-8',  name: 'David Kim',        time: 'Yesterday',  preview: "I've updated your assignment submission \u2014 it's now marked received.",      aiStatus: 'active',  agentId: 'clarity', priority: 'routine' },
+  { id: 'ai-9',  name: 'Derek Hoffman',    time: 'Mon',        preview: "This is getting frustrating \u2014 I've explained this three times already.",  aiStatus: 'paused',  agentId: 'support', priority: 'attention' },
+  { id: 'ai-10', name: 'Tom Brown',        time: 'Mon',        preview: "Can I get a guest pass for a photographer friend?",     aiStatus: 'active',  agentId: 'clarity', priority: 'routine' },
 ];
 
 // ── AI Conversations ──

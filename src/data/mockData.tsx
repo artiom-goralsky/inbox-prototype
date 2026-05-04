@@ -3743,8 +3743,8 @@ export const sidebarItems: SidebarItem[] = [
   {
     id: 'content',
     title: 'Content',
-    icon: <Icon name="file" size="lg" className="w-6 h-6" />,
-    activeIcon: <Icon name="file-filled" size="lg" className="w-6 h-6" />,
+    icon: <Icon name="file" size="lg" />,
+    activeIcon: <Icon name="file-filled" size="lg" />,
     subItems: [
       { id: 'posts', title: 'Posts' },
       { id: 'pages', title: 'Pages' },
@@ -3759,9 +3759,9 @@ export const sidebarItems: SidebarItem[] = [
   {
     id: 'marketing',
     title: 'Marketing',
-    icon: <Icon name="paper-plane" size="lg" className="w-6 h-6" />,
+    icon: <Icon name="paper-plane" size="lg" />,
     activeIcon: (
-      <Icon name="paper-plane-filled" size="lg" className="w-6 h-6" />
+      <Icon name="paper-plane-filled" size="lg" />
     ),
     subItems: [
       { id: 'overview', title: 'Overview', active: true },
@@ -3773,9 +3773,9 @@ export const sidebarItems: SidebarItem[] = [
   {
     id: 'ai-agents',
     title: 'AI Agents',
-    icon: <Icon name="sparkle-box" size="lg" className="w-6 h-6" />,
+    icon: <Icon name="sparkle-box" size="lg" />,
     activeIcon: (
-      <Icon name="sparkle-box-filled" size="lg" className="w-6 h-6" />
+      <Icon name="sparkle-box-filled" size="lg" />
     ),
     subItems: [
       { id: 'knowledge', title: 'Knowledge' },
@@ -3785,15 +3785,15 @@ export const sidebarItems: SidebarItem[] = [
   {
     id: 'ai-inbox',
     title: 'AI Inbox',
-    icon: <Icon name="inbox-ai" size="lg" className="w-6 h-6" />,
-    activeIcon: <Icon name="inbox-ai-filled" size="lg" className="w-6 h-6" />,
+    icon: <Icon name="inbox-ai" size="lg" />,
+    activeIcon: <Icon name="inbox-ai-filled" size="lg" />,
     subItems: [],
   },
   {
     id: 'workflows',
     title: 'Workflows',
-    icon: <Icon name="zap" size="lg" className="w-6 h-6" />,
-    activeIcon: <Icon name="zap-filled" size="lg" className="w-6 h-6" />,
+    icon: <Icon name="zap" size="lg" />,
+    activeIcon: <Icon name="zap-filled" size="lg" />,
     subItems: [
       { id: 'all-workflows', title: 'All workflows' },
       { id: 'history', title: 'History' },
@@ -3802,9 +3802,9 @@ export const sidebarItems: SidebarItem[] = [
   {
     id: 'analytics',
     title: 'Analytics',
-    icon: <Icon name="chart-square" size="lg" className="w-6 h-6" />,
+    icon: <Icon name="chart-square" size="lg" />,
     activeIcon: (
-      <Icon name="chart-square-filled" size="lg" className="w-6 h-6" />
+      <Icon name="chart-square-filled" size="lg" />
     ),
     subItems: [
       { id: 'dashboard', title: 'Dashboard' },
@@ -3815,8 +3815,8 @@ export const sidebarItems: SidebarItem[] = [
   {
     id: 'paywalls',
     title: 'Paywalls',
-    icon: <Icon name="money-hand" size="lg" className="w-6 h-6" />,
-    activeIcon: <Icon name="money-hand-filled" size="lg" className="w-6 h-6" />,
+    icon: <Icon name="money-hand" size="lg" />,
+    activeIcon: <Icon name="money-hand-filled" size="lg" />,
     subItems: [
       { id: 'paywalls', title: 'Paywalls' },
       { id: 'subscription-groups', title: 'Subscription groups' },
@@ -3831,9 +3831,9 @@ export const sidebarItems: SidebarItem[] = [
   {
     id: 'affiliates',
     title: 'Affiliates',
-    icon: <Icon name="affiliates" size="lg" className="w-6 h-6" />,
+    icon: <Icon name="affiliates" size="lg" />,
 
-    activeIcon: <Icon name="affiliates-filled" size="lg" className="w-6 h-6" />,
+    activeIcon: <Icon name="affiliates-filled" size="lg" />,
     subItems: [
       { id: 'affiliates', title: 'Affiliates' },
       { id: 'commissions', title: 'Commissions' },
@@ -3843,8 +3843,8 @@ export const sidebarItems: SidebarItem[] = [
   {
     id: 'site',
     title: 'Site',
-    icon: <Icon name="window" size="lg" className="w-6 h-6" />,
-    activeIcon: <Icon name="window-filled" size="lg" className="w-6 h-6" />,
+    icon: <Icon name="window" size="lg" />,
+    activeIcon: <Icon name="window-filled" size="lg" />,
     subItems: [
       { id: 'navigation', title: 'Navigation' },
       { id: 'seo', title: 'SEO' },
@@ -3857,16 +3857,16 @@ export const sidebarItems: SidebarItem[] = [
   {
     id: 'branded-app',
     title: 'Branded app',
-    icon: <Icon name="phone" size="lg" className="w-6 h-6" />,
-    activeIcon: <Icon name="phone-filled" size="lg" className="w-6 h-6" />,
+    icon: <Icon name="phone" size="lg" />,
+    activeIcon: <Icon name="phone-filled" size="lg" />,
     subItems: [],
   },
   {
     id: 'settings',
     title: 'Settings',
-    icon: <Icon name="settings-gear" size="lg" className="w-6 h-6" />,
+    icon: <Icon name="settings-gear" size="lg" />,
     activeIcon: (
-      <Icon name="settings-gear-filled" size="lg" className="w-6 h-6" />
+      <Icon name="settings-gear-filled" size="lg" />
     ),
     subItems: [
       { id: 'general', title: 'General' },

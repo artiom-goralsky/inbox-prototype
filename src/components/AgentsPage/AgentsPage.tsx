@@ -330,7 +330,7 @@ const AgentsPage: React.FC<AgentsPageProps> = ({ onItemClick, onItemClose, selec
             return (
               <div key={group.title} className="flex flex-col gap-6">
                 <div className="flex items-center gap-4">
-                  <Icon name={group.icon} size="lg" className="text-primary" />
+                  <Icon name={group.icon} size="lg" />
                   <Typography variant="label-md" color="primary">
                     <span className="font-semibold">{group.title}</span>
                   </Typography>
@@ -370,7 +370,7 @@ const AgentsPage: React.FC<AgentsPageProps> = ({ onItemClick, onItemClose, selec
                         })}
                       >
                         <div className="flex items-center justify-between">
-                          <Icon name={group.icon} size="lg" className="text-primary" />
+                          <Icon name={group.icon} size="lg" />
                           <Badge
                             variant="secondary"
                             label={skill.mode}

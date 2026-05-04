@@ -139,6 +139,7 @@ const CourseCommentsCenterPanelV1: React.FC<CourseCommentsCenterPanelV1Props> = 
   }
 
   const headerLabel = commentData?.headerLabel ?? 'Comment';
+  const courseTitle = commentData?.courseTitle ?? 'Photography Masterclass';
   const courseName = commentData?.courseName ?? thread.lessonName ?? '';
   const comments = commentData?.comments ?? [];
 
@@ -148,7 +149,7 @@ const CourseCommentsCenterPanelV1: React.FC<CourseCommentsCenterPanelV1Props> = 
         <div className="flex items-center gap-2 h-14 px-6 border-b border-[#f0f3f5] shrink-0">
           <Icon name="message-dots" size="sm" />
           <Typography variant="heading-md" color="primary">{headerLabel}</Typography>
-          <Typography variant="body-sm" color="tertiary" className="flex-1">{courseName}</Typography>
+          <Typography variant="body-sm" color="tertiary" className="flex-1">{courseTitle} · {courseName}</Typography>
           <Button variant="ghost" size="sm" onClick={() => {}}>Open Lesson</Button>
         </div>
 
@@ -209,8 +210,8 @@ const CourseCommentsCenterPanelV1: React.FC<CourseCommentsCenterPanelV1Props> = 
                   value={composerText}
                   onChange={(e) => setComposerText(e.target.value)}
                   placeholder="Message #Discussions"
-                  className="w-full px-4 py-3 text-sm resize-none outline-none bg-primary min-h-[80px] max-h-[120px] overflow-y-auto"
-                  rows={3}
+                  className="w-full px-4 py-3 text-sm leading-5 resize-none outline-none bg-primary min-h-[20px]"
+                  rows={1}
                 />
                 <div className="flex items-center justify-between p-2">
                   <div className="flex items-center">

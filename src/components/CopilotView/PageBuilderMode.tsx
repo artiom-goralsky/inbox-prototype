@@ -29,7 +29,7 @@ const SegControl = ({ items, active = 0 }: { items: { icon: IconName }[]; active
             : ''
         }`}
       >
-        <Icon name={item.icon} size="sm" className={i === active ? 'text-primary' : 'text-tertiary'} />
+        <Icon name={item.icon} size="sm" />
       </div>
     ))}
   </div>
@@ -59,14 +59,14 @@ const PageBuilderMode: React.FC<PageBuilderModeProps> = ({ onClose }) => {
             onClick={onClose}
           />
           <div className="flex items-center gap-2">
-            <Typography variant="label-sm" color="primary" className="font-semibold">
+            <Typography variant="label-sm" color="primary">
               Page title
             </Typography>
             <button
               type="button"
               className="flex items-center justify-center p-1 rounded-full hover:bg-hover transition-colors duration-[50ms]"
             >
-              <Icon name="chevron-down" size="sm" className="text-secondary" />
+              <Icon name="chevron-down" size="sm" />
             </button>
           </div>
         </div>
@@ -190,7 +190,7 @@ const PageBuilderMode: React.FC<PageBuilderModeProps> = ({ onClose }) => {
                 <>
                   {/* Page section header */}
                   <div className="flex items-center h-12 pl-4 pr-2 border-b border-secondary">
-                    <Typography variant="label-sm" color="primary" className="font-semibold flex-1">
+                    <Typography variant="label-sm" color="primary" className="flex-1">
                       Page
                     </Typography>
                   </div>
@@ -250,7 +250,7 @@ const PageBuilderMode: React.FC<PageBuilderModeProps> = ({ onClose }) => {
 
               {activeRailTab === 'copilot' && (
                 <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-                  <Icon name="cursor-ai" size="lg" className="text-tertiary mb-3" />
+                  <Icon name="cursor-ai" size="lg" className="mb-3" />
                   <Typography variant="body-sm" color="tertiary">
                     Ask Copilot to help you design and edit your page.
                   </Typography>

@@ -9,6 +9,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Easing tokens ── */
+:root {
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-smooth: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-exit: cubic-bezier(0.55, 0, 1, 0.45);
+}
+
 @property --shimmer-angle {
   syntax: "<angle>";
   initial-value: 0deg;
@@ -105,6 +112,57 @@
 }
 
 
+/* Project progress card shimmer — rotating conic gradient border (same as input-shimmer) */
+.progress-shimmer {
+  position: relative;
+}
+.progress-shimmer::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 18px;
+  padding: 2px;
+  background: conic-gradient(
+    from var(--shimmer-angle),
+    transparent 0%,
+    rgba(99, 102, 241, 0.04) 6%,
+    rgba(124, 97, 243, 0.34) 10%,
+    rgba(139, 92, 246, 0.45) 13%,
+    rgba(124, 97, 243, 0.34) 16%,
+    rgba(99, 102, 241, 0.04) 20%,
+    transparent 24%,
+    transparent 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 10;
+}
+.progress-shimmer.shimmer-active::before {
+  animation:
+    shimmerRotate 2.0s linear infinite,
+    shimmerFade 3.0s ease;
+}
+.progress-shimmer.shimmer-active {
+  animation: shimmerGlow 3.0s ease;
+}
+
+/* Skeleton pulse for progress steps */
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+.skeleton-pulse {
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+}
+
 /* Collapsed nav hover dropdown enter animation */
 @keyframes nav-dropdown-enter {
   from { opacity: 0; transform: translateX(-6px) scale(0.97); }
@@ -153,12 +211,36 @@
 }
 
 @keyframes shimmer-text {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 1; }
+  0%, 100% { color: #8994DC; }
+  50% { color: #3C53E7; }
 }
 
 .shimmer-text {
-  animation: shimmer-text 1.8s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  animation: shimmer-text 2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@keyframes thinkingFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes thinkingWordIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes shimmer-sweep {
+  0% { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+.shimmer-sweep-text {
+  background: linear-gradient(90deg, #9ca3af 0%, #191b1f 30%, #9ca3af 60%, #191b1f 90%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer-sweep 2s linear infinite;
 }
 
 @keyframes shimmer-frame {
@@ -184,7 +266,7 @@
 }
 
 @keyframes modalSlideIn {
-  from { opacity: 0; transform: scale(0.95) translateY(-8px); }
+  from { opacity: 0; transform: scale(0.97) translateY(-6px); }
   to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
@@ -304,6 +386,62 @@
 .skill-panel-item:nth-child(6) { animation-delay: 150ms; }
 .skill-panel-item:nth-child(n+7) { animation-delay: 175ms; }
 
+@keyframes recent-chats-exit {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-6px); }
+}
+
+@keyframes recent-chats-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.recent-chats-hidden {
+  animation: recent-chats-exit 200ms cubic-bezier(0.55, 0, 1, 0.45) both;
+  pointer-events: none;
+}
+
+.recent-chats-visible {
+  animation: recent-chats-enter 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes items-panel-enter {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes items-panel-exit {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-6px); }
+}
+
+.items-panel-enter {
+  animation: items-panel-enter 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.items-panel-exit {
+  animation: items-panel-exit 180ms cubic-bezier(0.55, 0, 1, 0.45) both;
+  pointer-events: none;
+}
+
+.skill-shortcut-item {
+  opacity: 0;
+  animation: items-panel-enter 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.items-panel-enter .skill-shortcut-item:nth-child(1) { animation-delay: 20ms; }
+.items-panel-enter .skill-shortcut-item:nth-child(2) { animation-delay: 40ms; }
+.items-panel-enter .skill-shortcut-item:nth-child(3) { animation-delay: 60ms; }
+.items-panel-enter .skill-shortcut-item:nth-child(4) { animation-delay: 80ms; }
+.items-panel-enter .skill-shortcut-item:nth-child(5) { animation-delay: 100ms; }
+.items-panel-enter .skill-shortcut-item:nth-child(6) { animation-delay: 120ms; }
+.items-panel-enter .skill-shortcut-item:nth-child(n+7) { animation-delay: 140ms; }
+
+.items-panel-exit .skill-shortcut-item {
+  animation: none;
+  opacity: 1;
+}
+
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
@@ -333,6 +471,15 @@
 
 .dock-appear {
   animation: dock-appear 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Inset layout — min-width only; transition lives in App.css */
+.copilot-panel {
+  min-width: 0;
+}
+
+.content-card-panel {
+  min-width: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {

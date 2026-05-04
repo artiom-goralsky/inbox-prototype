@@ -46,7 +46,7 @@ const MINE_CATEGORIES: NavItem[] = [
 ];
 
 const SHARED_CATEGORIES: NavItem[] = [
-  { id: 'moderation',      label: 'Moderation',      iconType: 'icon', iconName: 'compass' },
+  { id: 'moderation',      label: 'Moderation',      iconType: 'icon', iconName: 'flag' },
   { id: 'course-comments', label: 'Course comments', iconType: 'icon', iconName: 'graduate-cap' },
   { id: 'ai-inbox',        label: 'AI Inbox',        iconType: 'icon', iconName: 'ai-box' },
 ];
@@ -103,7 +103,7 @@ const InboxSidebar: React.FC<InboxSidebarProps> = ({ activeTab, onTabChange, onV
                 <Icon name="inbox-empty" size="sm" />
               </div>
               <Typography variant="body-sm" color="primary" className="truncate flex-1">
-                All
+                Inbox
               </Typography>
             </button>
           </div>

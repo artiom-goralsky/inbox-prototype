@@ -3,15 +3,13 @@ import { Typography } from '@circleco/compass/components/Typography';
 import { Avatar } from '@circleco/compass/components/Avatar';
 import { Icon } from '@circleco/compass/components/Icon';
 import { IconButton } from '@circleco/compass/components/IconButton';
-import { Menu } from '@circleco/compass/components/Menu';
-import { SegmentedControl } from '@circleco/compass/components/SegmentedControl';
 import {
   TYPE_ICON,
   TYPE_LABEL,
   GROUP_ORDER,
   type AllViewItem,
-  type AllViewItemType,
 } from './allViewMockData';
+import SortViewDropdown, { type ViewMode } from './v2/SortViewDropdown';
 
 interface AllViewThreadListProps {
   items: AllViewItem[];
@@ -25,19 +23,18 @@ const SORT_OPTIONS = [
   { label: 'Oldest unanswered', value: 'oldest' },
 ];
 
-const PRIORITY_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2 };
+const PRIORITY_ORDER: Record<string, number> = { attention: 0, routine: 1 };
 
-const PRIORITY_LEVELS: Array<{ key: 'high' | 'medium' | 'low'; label: string; dotColor: string; estimate: string }> = [
-  { key: 'high', label: 'High priority', dotColor: '#E24B4A', estimate: '~2 min' },
-  { key: 'medium', label: 'Medium priority', dotColor: '#BA7517', estimate: '~3 min' },
-  { key: 'low', label: 'Low priority', dotColor: 'var(--color-text-tertiary, #717680)', estimate: '~2 min' },
+const PRIORITY_LEVELS: Array<{ key: 'attention' | 'routine'; label: string }> = [
+  { key: 'attention', label: 'Needs attention' },
+  { key: 'routine', label: 'Routine' },
 ];
 
 // Dismiss animation
 type CardAnim = 'active' | 'dismissing' | 'collapsing' | 'removed';
 
 const AllViewThreadList: React.FC<AllViewThreadListProps> = ({ items, selectedId, onSelect }) => {
-  const [viewMode, setViewMode] = useState<string>('flat');
+  const [viewMode, setViewMode] = useState<ViewMode>('flat');
   const [sortMode, setSortMode] = useState<string>('ai-priority');
   const [itemAnims, setItemAnims] = useState<Record<string, CardAnim>>({});
 
@@ -128,20 +125,16 @@ const AllViewThreadList: React.FC<AllViewThreadListProps> = ({ items, selectedId
   };
 
   const renderGroupedView = () => {
-    // When AI priority sort: group by priority level
+    // When AI priority sort: group by priority bucket.
     if (sortMode === 'ai-priority') {
-      return PRIORITY_LEVELS.map(({ key, label, dotColor, estimate }) => {
+      return PRIORITY_LEVELS.map(({ key, label }) => {
         const groupItems = visibleItems.filter(i => i.priority === key);
         if (groupItems.length === 0) return null;
         return (
           <div key={key}>
-            <div className="sticky top-0 z-10 flex items-center gap-2 h-9 pl-4 pr-3 bg-primary">
-              <div className="size-1.5 rounded-full shrink-0" style={{ backgroundColor: dotColor }} />
-              <Typography variant="caption" color="tertiary" className="font-semibold">
+            <div className="sticky top-0 z-10 flex items-center h-9 pl-4 pr-3 bg-primary">
+              <Typography variant="caption" color="tertiary" className="font-medium">
                 {label} · {groupItems.length}
-              </Typography>
-              <Typography variant="caption" color="tertiary" className="ml-auto shrink-0">
-                {estimate}
               </Typography>
             </div>
             {groupItems.map(renderItem)}
@@ -150,14 +143,14 @@ const AllViewThreadList: React.FC<AllViewThreadListProps> = ({ items, selectedId
       });
     }
 
-    // Otherwise: group by category
+    // Otherwise: group by category, in left-nav order.
     return GROUP_ORDER.map(type => {
       const groupItems = visibleItems.filter(i => i.type === type);
       if (groupItems.length === 0) return null;
       return (
         <div key={type}>
           <div className="sticky top-0 z-10 flex items-center h-9 pl-4 pr-3 bg-primary">
-            <Typography variant="caption" color="tertiary" className="font-semibold">
+            <Typography variant="caption" color="tertiary" className="font-medium">
               {TYPE_LABEL[type]} · {groupItems.length}
             </Typography>
           </div>
@@ -172,25 +165,20 @@ const AllViewThreadList: React.FC<AllViewThreadListProps> = ({ items, selectedId
       {/* Title header */}
       <div className="flex items-center gap-2 h-14 pl-6 pr-4 shrink-0">
         <Typography variant="heading-md" color="primary" className="flex-1 truncate">
-          All
+          Inbox
         </Typography>
         <IconButton icon="magnifying-glass" size="sm" variant="ghost" aria-label="Search" />
       </div>
 
       {/* Filter bar */}
-      <div className="flex items-center justify-between px-4 pb-3 border-b border-[#f0f3f5] shrink-0">
-        <SegmentedControl
-          options={[
-            { value: 'flat', label: null, icon: 'layout-grid' },
-            { value: 'grouped', label: null, icon: 'layout-third' },
-          ]}
-          value={viewMode}
-          onValueChange={v => setViewMode(v)}
-          required
-        />
-        <Menu
-          options={SORT_OPTIONS.map(o => ({ label: o.label, onClick: () => setSortMode(o.value) }))}
-          trigger={<IconButton icon="arrow-bottom-top" size="md" variant="outline" aria-label="Sort" />}
+      <div className="flex items-center justify-end px-4 pb-3 border-b border-[#f0f3f5] shrink-0">
+        <SortViewDropdown
+          sortOptions={SORT_OPTIONS}
+          sortValue={sortMode}
+          onSortChange={setSortMode}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          showViewSection
         />
       </div>
 
@@ -235,34 +223,32 @@ function renderItemContent(item: AllViewItem) {
         </>
       );
 
-    case 'chatThread':
+    case 'chatThread': {
+      const chatSource = item.channelLabel === 'DM' ? 'DM' : (item.channelLabel ?? 'DM');
       return (
         <>
-          <div className="flex items-center h-3.5">
-            <div className="flex flex-1 gap-2 items-center min-w-0 whitespace-nowrap">
-              <Typography variant="heading-sm" color="primary" className="flex-1 min-w-0 truncate">
+          <div className="flex items-center gap-2 min-w-0 whitespace-nowrap">
+            <div className="flex items-center gap-1 flex-1 min-w-0 truncate">
+              <Typography variant="heading-sm" color="primary" className="shrink-0">
                 {item.name}
               </Typography>
-              <Typography variant="caption" color="tertiary" className="shrink-0">
-                {item.time}
+              <Typography variant="body-sm" color="tertiary" className="shrink-0">
+                in
+              </Typography>
+              <Typography variant="body-sm" color="tertiary" className="truncate">
+                {chatSource}
               </Typography>
             </div>
-          </div>
-          <div className="flex flex-col gap-0.5 whitespace-nowrap">
-            <div className="flex gap-1 items-start leading-[18px]">
-              <Typography variant="caption" color="tertiary" className="shrink-0">
-                {item.channelEmoji} {item.channelLabel}:
-              </Typography>
-              <Typography variant="caption" color="tertiary" className="flex-1 min-w-0 truncate">
-                {item.parentPreview}
-              </Typography>
-            </div>
-            <Typography variant="body-sm" color="secondary" className="truncate w-full">
-              {item.lastReply}
+            <Typography variant="caption" color="tertiary" className="shrink-0">
+              {item.time}
             </Typography>
           </div>
+          <Typography variant="body-sm" color="secondary" className="truncate w-full">
+            {item.lastReply}
+          </Typography>
         </>
       );
+    }
 
     case 'connectionRequest':
       return (

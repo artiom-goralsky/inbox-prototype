@@ -49,7 +49,7 @@ const BulkActionsDropdown: React.FC<BulkActionsDropdownProps> = ({
         <Button variant="outline" size="md" onClick={onShowAllFilters}>
           <div className="flex gap-1 items-center">
             <div>Filter</div>
-            <Icon name="circle" size="sm" className="text-tertiary" />
+            <Icon name="circle" size="sm" />
           </div>
         </Button>
       </div>
@@ -61,7 +61,7 @@ const BulkActionsDropdown: React.FC<BulkActionsDropdownProps> = ({
       <Button variant="outline" size="md" onClick={() => setIsOpen(!isOpen)}>
         <div className="flex gap-1 items-center">
           <div>Filter</div>
-          <Icon name="circle" size="sm" className="text-tertiary" />
+          <Icon name="circle" size="sm" />
         </div>
       </Button>
 

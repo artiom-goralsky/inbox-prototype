@@ -5,7 +5,6 @@ import { IconButton } from '@circleco/compass/components/IconButton';
 import { Button } from '@circleco/compass/components/Button';
 import { Typography } from '@circleco/compass/components/Typography';
 import { Box } from '@circleco/compass/components/Box';
-import { mergeClasses } from '../lib/utils';
 
 interface AIHelperChatProps {
   onClose: () => void;
@@ -34,9 +33,12 @@ const AIHelperChat: React.FC<AIHelperChatProps> = ({ onClose }) => {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-[22px] h-[60px] shrink-0">
         <div className="flex items-center gap-2">
-          <div className="shrink-0">
-            <Icon name="sparkle-filled" size="sm" />
-          </div>
+          <Icon
+            name="sparkle-filled"
+            size="sm"
+            color="primary"
+            className="shrink-0"
+          />
           <Typography variant="heading-sm" color="primary">
             Let&apos;s build!
           </Typography>

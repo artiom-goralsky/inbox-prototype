@@ -65,7 +65,7 @@ const BuilderRightPanel: React.FC<{
   <div className="shrink-0 w-[220px] bg-primary border-l border-secondary flex flex-col overflow-hidden">
     {/* Panel header */}
     <div className="shrink-0 flex items-center justify-between h-10 px-3 border-b border-secondary">
-      <Typography variant="label-sm" color="primary" className="font-semibold">
+      <Typography variant="label-sm" color="primary">
         Layers
       </Typography>
     </div>
@@ -83,7 +83,7 @@ const BuilderRightPanel: React.FC<{
           }`}
           onClick={() => onSelectSection(section.id)}
         >
-          <Icon name="section" size="sm" className="shrink-0 opacity-50" />
+          <Icon name="section" size="sm" className="shrink-0" />
           <Typography variant="label-sm" color="current" className="truncate">
             {section.label}
           </Typography>
@@ -186,7 +186,7 @@ const LandingPagePreview: React.FC<{ selectedSection: string | null; onSelectSec
         {['How do I get started?', 'What does the free plan include?', 'Can I migrate from another platform?'].map(q => (
           <div key={q} className="flex items-center justify-between px-4 py-3 rounded-lg border border-secondary">
             <span className="text-sm text-primary">{q}</span>
-            <Icon name="chevron-down" size="sm" className="text-tertiary" />
+            <Icon name="chevron-down" size="sm" />
           </div>
         ))}
       </div>
@@ -413,10 +413,10 @@ const LandingPageArtifact: React.FC<LandingPageArtifactProps> = ({ onOpenBuilder
       <div className="shrink-0 flex items-center justify-between px-4 py-2.5 border-b border-secondary">
         {/* Breadcrumb */}
         <div className="flex items-center gap-1.5 min-w-0">
-          <Icon name="file" size="sm" className="text-tertiary shrink-0" />
+          <Icon name="file" size="sm" className="shrink-0" />
           <Typography variant="label-sm" color="tertiary">clarity.community</Typography>
-          <Icon name="chevron-right" size="sm" className="text-disabled shrink-0" />
-          <Typography variant="label-sm" color="primary" className="truncate font-medium">
+          <Icon name="chevron-right" size="sm" className="shrink-0" />
+          <Typography variant="label-sm" color="primary" className="truncate">
             Landing Page
           </Typography>
           <div className="px-1.5 py-0.5 rounded bg-secondary ml-1">

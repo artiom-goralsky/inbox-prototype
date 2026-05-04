@@ -28,14 +28,14 @@ const Section: React.FC<{
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center gap-2 px-4 py-3 hover:bg-hover transition-colors"
       >
-        <Icon name={icon} size="sm" className="text-tertiary shrink-0" />
+        <Icon name={icon} size="sm" className="shrink-0" />
         <Typography variant="label-sm" color="primary">
           <span className="flex-1 text-left">{title}</span>
         </Typography>
         <Icon
           name="chevron-down"
           size="sm"
-          className={`text-tertiary transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
         />
       </button>
       {open && <div className="px-4 pb-4 flex flex-col gap-4">{children}</div>}
@@ -84,7 +84,7 @@ const KnowledgeRow: React.FC<{ title: string; group: string; type: string; items
 const WorkflowRow: React.FC<{ name: string; active: boolean }> = ({ name, active }) => (
   <div className="flex items-center justify-between gap-3 py-2.5 border-b border-secondary last:border-0">
     <div className="flex items-center gap-2 min-w-0">
-      <Icon name="sparkle" size="sm" className="text-accent-primary shrink-0" />
+      <Icon name="sparkle" size="sm" className="shrink-0" />
       <Typography variant="body-sm" color="primary"><span className="truncate">{name}</span></Typography>
     </div>
     <Badge variant={active ? 'success' : 'secondary'} label={active ? 'On' : 'Off'} />
@@ -179,7 +179,7 @@ const AgentSettingsSidebar: React.FC<AgentSettingsSidebarProps> = ({ agent, onCl
           <div className="rounded-lg border border-secondary px-3.5 py-3 flex flex-col gap-2">
             <Typography variant="label-sm" color="tertiary">Targeting</Typography>
             <div className="flex items-center gap-2">
-              <Icon name="people" size="sm" className="text-tertiary" />
+              <Icon name="people" size="sm" />
               <Typography variant="body-sm" color="primary">People: <strong>462</strong></Typography>
             </div>
             <Button variant="outline" size="sm" startIcon="plus" className="self-start">
@@ -242,7 +242,7 @@ const AgentSettingsSidebar: React.FC<AgentSettingsSidebarProps> = ({ agent, onCl
         <Section title="Instructions" icon="sparkle">
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-1.5">
-              <Icon name="sparkle" size="sm" className="text-accent-primary" />
+              <Icon name="sparkle" size="sm" />
               <Typography variant="label-sm" color="tertiary">AI prompt</Typography>
             </div>
             <TextArea
@@ -260,14 +260,14 @@ const AgentSettingsSidebar: React.FC<AgentSettingsSidebarProps> = ({ agent, onCl
             <Typography variant="label-sm" color="tertiary">Style</Typography>
             <div className="border border-accent-primary rounded-lg px-3.5 py-3 flex items-center justify-between gap-2">
               <Typography variant="body-sm" color="primary">Use AI generated answers</Typography>
-              <Icon name="sparkle" size="sm" className="text-accent-primary" />
+              <Icon name="sparkle" size="sm" />
             </div>
             <div className="border border-secondary rounded-lg px-3.5 py-3 flex items-center justify-between gap-2 opacity-50 cursor-not-allowed">
               <div className="flex items-center gap-2">
                 <Typography variant="body-sm" color="tertiary">Use custom answers</Typography>
                 <Badge variant="secondary" label="SOON" />
               </div>
-              <Icon name="copy" size="sm" className="text-tertiary" />
+              <Icon name="copy" size="sm" />
             </div>
           </div>
 

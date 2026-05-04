@@ -91,17 +91,34 @@ function AppContent() {
   const [adminCopilotOpen, setAdminCopilotOpen] = useState<boolean>(false);
   const [adminCopilotMaximized, setAdminCopilotMaximized] = useState<boolean>(false);
   const [contentCardFaded, setContentCardFaded] = useState(false);
+  const [contentCardFadingOut, setContentCardFadingOut] = useState(false);
+  const [contentCardSlowFadeIn, setContentCardSlowFadeIn] = useState(false);
 
   const handleCopilotStateChange = (open: boolean, isNewChat?: boolean) => {
     if (open && !adminCopilotOpen && isNewChat) {
-      setContentCardFaded(true);
-      requestAnimationFrame(() => {
-        setAdminCopilotOpen(true);
-        setTimeout(() => setContentCardFaded(false), 320);
-      });
+      // Phase 1: fade out content card with ease-out (no flex slide)
+      setContentCardFadingOut(true);
+      setAdminCopilotOpen(true);
+      setTimeout(() => {
+        // Phase 2: lock out with no-transition, then restore
+        setContentCardFadingOut(false);
+        setContentCardFaded(true);
+        requestAnimationFrame(() => setContentCardFaded(false));
+      }, 220);
     } else {
       setAdminCopilotOpen(open);
     }
+  };
+
+  const handleStartContentFadeOut = () => {
+    setContentCardFadingOut(true);
+    setContentCardSlowFadeIn(true);
+    setTimeout(() => {
+      setContentCardFadingOut(false);
+      setContentCardFaded(true);
+      requestAnimationFrame(() => setContentCardFaded(false));
+      setTimeout(() => setContentCardSlowFadeIn(false), 900); // 150ms delay + 700ms fade
+    }, 220);
   };
   const CONSTRAINED_BREAKPOINT = 1440;
   const [isScreenConstrained, setIsScreenConstrained] = useState(
@@ -112,6 +129,7 @@ function AppContent() {
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, [CONSTRAINED_BREAKPOINT]);
+
   const [adminArtifactOpen, setAdminArtifactOpen] = useState<string | null>(null);
   const lastCommunityRouteRef = useRef<string>('/clarity');
 
@@ -128,10 +146,24 @@ function AppContent() {
       }
       setDockHiddenOverride(true);
       setEnteredViaSparkle(fromSparkle);
+      // Collapse nav on narrow screens, expand on wide (≥1440px)
+      setAdminSidebarCollapsed(window.innerWidth < 1440);
+      if (fromSparkle) {
+        // Pre-open copilot at target width BEFORE navigating so the portal
+        // is already sized when AdminSection mounts — no narrow→wide resize.
+        setAdminCopilotOpen(true);
+        setContentCardFaded(true); // suppress flex transition
+      }
       setIsLoading(true);
       window.setTimeout(() => {
         navigate(path);
-        window.setTimeout(() => setIsLoading(false), 200);
+        window.setTimeout(() => {
+          setIsLoading(false);
+          if (fromSparkle) {
+            // Restore transitions now that layout is settled
+            requestAnimationFrame(() => setContentCardFaded(false));
+          }
+        }, 200);
       }, 500);
     },
     [navigate, location.pathname]
@@ -179,12 +211,6 @@ function AppContent() {
   const subItem = pathSegments[2]
     ? decodeURIComponent(pathSegments[2])
     : undefined;
-
-  useEffect(() => {
-    // #region agent log
-    fetch('http://127.0.0.1:7657/ingest/fd01d022-d456-47e7-9ee3-eabbb6756821',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'adbd37'},body:JSON.stringify({sessionId:'adbd37',runId:'initial',hypothesisId:'H2',location:'src/App.tsx:186',message:'AppContent mounted with route state',data:{pathname:location.pathname,firstLevel,secondLevel:secondLevel ?? null,subItem:subItem ?? null,sidebarCollapsedRaw:localStorage.getItem('sidebarCollapsed')},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
-  }, [location.pathname, firstLevel, secondLevel, subItem]);
 
   const isAdminRoute = firstLevel === 'manage';
   const shouldHideDock =
@@ -320,9 +346,6 @@ function AppContent() {
   };
 
   const renderContent = () => {
-    // #region agent log
-    fetch('http://127.0.0.1:7657/ingest/fd01d022-d456-47e7-9ee3-eabbb6756821',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'adbd37'},body:JSON.stringify({sessionId:'adbd37',runId:'initial',hypothesisId:'H3',location:'src/App.tsx:324',message:'renderContent executing',data:{firstLevel,secondLevel:secondLevel ?? null,hasPostSegment:Boolean(pathSegments[2]),isAdminRoute:firstLevel === 'manage'},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     // Handle post detail routes
     if (secondLevel === 'post' && pathSegments[2]) {
       const postId = pathSegments[2];
@@ -406,7 +429,8 @@ function AppContent() {
             }
             initialView={enteredViaSparkle ? 'community' : undefined}
             onCopilotStateChange={handleCopilotStateChange}
-            onCopilotMaximizedChange={setAdminCopilotMaximized}
+            onStartContentFadeOut={handleStartContentFadeOut}
+            onCopilotMaximizedChange={handleCopilotMaximizedChange}
             onArtifactStateChange={(type) => setAdminArtifactOpen(type)}
             onSidebarCollapsedChange={setAdminSidebarCollapsed}
             adminOuterPortal={adminOuterEl}
@@ -441,25 +465,47 @@ function AppContent() {
   const [copilotPortalEl, setCopilotPortalEl] = useState<HTMLDivElement | null>(null);
   const [adminSidebarCollapsed, setAdminSidebarCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
 
+  const handleCopilotMaximizedChange = useCallback((maximized: boolean) => {
+    if (maximized) {
+      // Sequence: fade out content card first, then collapse
+      setContentCardFadingOut(true);
+      setTimeout(() => {
+        setContentCardFadingOut(false);
+        setContentCardFaded(true);
+        setAdminCopilotMaximized(true);
+        requestAnimationFrame(() => setContentCardFaded(false));
+      }, 200);
+    } else {
+      // Un-maximize: expand content card first (flex), then fade in
+      setContentCardFaded(true);
+      setAdminCopilotMaximized(false);
+      requestAnimationFrame(() => {
+        setContentCardFaded(false);
+        setContentCardSlowFadeIn(true);
+        setTimeout(() => setContentCardSlowFadeIn(false), 600);
+      });
+    }
+  }, []);
+
   const isAdminInset = shouldHideDock && isAdminRoute;
 
   return (
     <div className="h-screen bg-secondary overflow-hidden">
       <div
         className={[
-          'h-full flex app-main-flex',
+          'h-full flex app-main-flex overflow-hidden',
           shouldHideDock ? 'dock-hidden' : '',
           buildPreviewActive ? 'build-preview-open' : '',
         ].join(' ')}
       >
         {/* Nav column — shows dock OR admin sidebar, takes proper layout space */}
         <div
-          className="shrink-0 h-full transition-[width] duration-300"
+          className="shrink-0 h-full transition-[width] duration-300 z-10 relative"
           style={{ width: isAdminInset ? ((adminCopilotOpen && isScreenConstrained) || adminSidebarCollapsed ? 68 : 222) : 68, transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
         >
           {isAdminInset ? (
             /* Admin sidebar — takes full column space */
-            <div ref={setAdminOuterEl} className="h-full" />
+            <div ref={setAdminOuterEl} className="h-full overflow-hidden" />
           ) : (
             /* Community dock — fades in place, not carried by width */
             <div className="dock-appear h-full" style={{ width: 68 }}>
@@ -479,7 +525,7 @@ function AppContent() {
         {/* Content inset — 12px padding on top, right, bottom; horizontal gap only when copilot is open */}
         <div
           className={[
-            'flex-1 min-w-0 min-h-0 flex bg-primary',
+            'flex-1 min-w-0 min-h-0 flex bg-primary overflow-hidden',
             isAdminInset && adminCopilotOpen ? 'gap-3' : 'gap-0',
           ].join(' ')}
         >
@@ -487,7 +533,10 @@ function AppContent() {
           <div
             ref={setCopilotPortalEl}
             className="h-full copilot-panel"
-            style={{ flex: isAdminInset && adminCopilotMaximized ? 7 : isAdminInset && adminCopilotOpen ? 3 : 0 }}
+            style={{
+              flex: isAdminInset && adminCopilotMaximized ? 7 : isAdminInset && adminCopilotOpen ? 3 : 0,
+              transition: (contentCardFaded || contentCardFadingOut) ? 'none' : undefined,
+            }}
           />
 
           {/* Unified content card */}
@@ -507,9 +556,15 @@ function AppContent() {
             ].join(' ')}
             style={{
               flex: isAdminInset && adminCopilotMaximized && !adminArtifactOpen ? 0 : adminArtifactOpen === 'page' ? 7 : adminArtifactOpen ? 'none' : 7,
-              width: adminArtifactOpen && adminArtifactOpen !== 'page' ? (adminArtifactOpen === 'build-frame' ? 720 : 568) : undefined,
-              opacity: contentCardFaded ? 0 : 1,
-              transition: contentCardFaded ? 'none' : 'flex 380ms cubic-bezier(0.23, 1, 0.32, 1), opacity 250ms ease-in-out',
+              width: adminArtifactOpen && adminArtifactOpen !== 'page' ? (adminArtifactOpen === 'event' || adminArtifactOpen === 'course' ? 960 : adminArtifactOpen === 'build-frame' ? 720 : 568) : undefined,
+              opacity: (contentCardFaded || contentCardFadingOut) ? 0 : 1,
+              transition: contentCardFaded
+                ? 'none'
+                : contentCardFadingOut
+                  ? 'opacity 200ms ease-out'
+                  : contentCardSlowFadeIn
+                    ? 'opacity 800ms ease-in-out 150ms'
+                    : 'flex 380ms cubic-bezier(0.23, 1, 0.32, 1), opacity 250ms ease-in-out',
             }}
           >
             <div
