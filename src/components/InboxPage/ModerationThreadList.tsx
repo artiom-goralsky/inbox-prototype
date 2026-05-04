@@ -111,36 +111,36 @@ const ModerationThreadList: React.FC<ModerationThreadListProps> = ({ selectedId,
         <Typography variant="heading-md" color="primary" className="flex-1 truncate">
           Moderation
         </Typography>
+        {showSortSelect && (
+          <div className="flex items-center gap-1 shrink-0">
+            {enableViewModes ? (
+              <SortViewDropdown
+                sortOptions={MOD_SORT_OPTIONS}
+                sortValue={sortMode}
+                onSortChange={handleSortChange}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                showViewSection={sortMode === 'ai-priority'}
+              />
+            ) : (
+              <Menu
+                options={MOD_SORT_OPTIONS.map(o => ({ label: o.label, onClick: () => setSortMode(o.value) }))}
+                trigger={<IconButton icon="arrow-bottom-top" size="md" variant="ghost" aria-label="Sort" />}
+              />
+            )}
+          </div>
+        )}
       </div>
 
       {/* Filter bar */}
       <div className="flex flex-col shrink-0 border-b border-[#f0f3f5]">
         <div className="px-4 h-10 flex items-center pb-3 box-content">
-          <div className="flex items-center justify-between w-full">
-            <Tabs.Root
-              tabs={[{ value: 'inbox', label: 'Inbox' }, { value: 'approved', label: 'Approved' }, { value: 'rejected', label: 'Rejected' }]}
-              selectedValue={modFilter}
-              onValueChange={v => setModFilter(v as 'inbox' | 'approved' | 'rejected')}
-              size="md"
-            />
-            {showSortSelect && (
-              enableViewModes ? (
-                <SortViewDropdown
-                  sortOptions={MOD_SORT_OPTIONS}
-                  sortValue={sortMode}
-                  onSortChange={handleSortChange}
-                  viewMode={viewMode}
-                  onViewModeChange={setViewMode}
-                  showViewSection={sortMode === 'ai-priority'}
-                />
-              ) : (
-                <Menu
-                  options={MOD_SORT_OPTIONS.map(o => ({ label: o.label, onClick: () => setSortMode(o.value) }))}
-                  trigger={<IconButton icon="arrow-bottom-top" size="md" variant="outline" aria-label="Sort" />}
-                />
-              )
-            )}
-          </div>
+          <Tabs.Root
+            tabs={[{ value: 'inbox', label: 'Inbox' }, { value: 'approved', label: 'Approved' }, { value: 'rejected', label: 'Rejected' }]}
+            selectedValue={modFilter}
+            onValueChange={v => setModFilter(v as 'inbox' | 'approved' | 'rejected')}
+            size="md"
+          />
         </div>
       </div>
 

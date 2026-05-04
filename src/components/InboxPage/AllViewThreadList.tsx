@@ -163,23 +163,21 @@ const AllViewThreadList: React.FC<AllViewThreadListProps> = ({ items, selectedId
   return (
     <div className="h-full bg-primary border-r border-[#f0f3f5] flex flex-col overflow-hidden">
       {/* Title header */}
-      <div className="flex items-center gap-2 h-14 pl-6 pr-4 shrink-0">
+      <div className="flex items-center gap-2 h-14 pl-6 pr-4 shrink-0 border-b border-[#f0f3f5]">
         <Typography variant="heading-md" color="primary" className="flex-1 truncate">
           Inbox
         </Typography>
-        <IconButton icon="magnifying-glass" size="sm" variant="ghost" aria-label="Search" />
-      </div>
-
-      {/* Filter bar */}
-      <div className="flex items-center justify-end px-4 pb-3 border-b border-[#f0f3f5] shrink-0">
-        <SortViewDropdown
-          sortOptions={SORT_OPTIONS}
-          sortValue={sortMode}
-          onSortChange={setSortMode}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          showViewSection
-        />
+        <div className="flex items-center gap-1 shrink-0">
+          <SortViewDropdown
+            sortOptions={SORT_OPTIONS}
+            sortValue={sortMode}
+            onSortChange={setSortMode}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            showViewSection
+          />
+          <IconButton icon="magnifying-glass" size="md" variant="ghost" aria-label="Search" />
+        </div>
       </div>
 
       {/* Items */}
