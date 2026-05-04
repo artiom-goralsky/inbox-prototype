@@ -128,6 +128,9 @@ interface AdminSectionProps {
   onCopilotMaximizedChange?: (maximized: boolean) => void;
   onArtifactStateChange?: (type: string | null) => void;
   onSidebarCollapsedChange?: (collapsed: boolean) => void;
+  /** Initial collapsed value passed by App so the column width and the inner SidebarV2 collapse state
+   *  agree on first paint. App owns the canonical value (localStorage with a window-width fallback). */
+  initialSidebarCollapsed?: boolean;
   /** Portal target element for rendering admin sidebar outside the content card */
   adminOuterPortal?: HTMLDivElement | null;
   /** Portal target element for rendering copilot between nav and content card */
@@ -209,6 +212,7 @@ const AdminSection: React.FC<AdminSectionProps> = ({
   onCopilotMaximizedChange,
   onArtifactStateChange,
   onSidebarCollapsedChange,
+  initialSidebarCollapsed,
   adminOuterPortal,
   copilotPortal,
 }) => {
@@ -271,7 +275,10 @@ const AdminSection: React.FC<AdminSectionProps> = ({
   const [activeAgent, setActiveAgent] = useState<Agent | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(
     () => {
-      // When entering from community: collapse on narrow screens, expand on wide
+      // App owns the canonical collapsed value (localStorage with a window-width
+      // fallback) — use it on first paint so column width and SidebarV2 agree.
+      if (initialSidebarCollapsed !== undefined) return initialSidebarCollapsed;
+      // Legacy fallback if rendered without the prop.
       if (initialView === 'community' || onBackToCommunity) {
         return window.innerWidth < 1440;
       }
