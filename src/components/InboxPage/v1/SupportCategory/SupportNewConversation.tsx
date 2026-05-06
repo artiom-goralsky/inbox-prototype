@@ -43,7 +43,7 @@ const SupportNewConversation: React.FC<SupportNewConversationProps> = ({
       {/* Header */}
       <div className="flex items-center gap-3 pl-6 pr-4 py-3 border-b border-[#f0f3f5] shrink-0 h-14">
         <Typography variant="heading-md" color="primary" className="flex-1 truncate">
-          New request support
+          New support request
         </Typography>
         <IconButton icon="cross" size="md" variant="ghost" aria-label="Cancel" onClick={onCancel} />
       </div>

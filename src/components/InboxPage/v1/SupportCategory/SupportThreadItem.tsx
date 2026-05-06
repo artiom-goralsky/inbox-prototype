@@ -1,15 +1,6 @@
 import React from 'react';
-import { Typography } from '@circleco/compass/components/Typography';
 import { Icon } from '@circleco/compass/components/Icon';
-import { Badge } from '@circleco/compass/components/Badge';
-import { getThreadStatus, type SupportStatus, type SupportThread } from './data/supportThreads';
-
-type BadgeVariant = 'info' | 'success' | 'secondary';
-const STATUS_BADGE: Record<SupportStatus, { label: string; variant: BadgeVariant }> = {
-  open: { label: 'Open', variant: 'info' },
-  solved: { label: 'Solved', variant: 'success' },
-  closed: { label: 'Closed', variant: 'secondary' },
-};
+import type { SupportThread } from './data/supportThreads';
 
 interface SupportThreadItemProps {
   thread: SupportThread;
@@ -17,21 +8,23 @@ interface SupportThreadItemProps {
   onClick: () => void;
 }
 
-const SupportThreadItem: React.FC<SupportThreadItemProps> = ({ thread, isSelected, onClick }) => {
-  const status = getThreadStatus(thread);
-  const isNewReply = thread.state === 'new_reply' || thread.state === 'awaiting_user';
-  const isInQueue = thread.state === 'in_queue';
-  const isActive = thread.state === 'active';
-  const isHasDraft = thread.state === 'has_draft';
-  const badge = STATUS_BADGE[status];
-
-  const lastMessage = thread.messages.length > 0 ? thread.messages[thread.messages.length - 1] : null;
+function getPreview(thread: SupportThread): { text: string; italic?: boolean } {
+  if (thread.state === 'has_draft' && thread.messages.length === 0) {
+    return { text: `Draft: ${thread.draft ?? ''}`, italic: true };
+  }
   const lastNonSystem = [...thread.messages].reverse().find(m => m.sender !== 'system') ?? null;
-  const previewBody = isHasDraft
-    ? (thread.draft ?? '')
-    : (lastNonSystem?.body ?? lastMessage?.body ?? '');
+  if (!lastNonSystem) {
+    return { text: thread.state === 'in_queue' ? 'In queue' : '' };
+  }
+  const senderName = lastNonSystem.sender === 'admin'
+    ? 'You'
+    : (lastNonSystem.agentName?.split(' ')[0] ?? 'Circle');
+  return { text: `${senderName}: ${lastNonSystem.body}` };
+}
 
-  const channelIcon = thread.channel === 'email' ? 'email' : 'message';
+const SupportThreadItem: React.FC<SupportThreadItemProps> = ({ thread, isSelected, onClick }) => {
+  const isUnread = thread.state === 'new_reply' || thread.state === 'awaiting_user';
+  const preview = getPreview(thread);
 
   return (
     <div
@@ -40,46 +33,41 @@ const SupportThreadItem: React.FC<SupportThreadItemProps> = ({ thread, isSelecte
       onClick={onClick}
       onKeyDown={e => e.key === 'Enter' && onClick()}
       className={[
-        'flex gap-3 items-center pl-4 pr-3 py-2 cursor-pointer transition-colors rounded-xl',
+        'group flex gap-3 items-center pl-4 pr-3 py-2 cursor-pointer transition-colors rounded-[16px] w-full',
         isSelected ? 'bg-active' : 'hover:bg-hover',
-      ].filter(Boolean).join(' ')}
+      ].join(' ')}
     >
-      {/* Channel icon — 32×32 square anchor in place of avatar */}
-      <div className="size-8 rounded-md border border-secondary flex items-center justify-center shrink-0 bg-primary">
-        <Icon name={channelIcon as any} size="sm" color="tertiary" />
+      {/* Avatar tile 32×32 */}
+      <div className={[
+        'size-8 rounded-lg border border-[#e4e7eb] flex items-center justify-center shrink-0 transition-colors',
+        isSelected ? 'bg-primary' : 'bg-secondary group-hover:bg-primary',
+      ].join(' ')}>
+        <Icon name={thread.channel === 'email' ? 'email' : 'message'} size="sm" color="secondary" />
       </div>
 
-      {/* Subject + preview */}
+      {/* Content */}
       <div className="flex-1 min-w-0 flex flex-col gap-1">
+        {/* Row 1: title | unread dot slot | time */}
         <div className="flex items-center gap-2 min-w-0">
-          {isNewReply && (
-            <span className="size-1.5 rounded-full bg-info shrink-0" aria-label="Unread" />
-          )}
-          {isActive && (
-            <span className="size-1.5 rounded-full bg-success shrink-0" aria-label="Live" />
-          )}
-          {isInQueue && (
-            <Icon name="clock" size="sm" color="tertiary" className="shrink-0" />
-          )}
-          <Typography
-            variant="heading-sm"
-            color="primary"
-            className="flex-1 min-w-0 truncate"
-          >
+          <span className="flex-1 min-w-0 truncate text-sm font-semibold text-primary leading-5">
             {thread.subject}
-          </Typography>
-          <Badge variant={badge.variant} label={badge.label} />
-          <Typography variant="caption" color="tertiary" className="shrink-0">
+          </span>
+          <div className="size-4 flex items-center justify-center shrink-0">
+            {isUnread && (
+              <span className="size-[7px] rounded-full bg-[#506CF0]" aria-label="Unread" />
+            )}
+          </div>
+          <span className="text-xs text-tertiary whitespace-nowrap leading-[18px]">
             {thread.lastActivity}
-          </Typography>
+          </span>
         </div>
-        <Typography
-          variant="body-sm"
-          color="secondary"
-          className="min-w-0 truncate"
-        >
-          {isInQueue && !lastNonSystem ? 'In queue' : previewBody}
-        </Typography>
+        {/* Row 2: preview */}
+        <span className={[
+          'text-sm leading-5 truncate w-full',
+          preview.italic ? 'italic text-primary' : 'text-secondary',
+        ].join(' ')}>
+          {preview.text}
+        </span>
       </div>
     </div>
   );

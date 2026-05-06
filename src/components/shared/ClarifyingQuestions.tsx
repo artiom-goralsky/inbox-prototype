@@ -2,11 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Typography } from '@circleco/compass/components/Typography';
 import { IconButton } from '@circleco/compass/components/IconButton';
 import { Button } from '@circleco/compass/components/Button';
+import { Badge } from '@circleco/compass/components/Badge';
+
+export interface ClarifyingOption { label: string; badge?: string; }
+export type ClarifyingOptionInput = string | ClarifyingOption;
 
 export interface ClarifyingQuestion {
   question: string;
-  options: string[];
+  options: ClarifyingOptionInput[];
 }
+
+function getLabel(o: ClarifyingOptionInput) { return typeof o === 'string' ? o : o.label; }
+function getBadge(o: ClarifyingOptionInput) { return typeof o === 'string' ? undefined : o.badge; }
 
 interface ClarifyingQuestionsProps {
   questions: ClarifyingQuestion[];
@@ -29,8 +36,9 @@ const ClarifyingQuestions: React.FC<ClarifyingQuestionsProps> = ({
 
   const totalOptions = current.options.length;
 
-  const selectOption = (option: string) => {
-    const newAnswers = [...answers, option];
+  const selectOption = (option: ClarifyingOptionInput) => {
+    const label = getLabel(option);
+    const newAnswers = [...answers, label];
     if (currentIndex < questions.length - 1) {
       setAnswers(newAnswers);
       setCurrentIndex(currentIndex + 1);
@@ -101,7 +109,7 @@ const ClarifyingQuestions: React.FC<ClarifyingQuestionsProps> = ({
       {/* Options — numbered rows */}
       {current.options.map((option, i) => (
         <button
-          key={option}
+          key={getLabel(option)}
           type="button"
           onClick={() => selectOption(option)}
           onMouseEnter={() => setActiveOption(i)}
@@ -115,8 +123,11 @@ const ClarifyingQuestions: React.FC<ClarifyingQuestionsProps> = ({
             </Typography>
           </div>
           <Typography variant="label-sm" color="primary">
-            {option}
+            {getLabel(option)}
           </Typography>
+          {getBadge(option) && (
+            <Badge variant="secondary" label={getBadge(option)!} className="ml-auto shrink-0" />
+          )}
         </button>
       ))}
 

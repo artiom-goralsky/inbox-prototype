@@ -1,14 +1,12 @@
 import React from 'react';
 import { Typography } from '@circleco/compass/components/Typography';
 import { Badge } from '@circleco/compass/components/Badge';
-import { Icon } from '@circleco/compass/components/Icon';
 import SupportConversationView from './SupportConversationView';
 import SupportComposer from './SupportComposer';
+import QueueCard from './QueueCard';
 import {
-  LIVE_CHAT_WAIT_LABEL,
-  getThreadStatus,
-  type SupportStatus,
   type SupportThread,
+  type SupportThreadState,
 } from './data/supportThreads';
 
 interface SupportCenterPanelProps {
@@ -20,11 +18,11 @@ interface SupportCenterPanelProps {
   onReopen: () => void;
 }
 
-type BadgeVariant = 'info' | 'success' | 'secondary';
-const STATUS_BADGE: Record<SupportStatus, { label: string; variant: BadgeVariant }> = {
-  open: { label: 'Open', variant: 'info' },
-  solved: { label: 'Solved', variant: 'success' },
-  closed: { label: 'Closed', variant: 'secondary' },
+type BadgeVariant = 'success' | 'secondary';
+const STATE_BADGE: Partial<Record<SupportThreadState, { label: string; variant: BadgeVariant }>> = {
+  resolved: { label: 'Resolved', variant: 'secondary' },
+  solved:   { label: 'Solved',   variant: 'success' },
+  closed:   { label: 'Closed',   variant: 'secondary' },
 };
 
 const CHANNEL_LABEL: Record<SupportThread['channel'], string> = {
@@ -38,9 +36,8 @@ const SupportCenterPanel: React.FC<SupportCenterPanelProps> = ({
   onComposerChange,
   onSend,
 }) => {
-  const status = getThreadStatus(thread);
-  const badge = STATUS_BADGE[status];
-  const isResolved = thread.state === 'resolved';
+  const stateBadge = STATE_BADGE[thread.state];
+  const isDone = !!stateBadge;
   const isChat = thread.channel === 'chat';
   const isInQueue = thread.state === 'in_queue';
   const isActive = thread.state === 'active';
@@ -54,7 +51,7 @@ const SupportCenterPanel: React.FC<SupportCenterPanelProps> = ({
             <Typography variant="heading-md" color="primary" className="truncate">
               {thread.subject}
             </Typography>
-            <Badge variant={badge.variant} label={badge.label} />
+            {stateBadge && <Badge variant={stateBadge.variant} label={stateBadge.label} />}
           </div>
           <div className="flex items-center gap-1.5">
             {isChat && isActive && (
@@ -69,15 +66,11 @@ const SupportCenterPanel: React.FC<SupportCenterPanelProps> = ({
         </div>
       </div>
 
-      {/* In-queue banner — only for live chat in_queue state */}
+      {/* In-queue card — only for live chat in_queue state */}
       {isChat && isInQueue && (
         <div className="px-4 pt-3 shrink-0">
-          <div className="max-w-[768px] mx-auto flex items-start gap-3 bg-secondary rounded-xl px-4 py-3">
-            <Icon name="message" size="md" color="info" />
-            <div className="flex flex-col gap-0.5">
-              <Typography variant="heading-sm" color="primary">Connecting you with Circle Support</Typography>
-              <Typography variant="body-sm" color="secondary">{LIVE_CHAT_WAIT_LABEL}</Typography>
-            </div>
+          <div className="max-w-[768px] mx-auto">
+            <QueueCard threadId={thread.id} />
           </div>
         </div>
       )}
@@ -90,7 +83,7 @@ const SupportCenterPanel: React.FC<SupportCenterPanelProps> = ({
         value={composerValue}
         onChange={onComposerChange}
         onSend={onSend}
-        placeholder={isResolved ? 'This conversation is resolved.' : isChat ? 'Type your message...' : 'Message'}
+        placeholder={isDone ? 'This conversation is resolved.' : isChat ? 'Type your message...' : 'Message'}
       />
     </div>
   );

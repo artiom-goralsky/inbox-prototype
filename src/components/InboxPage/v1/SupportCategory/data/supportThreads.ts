@@ -3,16 +3,16 @@ export type SupportThreadState =
   | 'awaiting_circle'
   | 'has_draft'
   | 'resolved'
+  | 'solved'
   | 'closed'
   | 'in_queue'
   | 'active'
   | 'awaiting_user';
 
-export type SupportStatus = 'open' | 'closed' | 'solved';
+export type SupportStatus = 'open' | 'resolved';
 
 export function getThreadStatus(thread: { state: SupportThreadState }): SupportStatus {
-  if (thread.state === 'resolved') return 'solved';
-  if (thread.state === 'closed') return 'closed';
+  if (thread.state === 'resolved' || thread.state === 'solved' || thread.state === 'closed') return 'resolved';
   return 'open';
 }
 
@@ -37,6 +37,7 @@ export interface SupportThread {
   lastActivity: string;
   draft?: string;
   messages: SupportMessage[];
+  queueState?: { startedAt: number };
 }
 
 export function addSupportThread(thread: SupportThread): void {
@@ -176,7 +177,7 @@ export const mockSupportThreads: SupportThread[] = [
         sender: 'circle',
         agentName: 'Lucy Smith',
         agentAvatar: '/images/avatars/3.png',
-        body: 'Hi Mark, sorry it took so long. How can I help you?',
+        body: 'Hi! How can I help you?',
         timestamp: 'Today 2:32 PM',
       },
     ],
@@ -262,4 +263,19 @@ export const LIVE_CHAT_AGENT = {
 } as const;
 
 export const LIVE_CHAT_WAIT_LABEL = 'Wait time: ~15 min';
-export const EMAIL_WAIT_LABEL = 'Wait time: ~22 hrs';
+
+export const QUEUE_INITIAL_PEOPLE_AHEAD = 8;
+export const QUEUE_TICK_MS = 625;
+
+export function transitionThreadToActive(threadId: string): void {
+  const thread = mockSupportThreads.find(t => t.id === threadId);
+  if (!thread || thread.state !== 'in_queue') return;
+  const base = thread.messages.length;
+  thread.state = 'active';
+  thread.lastActivity = 'now';
+  thread.messages.push(
+    { id: `${threadId}-m${base + 1}`, sender: 'system', body: `${LIVE_CHAT_AGENT.name} has joined the chat`, timestamp: 'Just now' },
+    { id: `${threadId}-m${base + 2}`, sender: 'circle', agentName: LIVE_CHAT_AGENT.name, agentAvatar: LIVE_CHAT_AGENT.avatar, body: `Hi! I'm ${LIVE_CHAT_AGENT.name.split(' ')[0]} from Circle Support. How can I help you today?`, timestamp: 'Just now' },
+  );
+  window.dispatchEvent(new CustomEvent('support-thread-updated', { detail: { threadId } }));
+}

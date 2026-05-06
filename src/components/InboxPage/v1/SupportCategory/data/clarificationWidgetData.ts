@@ -1,15 +1,14 @@
 export const clarificationWidgetCopy = {
-  question:
-    'Ok! What method of contact do you prefer based on the estimated waiting times?',
+  question: "I'll connect you with our team — which works best?",
   options: {
     liveChat: {
-      label: 'Live chat',
-      waitTime: 'wait time: 15 min',
+      label: 'Live Chat',
+      waitTime: 'Wait ~15 min',
       avatars: ['/images/avatars/3.png', '/images/avatars/5.png'],
     },
     email: {
       label: 'Email',
-      waitTime: 'wait time: 22 hrs',
+      waitTime: 'Reply within 1 business day',
     },
   },
 } as const;
