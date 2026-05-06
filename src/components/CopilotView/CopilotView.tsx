@@ -22,6 +22,7 @@ import { clarificationWidgetCopy } from '../InboxPage/v1/SupportCategory/data/cl
 import { addSupportThread, type SupportThread } from '../InboxPage/v1/SupportCategory/data/supportThreads';
 import SupportTicketForm, { type SupportTicketFormData } from './SupportTicketForm';
 import TicketLinkCard from './TicketLinkCard';
+import QueueCard from '../InboxPage/v1/SupportCategory/QueueCard';
 import SpaceSetupFlow from './SpaceSetupFlow';
 import PageBuilderMode from './PageBuilderMode';
 import EntityV, { type EntityVariant } from '../shared/EntityV';
@@ -80,8 +81,11 @@ const SHORTCUT_BUILD_ASSET: CopilotAsset = {
 
 const SUPPORT_CLARIFICATION_QUESTIONS: ClarifyingQuestion[] = [
   {
-    question: 'Ok! What method of contact do you prefer based on the estimated waiting times?',
-    options: ['Live chat', 'Email'],
+    question: "I'll connect you with our team — which works best?",
+    options: [
+      { label: 'Live Chat', badge: 'Wait ~15 min' },
+      { label: 'Email', badge: 'Reply within 1 business day' },
+    ],
   },
 ];
 
@@ -1574,7 +1578,7 @@ const CopilotView: React.FC<CopilotViewProps> = ({
 
   // Submitted messages from the chat box (skill-triggered or generic)
   type ClarificationChoice = 'live_chat' | 'email';
-  type SubmittedMessage = { id: string; text: string; skill?: { id: string; icon: string }; phase: 'thinking' | 'reply'; reply: string; stopped?: boolean; referenceAttachments?: Array<{ authorName: string; snippet: string; messageId: string; category: string }>; artifact?: import('../InboxPage/aiAssistMockData').AiAssistArtifact; targetCategory?: string; recipientName?: string; clarification?: { selected?: ClarificationChoice }; assistantOnly?: boolean; ticketForm?: { open: boolean; initialDescription: string }; ticketSubmitted?: { threadId: string; subject: string } };
+  type SubmittedMessage = { id: string; text: string; skill?: { id: string; icon: string }; phase: 'thinking' | 'reply'; reply: string; stopped?: boolean; referenceAttachments?: Array<{ authorName: string; snippet: string; messageId: string; category: string }>; artifact?: import('../InboxPage/aiAssistMockData').AiAssistArtifact; targetCategory?: string; recipientName?: string; clarification?: { selected?: ClarificationChoice }; assistantOnly?: boolean; ticketForm?: { open: boolean; initialDescription: string }; ticketSubmitted?: { threadId: string; subject: string }; queueCard?: { threadId: string } };
   const [submittedMessages, setSubmittedMessages] = useState<SubmittedMessage[]>([]);
   const [awaitingLiveChatClarification, setAwaitingLiveChatClarification] = useState(false);
   // Dedupe the fresh-chat support fork against React.StrictMode's effect double-invoke.
@@ -1671,7 +1675,7 @@ const CopilotView: React.FC<CopilotViewProps> = ({
       const msgId = `msg-${Date.now()}`;
       setSubmittedMessages(prev => [
         ...prev,
-        { id: msgId, text: initialMessage, phase: 'reply', reply: '', clarification: {} },
+        { id: msgId, text: initialMessage, phase: 'reply', reply: 'Clarify some information:', clarification: {} },
       ]);
       return;
     }
@@ -1844,7 +1848,7 @@ const CopilotView: React.FC<CopilotViewProps> = ({
       }]);
       window.setTimeout(() => {
         setSubmittedMessages(prev => prev.map(m => m.id === thinkingId
-          ? { ...m, phase: 'reply', ticketForm: { open: true, initialDescription } }
+          ? { ...m, phase: 'reply', reply: 'Add details', ticketForm: { open: true, initialDescription } }
           : m,
         ));
       }, 1500);
@@ -1863,7 +1867,7 @@ const CopilotView: React.FC<CopilotViewProps> = ({
     }]);
     window.setTimeout(() => {
       setSubmittedMessages(prev => prev.map(m => m.id === promptId
-        ? { ...m, phase: 'reply', reply: "Okay! To start a live chat, tell me what you need help with. Then, I'll redirect you to an agent." }
+        ? { ...m, phase: 'reply', reply: "Got it. Send a quick description for the agent — they'll see this when they join." }
         : m,
       ));
     }, 1500);
@@ -1926,21 +1930,38 @@ const CopilotView: React.FC<CopilotViewProps> = ({
       setFreshSkill(null);
     }
     // Live-chat clarification handoff — when the user is in awaiting state,
-    // the next message is treated as the live-chat clarification.
+    // the next message is treated as the live-chat description for the agent.
     if (awaitingLiveChatClarification) {
       const trimmed = message.trim();
       if (!trimmed) return;
+
+      const threadId = `sup-${Date.now()}`;
+      const subject = trimmed.length > 40 ? `${trimmed.slice(0, 40).trimEnd()}…` : trimmed;
+      addSupportThread({
+        id: threadId,
+        subject,
+        channel: 'chat',
+        state: 'in_queue',
+        lastActivity: 'now',
+        queueState: { startedAt: Date.now() + 1500 },
+        messages: [{ id: `${threadId}-m1`, sender: 'admin', body: trimmed, timestamp: 'Just now' }],
+      });
+
       const turnId = `msg-${Date.now()}`;
       setSubmittedMessages(prev => [...prev, {
-        id: turnId,
-        text: trimmed,
-        phase: 'reply',
-        reply: "Got it. I've started a live chat — your conversation continues in your inbox. An agent will join shortly. →",
+        id: turnId, text: trimmed, phase: 'thinking', reply: '',
       }]);
+
+      window.setTimeout(() => {
+        setSubmittedMessages(prev => prev.map(m => m.id === turnId ? {
+          ...m,
+          phase: 'reply',
+          reply: "You're in the queue. I'll let you know when an agent joins.",
+          queueCard: { threadId },
+        } : m));
+      }, 1500);
+
       setAwaitingLiveChatClarification(false);
-      window.dispatchEvent(new CustomEvent('open-support', {
-        detail: { variant: 'live_chat', liveChatFirstMessage: trimmed },
-      }));
       return;
     }
     // Support keyword fork — short-circuit normal AI reply, run a brief
@@ -1956,7 +1977,7 @@ const CopilotView: React.FC<CopilotViewProps> = ({
       ]);
       window.setTimeout(() => {
         setSubmittedMessages(prev => prev.map(m => m.id === msgId
-          ? { ...m, phase: 'reply', reply: 'Sure — I can route you to support. First, a quick question:' }
+          ? { ...m, phase: 'reply', reply: 'Clarify some information:' }
           : m,
         ));
       }, 1500);
@@ -2814,6 +2835,16 @@ const CopilotView: React.FC<CopilotViewProps> = ({
                             <TicketLinkCard
                               subject={msg.ticketSubmitted.subject}
                               onView={() => openTicketInInbox(msg.ticketSubmitted!.threadId)}
+                            />
+                          </div>
+                        )}
+                        {msg.queueCard && msg.phase === 'reply' && (
+                          <div className="animate-[fadeInSlide_0.4s_cubic-bezier(0.16,1,0.3,1)_both]">
+                            <QueueCard
+                              threadId={msg.queueCard.threadId}
+                              onOpenConversation={() =>
+                                window.dispatchEvent(new CustomEvent('open-support', { detail: { threadId: msg.queueCard!.threadId } }))
+                              }
                             />
                           </div>
                         )}
@@ -4192,6 +4223,16 @@ const CopilotView: React.FC<CopilotViewProps> = ({
                             <TicketLinkCard
                               subject={msg.ticketSubmitted.subject}
                               onView={() => openTicketInInbox(msg.ticketSubmitted!.threadId)}
+                            />
+                          </div>
+                        )}
+                        {msg.queueCard && msg.phase === 'reply' && (
+                          <div className="animate-[fadeInSlide_0.4s_cubic-bezier(0.16,1,0.3,1)_both]">
+                            <QueueCard
+                              threadId={msg.queueCard.threadId}
+                              onOpenConversation={() =>
+                                window.dispatchEvent(new CustomEvent('open-support', { detail: { threadId: msg.queueCard!.threadId } }))
+                              }
                             />
                           </div>
                         )}

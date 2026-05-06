@@ -29,7 +29,6 @@ const InboxV1: React.FC<InboxV1Props> = ({ onVersionChange }) => {
   const [showNewMessage, setShowNewMessage] = useState(false);
   const [supportPrefill, setSupportPrefill] = useState<SupportPrefill | null>(null);
   const [supportVariant, setSupportVariant] = useState<SupportNewVariant | null>(null);
-  const [supportLiveChatFirstMessage, setSupportLiveChatFirstMessage] = useState<string | null>(null);
   const [supportSelectedThreadId, setSupportSelectedThreadId] = useState<string | null>(null);
 
   // Support badge: count of new_reply threads in initial mock (no live mutation feedback to nav,
@@ -57,19 +56,18 @@ const InboxV1: React.FC<InboxV1Props> = ({ onVersionChange }) => {
   }, []);
 
   // Listen for an external 'open-support' event so other surfaces (e.g. the Copilot
-  // clarification widget) can route into Support. Detail shape:
-  //   { variant?: 'email'; prefill?: SupportPrefill; liveChatFirstMessage?: string; threadId?: string }
+  // QueueCard) can route into Support. Detail shape:
+  //   { variant?: 'email'; prefill?: SupportPrefill; threadId?: string }
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail as
-        | { variant?: SupportNewVariant | 'live_chat'; prefill?: SupportPrefill; liveChatFirstMessage?: string; threadId?: string }
+        | { variant?: SupportNewVariant; prefill?: SupportPrefill; threadId?: string }
         | undefined;
       setActiveCategory('support');
       setShowProfile(false);
       setShowNewMessage(false);
       if (detail?.variant === 'email') setSupportVariant('email');
       if (detail?.prefill) setSupportPrefill(detail.prefill);
-      if (detail?.liveChatFirstMessage) setSupportLiveChatFirstMessage(detail.liveChatFirstMessage);
       if (detail?.threadId) setSupportSelectedThreadId(detail.threadId);
     };
     window.addEventListener('open-support', handler);
@@ -150,12 +148,10 @@ const InboxV1: React.FC<InboxV1Props> = ({ onVersionChange }) => {
           <SupportCategory
             prefill={supportPrefill}
             newVariant={supportVariant}
-            liveChatFirstMessage={supportLiveChatFirstMessage}
             selectedThreadIdOverride={supportSelectedThreadId}
             onPrefillConsumed={() => {
               setSupportPrefill(null);
               setSupportVariant(null);
-              setSupportLiveChatFirstMessage(null);
               setSupportSelectedThreadId(null);
             }}
           />

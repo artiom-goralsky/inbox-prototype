@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Typography } from '@circleco/compass/components/Typography';
 import SupportThreadList from './SupportThreadList';
 import SupportCenterPanel from './SupportCenterPanel';
 import SupportNewConversation from './SupportNewConversation';
 import SupportEmptyState from './SupportEmptyState';
 import {
-  LIVE_CHAT_AGENT,
+  getThreadStatus,
   mockSupportThreads,
   type SupportNewVariant,
   type SupportPrefill,
@@ -14,17 +15,13 @@ import {
 interface SupportCategoryProps {
   /** Optional prefill (e.g. from Copilot email bridge). When set, opens email new-conversation mode pre-filled. */
   prefill?: SupportPrefill | null;
-  /** Variant of new-conversation flow to open. Currently only 'email' opens a composer; live chat is created directly via `liveChatFirstMessage`. */
+  /** Variant of new-conversation flow to open. Currently only 'email' opens a composer. */
   newVariant?: SupportNewVariant | null;
-  /** When set, immediately creates a live-chat thread in `in_queue` with this body and selects it. */
-  liveChatFirstMessage?: string | null;
   /** When set, selects this specific thread (e.g. a ticket just created from Copilot). */
   selectedThreadIdOverride?: string | null;
-  /** Called after consuming a prefill / liveChatFirstMessage so the parent can clear it. */
+  /** Called after consuming a prefill so the parent can clear it. */
   onPrefillConsumed?: () => void;
 }
-
-const AGENT_JOIN_DELAY_MS = 5000;
 
 function pickDefaultThreadId(threads: SupportThread[]): string | null {
   if (threads.length === 0) return null;
@@ -33,7 +30,7 @@ function pickDefaultThreadId(threads: SupportThread[]): string | null {
   return threads[0].id;
 }
 
-const SupportCategory: React.FC<SupportCategoryProps> = ({ prefill, newVariant, liveChatFirstMessage, selectedThreadIdOverride, onPrefillConsumed }) => {
+const SupportCategory: React.FC<SupportCategoryProps> = ({ prefill, newVariant, selectedThreadIdOverride, onPrefillConsumed }) => {
   const [threads, setThreads] = useState<SupportThread[]>(() => [...mockSupportThreads]);
   const [selectedId, setSelectedId] = useState<string | null>(
     () => selectedThreadIdOverride ?? pickDefaultThreadId(mockSupportThreads),
@@ -46,13 +43,10 @@ const SupportCategory: React.FC<SupportCategoryProps> = ({ prefill, newVariant, 
     return init;
   });
 
+  const [filter, setFilter] = useState<'open' | 'resolved'>('open');
   const [newMode, setNewMode] = useState<SupportNewVariant | null>(null);
   const [newSubject, setNewSubject] = useState('');
   const [newMessage, setNewMessage] = useState('');
-  const agentTimers = useRef<Record<string, number>>({});
-  // Dedupe live-chat thread creation against React StrictMode's effect double-invoke
-  // (and any future spurious effect re-runs caused by parent inline-callback churn).
-  const consumedLiveChatRef = useRef<string | null>(null);
 
   // Consume external email-prefill / variant trigger.
   useEffect(() => {
@@ -78,55 +72,39 @@ const SupportCategory: React.FC<SupportCategoryProps> = ({ prefill, newVariant, 
     setNewMode(null);
   }, [selectedThreadIdOverride]);
 
-  // Clear pending agent-join timers on unmount.
+  // Listen for agent-join transitions fired by QueueCard.
   useEffect(() => {
-    return () => {
-      Object.values(agentTimers.current).forEach(id => window.clearTimeout(id));
-      agentTimers.current = {};
+    const handler = (e: Event) => {
+      const { threadId } = (e as CustomEvent).detail as { threadId: string };
+      setThreads(prev => {
+        const fresh = mockSupportThreads.find(t => t.id === threadId);
+        if (!fresh) return prev;
+        return prev.map(t => t.id === threadId ? { ...fresh } : t);
+      });
     };
+    window.addEventListener('support-thread-updated', handler);
+    return () => window.removeEventListener('support-thread-updated', handler);
   }, []);
+
+  const filteredThreads = useMemo(
+    () => threads.filter(t => getThreadStatus(t) === filter),
+    [threads, filter],
+  );
 
   const selectedThread = useMemo(
     () => threads.find(t => t.id === selectedId) ?? null,
     [threads, selectedId],
   );
 
-  const scheduleAgentJoin = useCallback((threadId: string) => {
-    if (agentTimers.current[threadId]) return;
-    const timerId = window.setTimeout(() => {
-      delete agentTimers.current[threadId];
-      setThreads(prev =>
-        prev.map(t => {
-          if (t.id !== threadId) return t;
-          if (t.state !== 'in_queue') return t;
-          const baseId = t.messages.length;
-          return {
-            ...t,
-            state: 'active' as const,
-            lastActivity: 'now',
-            messages: [
-              ...t.messages,
-              {
-                id: `${t.id}-m${baseId + 1}`,
-                sender: 'system' as const,
-                body: `${LIVE_CHAT_AGENT.name} has joined the chat`,
-                timestamp: 'Just now',
-              },
-              {
-                id: `${t.id}-m${baseId + 2}`,
-                sender: 'circle' as const,
-                agentName: LIVE_CHAT_AGENT.name,
-                agentAvatar: LIVE_CHAT_AGENT.avatar,
-                body: `Hi! I'm ${LIVE_CHAT_AGENT.name.split(' ')[0]} from Circle Support. How can I help you today?`,
-                timestamp: 'Just now',
-              },
-            ],
-          };
-        }),
-      );
-    }, AGENT_JOIN_DELAY_MS);
-    agentTimers.current[threadId] = timerId;
-  }, []);
+  const handleFilterChange = useCallback((newFilter: 'open' | 'resolved') => {
+    setFilter(newFilter);
+    setSelectedId(prev => {
+      const newFiltered = threads.filter(t => getThreadStatus(t) === newFilter);
+      if (prev && newFiltered.some(t => t.id === prev)) return prev;
+      return newFiltered.length > 0 ? newFiltered[0].id : null;
+    });
+    setNewMode(null);
+  }, [threads]);
 
   const handleSelect = useCallback((id: string) => {
     setNewMode(null);
@@ -174,42 +152,6 @@ const SupportCategory: React.FC<SupportCategoryProps> = ({ prefill, newVariant, 
     setNewSubject('');
     setNewMessage('');
   }, [newSubject, newMessage]);
-
-  // Consume external live-chat first message — create a thread directly,
-  // skip new-conversation mode, schedule agent join.
-  useEffect(() => {
-    if (!liveChatFirstMessage) return;
-    if (consumedLiveChatRef.current === liveChatFirstMessage) return;
-    consumedLiveChatRef.current = liveChatFirstMessage;
-
-    const trimmed = liveChatFirstMessage.trim();
-    if (!trimmed) {
-      onPrefillConsumed?.();
-      return;
-    }
-    const id = `sup-${Date.now()}`;
-    const subject = trimmed.length > 40 ? `${trimmed.slice(0, 40).trimEnd()}…` : trimmed;
-    const created: SupportThread = {
-      id,
-      subject,
-      channel: 'chat',
-      state: 'in_queue',
-      lastActivity: 'now',
-      messages: [
-        {
-          id: `${id}-m1`,
-          sender: 'admin',
-          body: trimmed,
-          timestamp: 'Just now',
-        },
-      ],
-    };
-    setThreads(prev => [created, ...prev]);
-    setSelectedId(id);
-    setNewMode(null);
-    scheduleAgentJoin(id);
-    onPrefillConsumed?.();
-  }, [liveChatFirstMessage, scheduleAgentJoin, onPrefillConsumed]);
 
   const handleComposerChange = useCallback((threadId: string, value: string) => {
     setComposerByThread(prev => ({ ...prev, [threadId]: value }));
@@ -260,7 +202,14 @@ const SupportCategory: React.FC<SupportCategoryProps> = ({ prefill, newVariant, 
 
   const handleMarkResolved = useCallback((threadId: string) => {
     setThreads(prev => prev.map(t => (t.id === threadId ? { ...t, state: 'resolved' as const } : t)));
-  }, []);
+    if (filter === 'open') {
+      setSelectedId(prev => {
+        if (prev !== threadId) return prev;
+        const remaining = threads.filter(t => t.id !== threadId && getThreadStatus(t) === 'open');
+        return remaining.length > 0 ? remaining[0].id : null;
+      });
+    }
+  }, [filter, threads]);
 
   const handleReopen = useCallback((threadId: string) => {
     setThreads(prev => prev.map(t => (t.id === threadId ? { ...t, state: 'awaiting_circle' as const } : t)));
@@ -272,8 +221,10 @@ const SupportCategory: React.FC<SupportCategoryProps> = ({ prefill, newVariant, 
       <div className="flex flex-1 min-w-0 h-full">
         <div className="w-[280px] shrink-0">
           <SupportThreadList
-            threads={threads}
+            threads={[]}
             selectedId={null}
+            filter={filter}
+            onFilterChange={handleFilterChange}
             onSelect={() => {}}
           />
         </div>
@@ -286,8 +237,10 @@ const SupportCategory: React.FC<SupportCategoryProps> = ({ prefill, newVariant, 
     <div className="flex flex-1 min-w-0 h-full">
       <div className="w-[280px] shrink-0">
         <SupportThreadList
-          threads={threads}
+          threads={filteredThreads}
           selectedId={newMode ? null : selectedId}
+          filter={filter}
+          onFilterChange={handleFilterChange}
           onSelect={handleSelect}
         />
       </div>
@@ -310,6 +263,10 @@ const SupportCategory: React.FC<SupportCategoryProps> = ({ prefill, newVariant, 
           onMarkResolved={() => handleMarkResolved(selectedThread.id)}
           onReopen={() => handleReopen(selectedThread.id)}
         />
+      ) : filter === 'resolved' ? (
+        <div className="flex-1 flex items-center justify-center bg-primary">
+          <Typography variant="body-sm" color="secondary">No resolved conversations yet</Typography>
+        </div>
       ) : (
         <SupportEmptyState onStart={handleNewConversation} />
       )}
