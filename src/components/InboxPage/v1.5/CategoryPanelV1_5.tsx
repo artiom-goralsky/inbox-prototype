@@ -2,6 +2,7 @@ import React from 'react';
 import { Typography } from '@circleco/compass/components/Typography';
 import { Icon } from '@circleco/compass/components/Icon';
 import { Avatar } from '@circleco/compass/components/Avatar';
+import { Badge } from '@circleco/compass/components/Badge';
 import { Select } from '@circleco/compass/components/Select';
 import type { V1_5Category } from './v1_5MockData';
 import NotificationsPopover from '../NotificationsPopover';
@@ -12,20 +13,20 @@ interface CategoryPanelV1_5Props {
   onVersionChange: (version: 'v1' | 'v1.5' | 'v2') => void;
 }
 
-const MINE_CATEGORIES: { id: V1_5Category; label: string; iconType: 'avatar' | 'icon'; iconName?: string }[] = [
-  { id: 'dms', label: 'DMs', iconType: 'avatar' },
+const MINE_CATEGORIES: { id: V1_5Category; label: string; iconType: 'avatar' | 'icon'; iconName?: string; count?: number }[] = [
+  { id: 'dms', label: 'DMs', iconType: 'avatar', count: 23 },
   { id: 'chat-threads', label: 'Chat threads', iconType: 'icon', iconName: 'thread' },
   { id: 'connection-requests', label: 'Connection requests', iconType: 'icon', iconName: 'people-add' },
 ];
 
-const SHARED_CATEGORIES: { id: V1_5Category; label: string; iconType: 'icon'; iconName: string }[] = [
-  { id: 'moderation' as V1_5Category, label: 'Moderation', iconType: 'icon' as const, iconName: 'flag' },
+const SHARED_CATEGORIES: { id: V1_5Category; label: string; iconType: 'icon'; iconName: string; count?: number }[] = [
+  { id: 'moderation' as V1_5Category, label: 'Moderation', iconType: 'icon' as const, iconName: 'flag', count: 13 },
   { id: 'course-comments' as V1_5Category, label: 'Course comments', iconType: 'icon' as const, iconName: 'graduate-cap' },
-  { id: 'ai-inbox' as V1_5Category, label: 'AI Inbox', iconType: 'icon' as const, iconName: 'ai-box' },
+  { id: 'ai-inbox' as V1_5Category, label: 'AI Inbox', iconType: 'icon' as const, iconName: 'ai-box', count: 7 },
 ];
 
 const CategoryPanelV1_5: React.FC<CategoryPanelV1_5Props> = ({ activeCategory, onCategoryChange, onVersionChange }) => {
-  const renderItem = (item: { id: V1_5Category; label: string; iconType: 'avatar' | 'icon'; iconName?: string }) => (
+  const renderItem = (item: { id: V1_5Category; label: string; iconType: 'avatar' | 'icon'; iconName?: string; count?: number }) => (
     <button
       key={item.id}
       onClick={() => onCategoryChange(item.id)}
@@ -41,6 +42,9 @@ const CategoryPanelV1_5: React.FC<CategoryPanelV1_5Props> = ({ activeCategory, o
       <Typography variant="body-sm" color="primary" className="truncate flex-1">
         {item.label}
       </Typography>
+      {item.count != null && item.count > 0 && (
+        <Badge variant="secondary" label={String(item.count)} />
+      )}
     </button>
   );
 

@@ -50,12 +50,11 @@ const QueueCard: React.FC<QueueCardProps> = ({ threadId, onOpenConversation }) =
           <span className="text-sm font-medium text-[#191b1f]">{label}</span>
           <span className="text-xs text-[#717680]">Estimated wait ~10 min</span>
         </div>
-        <div className="shrink-0 size-4">
-          <svg className="animate-spin" viewBox="0 0 16 16" fill="none">
-            <circle cx="8" cy="8" r="6" stroke="#e4e7eb" strokeWidth="2"/>
-            <path d="M14 8a6 6 0 0 0-6-6" stroke="#191b1f" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
-        </div>
+        {onOpenConversation && (
+          <Button variant="outline" size="sm" onClick={onOpenConversation}>
+            Open conversation
+          </Button>
+        )}
       </div>
     );
   }

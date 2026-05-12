@@ -42,7 +42,6 @@ export const adminNavDataV5: AdminNavZoneV5[] = [
         label: 'Inbox',
         iconName: 'inbox-empty',
         activeIconName: 'inbox-empty-filled',
-        badge: 3,
       },
       {
         id: 'v5-agents-management',
@@ -226,7 +225,6 @@ export const adminNavDataV4: AdminNavZoneV5[] = [
         label: 'Inbox',
         iconName: 'inbox-empty',
         activeIconName: 'inbox-empty-filled',
-        badge: 3,
       },
       {
         id: 'v5-ai-team',
@@ -387,7 +385,6 @@ export const flatNavDataV5: FlatNavSectionV5[] = [
         label: 'Inbox',
         iconName: 'inbox-empty',
         activeIconName: 'inbox-empty-filled',
-        badge: 3,
       },
     ],
   },

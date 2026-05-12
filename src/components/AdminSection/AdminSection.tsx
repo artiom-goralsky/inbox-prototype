@@ -235,6 +235,7 @@ const AdminSection: React.FC<AdminSectionProps> = ({
   // Support, render the Inbox alongside (instead of navigating away and
   // unmounting the Copilot side panel).
   const [supportInboxOpen, setSupportInboxOpen] = useState(false);
+  const [inboxUnread, setInboxUnread] = useState(false);
   useEffect(() => {
     const handler = () => {
       // The first listener-fire opens the overlay and unmaximizes Copilot;
@@ -272,6 +273,12 @@ const AdminSection: React.FC<AdminSectionProps> = ({
   useEffect(() => {
     setSupportInboxOpen(false);
   }, [propCurrentSection, propActiveSubItem]);
+  // Badge the Inbox nav item when an agent joins a support chat.
+  useEffect(() => {
+    const handler = () => setInboxUnread(true);
+    window.addEventListener('support-thread-updated', handler);
+    return () => window.removeEventListener('support-thread-updated', handler);
+  }, []);
   const [activeAgent, setActiveAgent] = useState<Agent | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(
     () => {
@@ -633,6 +640,7 @@ const AdminSection: React.FC<AdminSectionProps> = ({
   };
 
   const handleSidebarItemClick = (itemId: string, subItemId?: string) => {
+    if (itemId === 'v5-inbox') setInboxUnread(false);
     // Keep copilot open — it's a companion across navigation
     // If maximized, condense back to side panel so the page is visible
     if (isCopilotMaximized) setIsCopilotMaximized(false);
@@ -1146,6 +1154,7 @@ const AdminSection: React.FC<AdminSectionProps> = ({
     onAgentClick: handleAgentClick,
     currentSection: sidebarCurrentSection,
     activeSubItem: sidebarActiveSubItem,
+    badgeOverrides: inboxUnread ? { 'v5-inbox': 1 } : undefined,
   };
 
   const rightPanels = (

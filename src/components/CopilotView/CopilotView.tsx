@@ -2452,7 +2452,6 @@ const CopilotView: React.FC<CopilotViewProps> = ({
                     {/* Clara's greeting */}
                     {shortcutPhase && shortcutFlow && (isCourseTask || shortcutPhase !== 'greeting') && (
                       <div className="flex flex-col items-start gap-3 animate-[fadeIn_0.3s_cubic-bezier(0.16,1,0.3,1)]">
-                        <img src="/ai-avatar.png" alt="AI" className="w-[22px] h-[22px] rounded-full shrink-0" />
                         <div className="flex-1 min-w-0 w-full">
                           <Typography variant="body-md" color="primary" className="px-1">
                             {shortcutFlow.greeting}
@@ -2503,7 +2502,6 @@ const CopilotView: React.FC<CopilotViewProps> = ({
                     {/* Course: AI's first real response */}
                     {isCourseTask && shortcutFirstAIResponse && (
                       <div className="flex flex-col items-start gap-3 animate-[fadeIn_0.3s_cubic-bezier(0.16,1,0.3,1)]">
-                        <img src="/ai-avatar.png" alt="AI" className="w-[22px] h-[22px] rounded-full shrink-0" />
                         <div className="flex-1 min-w-0 w-full">
                           <Typography variant="body-md" color="primary" className="px-1">
                             {shortcutFirstAIResponse}
@@ -2539,7 +2537,6 @@ const CopilotView: React.FC<CopilotViewProps> = ({
                     {/* Plan result */}
                     {shortcutPhase === 'done' && shortcutPlanResult && shortcutFlow && (
                       <div className="flex flex-col items-start gap-3 animate-[fadeIn_0.3s_cubic-bezier(0.16,1,0.3,1)]">
-                      <img src="/ai-avatar.png" alt="AI" className="w-[22px] h-[22px] rounded-full shrink-0" />
                         <div className="flex-1 min-w-0 w-full flex flex-col gap-3">
                           <Typography variant="body-md" color="primary" className="px-1">
                             {shortcutFlow.planIntro}
@@ -2575,7 +2572,6 @@ const CopilotView: React.FC<CopilotViewProps> = ({
                     {/* Sensitive step — awaiting confirmation */}
                     {shortcutPhase === 'awaiting-confirmation' && shortcutSensitiveStep && (
                       <div className="flex flex-col items-start gap-3 animate-[fadeIn_0.2s_cubic-bezier(0.16,1,0.3,1)]">
-                        <img src="/ai-avatar.png" alt="AI" className="w-[22px] h-[22px] rounded-full shrink-0" />
                         <div className="flex-1 min-w-0 w-full flex flex-col gap-3">
                           <Typography variant="body-md" color="primary" className="px-1">
                             Before I continue, I need your confirmation on a sensitive step.
@@ -2594,7 +2590,6 @@ const CopilotView: React.FC<CopilotViewProps> = ({
                     {/* Plan failed / paused — recovery card */}
                     {shortcutPhase === 'failed' && shortcutRecovery && (
                       <div className="flex flex-col items-start gap-3 animate-[fadeIn_0.2s_cubic-bezier(0.16,1,0.3,1)]">
-                        <img src="/ai-avatar.png" alt="AI" className="w-[22px] h-[22px] rounded-full shrink-0" />
                         <div className="flex-1 min-w-0 w-full flex flex-col gap-3">
                           <Typography variant="body-md" color="primary" className="px-1">
                             The plan ran into an issue. Here&apos;s where things stopped:
@@ -2616,7 +2611,6 @@ const CopilotView: React.FC<CopilotViewProps> = ({
                     {/* Built — completion message + entity result card (or landing page artifact) */}
                     {shortcutPhase === 'built' && (
                       <div className="flex flex-col items-start gap-3 animate-[fadeIn_0.3s_cubic-bezier(0.16,1,0.3,1)]">
-                        <img src="/ai-avatar.png" alt="AI" className="w-[22px] h-[22px] rounded-full shrink-0" />
                         <div className="flex-1 min-w-0 w-full flex flex-col gap-3">
                           <Typography variant="body-md" color="primary" className="px-1">
                             {isLandingPageTask
@@ -2704,7 +2698,6 @@ const CopilotView: React.FC<CopilotViewProps> = ({
                 {/* Skill greeting */}
                 {showGreeting && skillMention && (
                   <div className="flex flex-col items-start gap-1 animate-[fadeIn_0.3s_cubic-bezier(0.16,1,0.3,1)]">
-                    <img src="/ai-avatar.png" alt="AI" className="w-[22px] h-[22px] rounded-full shrink-0" />
                     <div className="flex-1 min-w-0 w-full">
                       <Typography variant="body-md" color="primary" className="px-1">
                         I&apos;m ready to help with {skillMention}. What would you like to do?
@@ -2745,8 +2738,7 @@ const CopilotView: React.FC<CopilotViewProps> = ({
                     {freshPhase === 'reply' && (
                       <div className="group flex flex-col gap-2 min-w-0 animate-[fadeIn_0.3s_cubic-bezier(0.16,1,0.3,1)]">
                         <div className="flex flex-col gap-2 w-full min-w-0">
-                          <img src="/ai-avatar.png" alt="AI" className="w-[22px] h-[22px] rounded-full shrink-0" />
-                          <MarkdownContent content={freshReply} />
+                            <MarkdownContent content={freshReply} />
                           {/* Event card — shown when the reply is about creating an event */}
                           {initialMessage && isEventMessage(initialMessage) && (
                             <button
@@ -2817,7 +2809,6 @@ const CopilotView: React.FC<CopilotViewProps> = ({
                       </div>
                     ) : (
                       <div className="flex flex-col gap-3 animate-[fadeIn_0.2s_cubic-bezier(0.16,1,0.3,1)]">
-                        <img src="/ai-avatar.png" alt="AI" className="w-[22px] h-[22px] rounded-full shrink-0" />
                         {(msg.phase === 'thinking' || (!msg.clarification && !msg.assistantOnly)) && (
                           <ThinkingIndicator
                             done={msg.phase === 'reply'}
@@ -2942,8 +2933,7 @@ const CopilotView: React.FC<CopilotViewProps> = ({
                       ) : (
                         <div key={i} className="group flex flex-col gap-2 min-w-0">
                           <div className="flex flex-col gap-2 w-full min-w-0">
-                            <img src="/ai-avatar.png" alt="AI" className="w-[22px] h-[22px] rounded-full shrink-0" />
-                            <MarkdownContent content={msg.content} />
+                                <MarkdownContent content={msg.content} />
                           </div>
                           <div className="flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                             <div className="flex items-center gap-[5px]">
@@ -2994,8 +2984,7 @@ const CopilotView: React.FC<CopilotViewProps> = ({
                         return (
                           <div key={chip.id} className="group flex flex-col gap-2 min-w-0 animate-[fadeInSlide_0.4s_cubic-bezier(0.16,1,0.3,1)_both]">
                             <div className="flex flex-col gap-2 w-full min-w-0">
-                              <img src="/ai-avatar.png" alt="AI" className="w-[22px] h-[22px] rounded-full shrink-0" />
-                            </div>
+                                  </div>
 
                             <ThinkingIndicator
                               done={!isLoading}
@@ -3071,8 +3060,7 @@ const CopilotView: React.FC<CopilotViewProps> = ({
                         const hiddenExecCount = execSteps.length - MAX_EXEC_VISIBLE;
                         return (
                           <div key={chip.id} className="flex flex-col items-start gap-4 animate-[fadeInSlide_0.4s_cubic-bezier(0.16,1,0.3,1)_both]">
-                            <img src="/ai-avatar.png" alt="AI" className="w-[22px] h-[22px] rounded-full shrink-0" />
-                            <div className="w-full bg-[#f7f9fa] border border-[#e4e7eb] rounded-[12px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] overflow-hidden">
+                                <div className="w-full bg-[#f7f9fa] border border-[#e4e7eb] rounded-[12px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] overflow-hidden">
                               {/* Header */}
                               <div className="bg-[#f7f9fa] flex h-14 items-center justify-between px-[18px]">
                                 <span className={`text-sm font-semibold ${isDone ? 'text-[#191b1f]' : 'shimmer-sweep-text'}`}>
@@ -3140,8 +3128,7 @@ const CopilotView: React.FC<CopilotViewProps> = ({
                       if (chip.label === 'Order-result') {
                         return (
                           <div key={chip.id} className="flex flex-col items-start gap-4 animate-[fadeInSlide_0.4s_cubic-bezier(0.16,1,0.3,1)_both]">
-                            <img src="/ai-avatar.png" alt="AI" className="w-[22px] h-[22px] rounded-full shrink-0" />
-                            <div className="w-full bg-secondary border border-[#e4e7eb] rounded-[16px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] overflow-hidden">
+                                <div className="w-full bg-secondary border border-[#e4e7eb] rounded-[16px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] overflow-hidden">
                               <div className="bg-white border-b border-[#f0f3f5] flex h-14 items-center px-[18px] py-3 rounded-t-[14px]">
                                 <span className="text-sm font-semibold text-[#191b1f]">What type of community are you building?</span>
                               </div>
@@ -3181,8 +3168,7 @@ const CopilotView: React.FC<CopilotViewProps> = ({
 
                         return (
                           <div key={chip.id} className="flex flex-col items-start gap-3 animate-[fadeInSlide_0.4s_cubic-bezier(0.16,1,0.3,1)_both]">
-                            <img src="/ai-avatar.png" alt="AI" className="w-[22px] h-[22px] rounded-full shrink-0" />
-                            <div className="flex-1 min-w-0 w-full flex flex-col gap-3">
+                                <div className="flex-1 min-w-0 w-full flex flex-col gap-3">
 
                               {/* Working card */}
                               <div className="bg-[#f7f9fa] border border-[#e4e7eb] rounded-[12px] overflow-hidden">
@@ -3351,8 +3337,7 @@ const CopilotView: React.FC<CopilotViewProps> = ({
                         const isLoading = chip.status === 'loading';
                         return (
                           <div key={chip.id} className="group flex flex-col gap-3 min-w-0 animate-[fadeInSlide_0.4s_cubic-bezier(0.16,1,0.3,1)_both]">
-                            <img src="/ai-avatar.png" alt="AI" className="w-[22px] h-[22px] rounded-full shrink-0" />
-                            <ThinkingIndicator
+                                <ThinkingIndicator
                               done={!isLoading}
                               steps={[
                                 { label: 'Loading page structure and components from your site.' },
@@ -3398,8 +3383,7 @@ const CopilotView: React.FC<CopilotViewProps> = ({
                         ];
                         return (
                           <div key={chip.id} className="flex flex-col items-start gap-3 animate-[fadeInSlide_0.4s_cubic-bezier(0.16,1,0.3,1)_both]">
-                            <img src="/ai-avatar.png" alt="AI" className="w-[22px] h-[22px] rounded-full shrink-0" />
-                            <div className="flex-1 min-w-0 w-full flex flex-col gap-3">
+                                <div className="flex-1 min-w-0 w-full flex flex-col gap-3">
                               {/* Execution card — visible in both running and done */}
                               <div className="w-full bg-[#f7f9fa] border border-[#e4e7eb] rounded-[12px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] overflow-hidden">
                                 <div className="bg-[#f7f9fa] flex h-14 items-center justify-between px-[18px]">
@@ -3483,8 +3467,7 @@ const CopilotView: React.FC<CopilotViewProps> = ({
                         ];
                         return (
                           <div key={chip.id} className="flex flex-col items-start gap-3 animate-[fadeInSlide_0.4s_cubic-bezier(0.16,1,0.3,1)_both]">
-                            <img src="/ai-avatar.png" alt="AI" className="w-[22px] h-[22px] rounded-full shrink-0" />
-                            <div className="flex-1 min-w-0 w-full flex flex-col gap-3">
+                                <div className="flex-1 min-w-0 w-full flex flex-col gap-3">
                               {/* Execution card — visible in both running and done */}
                               <div className="w-full bg-[#f7f9fa] border border-[#e4e7eb] rounded-[12px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] overflow-hidden">
                                 <div className="bg-[#f7f9fa] flex h-14 items-center justify-between px-[18px]">
@@ -3556,8 +3539,7 @@ const CopilotView: React.FC<CopilotViewProps> = ({
                           </div>
                         ) : (
                           <div className="flex flex-col gap-3 animate-[fadeIn_0.2s_cubic-bezier(0.16,1,0.3,1)]">
-                            <img src="/ai-avatar.png" alt="AI" className="w-[22px] h-[22px] rounded-full shrink-0" />
-                            <ThinkingIndicator
+                                <ThinkingIndicator
                               done={msg.phase === 'reply'}
                               skill={msg.skill?.id}
                               skillIcon={msg.skill?.icon}
@@ -3980,7 +3962,6 @@ const CopilotView: React.FC<CopilotViewProps> = ({
                 {/* Clara intro */}
                 <div className="group flex flex-col gap-2 min-w-0">
                   <div className="flex flex-col gap-2 w-full min-w-0">
-                    <img src="/ai-avatar.png" alt="AI" className="w-[22px] h-[22px] rounded-full shrink-0" />
                     <p className="text-[16px] font-normal leading-[24px] text-[#191b1f]">
                       Hey! I&apos;m Circle AI. I have full visibility into your community — member activity, onboarding, content, and revenue. What would you like to work on?
                     </p>
@@ -4014,7 +3995,6 @@ const CopilotView: React.FC<CopilotViewProps> = ({
                 {/* Clara response with artifact card */}
                 <div className="group flex flex-col gap-2 min-w-0">
                   <div className="flex flex-col gap-2 w-full min-w-0">
-                    <img src="/ai-avatar.png" alt="AI" className="w-[22px] h-[22px] rounded-full shrink-0" />
                     <div className="flex flex-col gap-3 w-full">
                       <Typography variant="body-md" color="primary">
                         This week we had <strong>12 new signups</strong>.{' '}
@@ -4089,7 +4069,6 @@ const CopilotView: React.FC<CopilotViewProps> = ({
                     {/* Plan result */}
                     {planPhase === 'done' && planResult && (
                       <div className="flex flex-col items-start gap-3 animate-[fadeIn_0.3s_cubic-bezier(0.16,1,0.3,1)]">
-                      <img src="/ai-avatar.png" alt="AI" className="w-[22px] h-[22px] rounded-full shrink-0" />
                         <div className="flex-1 min-w-0 w-full flex flex-col gap-3">
                           <Typography variant="body-md" color="primary" className="px-1">
                             I&apos;ve created a plan for your creative request management library! Based on your needs, here&apos;s how we&apos;ll build a system to streamline intake forms, review processes, and request tracking. Does this look right, or would you like to make any changes?
@@ -4129,7 +4108,6 @@ const CopilotView: React.FC<CopilotViewProps> = ({
                     {/* AI reply — updating */}
                     {(redesignPhase === 'reply' || redesignPhase === 'done') && (
                       <div className="flex flex-col items-start gap-4 animate-[fadeIn_0.3s_cubic-bezier(0.16,1,0.3,1)]">
-                        <img src="/ai-avatar.png" alt="AI" className="w-[22px] h-[22px] rounded-full shrink-0" />
                         <div className="flex flex-col gap-3 w-full">
                           <Typography variant="body-md" color="primary" className="px-1">
                             I&apos;ve restructured your project plan to prioritize creating spaces first. The plan now focuses on getting your space structure right before moving to content and onboarding — this way, everything you build after has a clear home.
@@ -4144,7 +4122,6 @@ const CopilotView: React.FC<CopilotViewProps> = ({
                     {/* AI reply — confirmation after update */}
                     {redesignPhase === 'done' && (
                       <div className="flex flex-col items-start gap-4 animate-[fadeIn_0.3s_cubic-bezier(0.16,1,0.3,1)]">
-                        <img src="/ai-avatar.png" alt="AI" className="w-[22px] h-[22px] rounded-full shrink-0" />
                         <div className="flex flex-col gap-3 w-full">
                           <Typography variant="body-md" color="primary" className="px-1">
                             Done — your project plan has been updated. The 6 new steps are focused on designing, creating, and configuring your spaces before moving on to content and member invitations. You can click any step to start working on it.
@@ -4196,7 +4173,6 @@ const CopilotView: React.FC<CopilotViewProps> = ({
                       </div>
                     ) : (
                       <div className="flex flex-col gap-3 animate-[fadeIn_0.2s_cubic-bezier(0.16,1,0.3,1)]">
-                        <img src="/ai-avatar.png" alt="AI" className="w-[22px] h-[22px] rounded-full shrink-0" />
                         {(msg.phase === 'thinking' || !msg.clarification) && (
                           <ThinkingIndicator
                             done={msg.phase === 'reply'}
@@ -4491,7 +4467,6 @@ const CopilotView: React.FC<CopilotViewProps> = ({
               {/* Messages */}
               <div className="flex-1 overflow-y-auto px-5 py-6 flex flex-col gap-6">
                 <div className="flex flex-col gap-2">
-                  <img src="/ai-avatar.png" alt="AI" className="w-[22px] h-[22px] rounded-full shrink-0" />
                   <p className="text-sm text-[#191b1f] leading-[22px]">
                     Here&apos;s your <strong className="font-semibold">Home page</strong> open in the visual editor. Click any section on the canvas to select and edit it. I can help you make changes — just describe what you&apos;d like.
                   </p>
@@ -4502,7 +4477,6 @@ const CopilotView: React.FC<CopilotViewProps> = ({
                   </div>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <img src="/ai-avatar.png" alt="AI" className="w-[22px] h-[22px] rounded-full shrink-0" />
                   <p className="text-sm text-[#191b1f] leading-[22px]">
                     Done! I&apos;ve updated the hero to: <em>&quot;Connect. Learn. Grow.&quot;</em> — short, action-oriented, and memorable. The subtext stays as-is. Want to try a different direction?
                   </p>

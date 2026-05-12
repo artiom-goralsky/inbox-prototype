@@ -216,11 +216,7 @@ const ViewContent: React.FC<{ data: EventData }> = ({ data }) => (
 
         {/* Cover */}
         <div className="w-full h-[304px] rounded-[13px] overflow-hidden border border-primary relative shrink-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-100 via-purple-100 to-indigo-200 flex items-center justify-center">
-            <div className="w-52 h-52 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 blur-3xl opacity-60" />
-            <div className="absolute w-36 h-36 rounded-full bg-gradient-to-tr from-indigo-300 to-blue-200 blur-2xl opacity-60 translate-x-20 -translate-y-10" />
-            <div className="absolute w-32 h-32 rounded-full bg-gradient-to-bl from-purple-300 to-indigo-200 blur-2xl opacity-50 -translate-x-16 translate-y-12" />
-          </div>
+          <div className="absolute inset-0 bg-[#f0f3f5]" />
         </div>
 
         {/* Title + details card */}

@@ -11,6 +11,7 @@ import {
   type SupportPrefill,
   type SupportThread,
 } from './data/supportThreads';
+import type { SupportFilter } from './SupportThreadList';
 
 interface SupportCategoryProps {
   /** Optional prefill (e.g. from Copilot email bridge). When set, opens email new-conversation mode pre-filled. */
@@ -21,6 +22,12 @@ interface SupportCategoryProps {
   selectedThreadIdOverride?: string | null;
   /** Called after consuming a prefill so the parent can clear it. */
   onPrefillConsumed?: () => void;
+}
+
+function applyFilter(threads: SupportThread[], filter: SupportFilter): SupportThread[] {
+  if (filter === 'all') return threads;
+  if (filter === 'open') return threads.filter(t => getThreadStatus(t) === 'open');
+  return threads.filter(t => t.state === filter);
 }
 
 function pickDefaultThreadId(threads: SupportThread[]): string | null {
@@ -43,7 +50,7 @@ const SupportCategory: React.FC<SupportCategoryProps> = ({ prefill, newVariant, 
     return init;
   });
 
-  const [filter, setFilter] = useState<'open' | 'resolved'>('open');
+  const [filter, setFilter] = useState<SupportFilter>('open');
   const [newMode, setNewMode] = useState<SupportNewVariant | null>(null);
   const [newSubject, setNewSubject] = useState('');
   const [newMessage, setNewMessage] = useState('');
@@ -87,7 +94,7 @@ const SupportCategory: React.FC<SupportCategoryProps> = ({ prefill, newVariant, 
   }, []);
 
   const filteredThreads = useMemo(
-    () => threads.filter(t => getThreadStatus(t) === filter),
+    () => applyFilter(threads, filter),
     [threads, filter],
   );
 
@@ -96,10 +103,10 @@ const SupportCategory: React.FC<SupportCategoryProps> = ({ prefill, newVariant, 
     [threads, selectedId],
   );
 
-  const handleFilterChange = useCallback((newFilter: 'open' | 'resolved') => {
+  const handleFilterChange = useCallback((newFilter: SupportFilter) => {
     setFilter(newFilter);
     setSelectedId(prev => {
-      const newFiltered = threads.filter(t => getThreadStatus(t) === newFilter);
+      const newFiltered = applyFilter(threads, newFilter);
       if (prev && newFiltered.some(t => t.id === prev)) return prev;
       return newFiltered.length > 0 ? newFiltered[0].id : null;
     });
@@ -263,9 +270,13 @@ const SupportCategory: React.FC<SupportCategoryProps> = ({ prefill, newVariant, 
           onMarkResolved={() => handleMarkResolved(selectedThread.id)}
           onReopen={() => handleReopen(selectedThread.id)}
         />
-      ) : filter === 'resolved' ? (
+      ) : filter !== 'open' ? (
         <div className="flex-1 flex items-center justify-center bg-primary">
-          <Typography variant="body-sm" color="secondary">No resolved conversations yet</Typography>
+          <Typography variant="body-sm" color="secondary">
+            {filter === 'closed' ? 'No closed conversations yet'
+              : filter === 'solved' ? 'No solved conversations yet'
+              : 'No conversations yet'}
+          </Typography>
         </div>
       ) : (
         <SupportEmptyState onStart={handleNewConversation} />

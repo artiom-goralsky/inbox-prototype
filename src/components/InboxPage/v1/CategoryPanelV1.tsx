@@ -17,14 +17,14 @@ interface CategoryPanelV1Props {
   supportBadgeCount?: number;
 }
 
-const MINE_CATEGORIES: { id: V1Category; label: string; iconType: 'avatar' | 'icon'; iconName?: string }[] = [
-  { id: 'dms', label: 'DMs', iconType: 'avatar' },
+const MINE_CATEGORIES: { id: V1Category; label: string; iconType: 'avatar' | 'icon'; iconName?: string; count?: number }[] = [
+  { id: 'dms', label: 'DMs', iconType: 'avatar', count: 23 },
 ];
 
-const SHARED_CATEGORIES: { id: V1Category; label: string; iconType: 'icon'; iconName: string }[] = [
-  { id: 'moderation', label: 'Moderation', iconType: 'icon', iconName: 'flag' },
+const SHARED_CATEGORIES: { id: V1Category; label: string; iconType: 'icon'; iconName: string; count?: number }[] = [
+  { id: 'moderation', label: 'Moderation', iconType: 'icon', iconName: 'flag', count: 13 },
   { id: 'course-comments', label: 'Course comments', iconType: 'icon', iconName: 'graduate-cap' },
-  { id: 'ai-inbox', label: 'AI Inbox', iconType: 'icon', iconName: 'ai-box' },
+  { id: 'ai-inbox', label: 'AI Inbox', iconType: 'icon', iconName: 'ai-box', count: 7 },
 ];
 
 const CategoryPanelV1: React.FC<CategoryPanelV1Props> = ({
@@ -34,7 +34,7 @@ const CategoryPanelV1: React.FC<CategoryPanelV1Props> = ({
   onSupportClick,
   supportBadgeCount = 0,
 }) => {
-  const renderItem = (item: { id: V1Category; label: string; iconType: 'avatar' | 'icon'; iconName?: string }) => (
+  const renderItem = (item: { id: V1Category; label: string; iconType: 'avatar' | 'icon'; iconName?: string; count?: number }) => (
     <button
       key={item.id}
       onClick={() => onCategoryChange(item.id)}
@@ -50,6 +50,9 @@ const CategoryPanelV1: React.FC<CategoryPanelV1Props> = ({
       <Typography variant="body-sm" color="primary" className="truncate flex-1">
         {item.label}
       </Typography>
+      {item.count != null && item.count > 0 && (
+        <Badge variant="secondary" label={String(item.count)} />
+      )}
     </button>
   );
 

@@ -4,16 +4,27 @@ import { Select } from '@circleco/compass/components/Select';
 import SupportThreadItem from './SupportThreadItem';
 import type { SupportThread } from './data/supportThreads';
 
-const FILTER_OPTIONS = [
+export type SupportFilter = 'open' | 'closed' | 'solved' | 'all';
+
+const FILTER_OPTIONS: { label: string; value: SupportFilter }[] = [
   { label: 'Open', value: 'open' },
-  { label: 'Resolved', value: 'resolved' },
-] as const;
+  { label: 'Closed', value: 'closed' },
+  { label: 'Solved', value: 'solved' },
+  { label: 'All', value: 'all' },
+];
+
+const EMPTY_TEXT: Record<SupportFilter, string> = {
+  open:   'No open conversations',
+  closed: 'No closed conversations yet',
+  solved: 'No solved conversations yet',
+  all:    'No conversations yet',
+};
 
 interface SupportThreadListProps {
   threads: SupportThread[];
   selectedId: string | null;
-  filter: 'open' | 'resolved';
-  onFilterChange: (filter: 'open' | 'resolved') => void;
+  filter: SupportFilter;
+  onFilterChange: (filter: SupportFilter) => void;
   onSelect: (id: string) => void;
 }
 
@@ -24,7 +35,7 @@ const SupportThreadList: React.FC<SupportThreadListProps> = ({
   onFilterChange,
   onSelect,
 }) => {
-  const emptyText = filter === 'resolved' ? 'No resolved conversations yet' : 'No open conversations';
+  const emptyText = EMPTY_TEXT[filter];
 
   return (
     <div className="h-full bg-primary border-r border-[#f0f3f5] flex flex-col overflow-hidden">
@@ -41,7 +52,7 @@ const SupportThreadList: React.FC<SupportThreadListProps> = ({
           aria-label="Filter conversations"
           options={FILTER_OPTIONS as unknown as Array<{ label: string; value: string }>}
           value={FILTER_OPTIONS.find(o => o.value === filter) as unknown as { label: string; value: string }}
-          onValueChange={v => v && onFilterChange(v.value as 'open' | 'resolved')}
+          onValueChange={v => v && onFilterChange(v.value as SupportFilter)}
         />
       </div>
 
