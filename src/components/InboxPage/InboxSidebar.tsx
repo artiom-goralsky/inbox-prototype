@@ -52,10 +52,9 @@ const SHARED_CATEGORIES: NavItem[] = [
 ];
 
 const TAB_COUNTS: Partial<Record<Tab, number>> = {
-  dms: 12,
-  moderation: 6,
-  'connection-requests': 3,
-  'ai-inbox': 3,
+  dms: 23,
+  moderation: 13,
+  'ai-inbox': 7,
 };
 
 interface InboxSidebarProps {
@@ -134,9 +133,7 @@ const InboxSidebar: React.FC<InboxSidebarProps> = ({ activeTab, onTabChange, onV
                     {item.label}
                   </Typography>
                   {count != null && count > 0 && (
-                    <Typography variant="caption" color="tertiary" className="shrink-0 tabular-nums">
-                      {count}
-                    </Typography>
+                    <Badge variant="secondary" label={String(count)} />
                   )}
                 </button>
               );
@@ -165,9 +162,7 @@ const InboxSidebar: React.FC<InboxSidebarProps> = ({ activeTab, onTabChange, onV
                     {item.label}
                   </Typography>
                   {count != null && count > 0 && (
-                    <Typography variant="caption" color="tertiary" className="shrink-0 tabular-nums">
-                      {count}
-                    </Typography>
+                    <Badge variant="secondary" label={String(count)} />
                   )}
                 </button>
               );

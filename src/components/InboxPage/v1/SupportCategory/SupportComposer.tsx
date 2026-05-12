@@ -6,6 +6,7 @@ interface SupportComposerProps {
   onChange: (value: string) => void;
   onSend: () => void;
   placeholder?: string;
+  noPadding?: boolean;
 }
 
 /** Reply composer for an existing Support thread. */
@@ -14,11 +15,12 @@ const SupportComposer: React.FC<SupportComposerProps> = ({
   onChange,
   onSend,
   placeholder = 'Message',
+  noPadding = false,
 }) => {
   const canSend = value.trim().length > 0;
 
   return (
-    <div className="px-4 pb-4 shrink-0">
+    <div className={noPadding ? '' : 'px-4 pb-4 shrink-0'}>
       <div className="max-w-[768px] mx-auto">
         <div className="border border-[#f0f3f5] rounded-2xl overflow-hidden">
           <textarea

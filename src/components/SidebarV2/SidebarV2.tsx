@@ -194,6 +194,8 @@ interface SidebarV5Props {
   onAgentClick?: (agentId: string) => void;
   /** When Copilot is active, controls whether the sidebar collapse affordance is shown. */
   showCollapseAffordance?: boolean;
+  /** Per-item badge count overrides keyed by nav item id. */
+  badgeOverrides?: Record<string, number>;
 }
 
 /* ── Content section IDs — only these show the table/skeleton content ── */
@@ -239,6 +241,7 @@ const AdminL1Item: React.FC<{
   onSelect: (id: string) => void;
   onPin?: (id: string) => void;
   onUnpin?: () => void;
+  badgeOverride?: number;
 }> = ({
   item,
   isExpanded,
@@ -248,6 +251,7 @@ const AdminL1Item: React.FC<{
   onSelect,
   onPin,
   onUnpin,
+  badgeOverride,
 }) => {
   const highlighted = isActive || hasActiveChild;
   const iconName = highlighted ? item.activeIconName : item.iconName;
@@ -280,9 +284,7 @@ const AdminL1Item: React.FC<{
         className="w-5 h-5 shrink-0"
       />
       <span className="flex-1 text-left truncate">{item.label}</span>
-      {item.badge != null && item.badge > 0 && (
-        <Badge label={String(item.badge)} variant="secondary" />
-      )}
+      {(() => { const b = badgeOverride ?? item.badge; return b != null && b > 0 ? <Badge label={String(b)} variant="secondary" /> : null; })()}
       {showChevron && item.children && item.children.length > 0 && (
         <Icon
           name="chevron-down"
@@ -889,6 +891,7 @@ const SidebarV5: React.FC<SidebarV5Props> = ({
   onNavigateConsumed,
   navStyle = 'accordion',
   showCollapseAffordance,
+  badgeOverrides,
 }) => {
   /* ── State ─────────────────────────────────────────────────────────── */
   const [activeId, setActiveId] = useState<string>(() =>
@@ -1782,6 +1785,7 @@ const SidebarV5: React.FC<SidebarV5Props> = ({
                             !!(item.children && item.children.length > 0)
                           }
                           onSelect={handleAdminL1Select}
+                          badgeOverride={badgeOverrides?.[item.id]}
                         />
                         {item.children && item.children.length > 0 && (
                           <div
@@ -1988,6 +1992,7 @@ const SidebarV5: React.FC<SidebarV5Props> = ({
                             !!(item.children && item.children.length > 0)
                           }
                           onSelect={handleAdminL1Select}
+                          badgeOverride={badgeOverrides?.[item.id]}
                         />
                         {item.children && item.children.length > 0 && (
                           <div
@@ -2080,6 +2085,7 @@ const SidebarV5: React.FC<SidebarV5Props> = ({
                             !!(item.children && item.children.length > 0)
                           }
                           onSelect={handleAdminL1Select}
+                          badgeOverride={badgeOverrides?.[item.id]}
                         />
                         {item.children && item.children.length > 0 && (
                           <div
@@ -2239,6 +2245,7 @@ const SidebarV5: React.FC<SidebarV5Props> = ({
                           hasActiveChild={hasActiveChild}
                           showChevron={!!item.children?.length}
                           onSelect={handleAdminL1Select}
+                          badgeOverride={badgeOverrides?.[item.id]}
                         />
                         {item.children && item.children.length > 0 && (
                           <div
